@@ -77,7 +77,7 @@ Seřazené podle ticketu, který je vyřeší. Nic z toho dnes neběží v provo
 17. **Odkaz v e‑mailu nedává smysl s novými URL.** Vede na `/zrusit-rezervaci?id&token`, který v nových URL neexistuje. Navíc endpoint chce i e‑mail, takže se ho stránka musí doptat. **Vyřešeno v #8:** odkaz `/rezervace/zruseni/?r={token}`, REST `GET`/`POST /cancellation` jen s tokenem. Starý `/cancel` odstraněn, `/bookings/{id}/cancel` jen pro Provozovatele.
 18. **Zrušení Provozovatelem přes REST** pouští jen `manage_options`, ne capability „spravovat rezervace“.
 19. **E‑mail Provozovateli chodí vždy**, zadání ho chce zapínatelný. Odesílatel „Jan Kárník Autoservis“ je v kódu natvrdo. **Vyřešeno v #8:** upozornění na novou a na zrušenou online Rezervaci jde zvlášť vypnout, odesílatel je název webu, odpověď jde Provozovateli (Reply-To). E‑maily jsou HTML s textovou alternativou, úvod, podpis a „co si vzít s sebou“ se upravují v Nastavení.
-20. **Rate limiting** počítá jen úspěšné Rezervace (zkoušení neomezí). Bere `REMOTE_ADDR`, takže za proxy sdílí limit všichni. Zrušení limit nemá.
+20. **Rate limiting** počítá jen úspěšné Rezervace (zkoušení neomezí). Bere `REMOTE_ADDR`, takže za proxy sdílí limit všichni. Zrušení limit nemá. **Vyřešeno v #10:** limity v `Pneukarnik_Rate_Limit`, zvlášť pro vytvoření (počítá vytvořené Rezervace, obsazenost prozradí i `/slots`) a pro Zrušení odkazem (počítá každý pokus, REST i formulář stránky), oba nastavitelné, pevné hodinové okno, IPv6 po /64. Za proxy vrátí skutečnou IP filtr `pneukarnik_client_ip`.
 21. **Poznámka zákazníka** jde přes `sanitize_text_field`, které smaže konce řádků. **Vyřešeno v #4:** `sanitize_textarea_field`.
 
 ### Administrace, PDF, iCal (#11, #12)

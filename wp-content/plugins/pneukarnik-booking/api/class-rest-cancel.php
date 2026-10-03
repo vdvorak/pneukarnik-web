@@ -10,7 +10,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * POST /wp-json/pneukarnik/v1/cancellation {token}  Zrušení odkazem z e‑mailu
  * POST /wp-json/pneukarnik/v1/bookings/{id}/cancel  Zrušení Provozovatelem
  *
- * Kódy: cancellation.allowed, .cancelled, .too_late, .already_cancelled, .invalid_token.
+ * Kódy: cancellation.allowed, .cancelled, .too_late, .already_cancelled, .invalid_token,
+ * .rate_limited (429, každý POST odkazem se počítá do limitu IP, viz Pneukarnik_Rate_Limit).
  * Odpovědi bez osobních údajů Zákazníka.
  */
 class Pneukarnik_Rest_Cancel {
@@ -59,6 +60,9 @@ class Pneukarnik_Rest_Cancel {
 	}
 
 	public function cancel_by_token( WP_REST_Request $request ): WP_REST_Response {
+		if ( ! Pneukarnik_Rate_Limit::attempt( Pneukarnik_Rate_Limit::CANCEL ) ) {
+			return self::refusal( Pneukarnik_Cancellation::RATE_LIMITED, 429 );
+		}
 		/** @var mixed $body Tělo může být i jiná JSON hodnota než objekt. */
 		$body = $request->get_json_params();
 		return self::result( Pneukarnik_Cancellation::cancel_by_token( is_array( $body ) ? $body['token'] ?? null : null ) );

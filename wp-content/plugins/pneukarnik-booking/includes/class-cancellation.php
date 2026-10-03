@@ -20,6 +20,8 @@ final class Pneukarnik_Cancellation {
 	public const TOO_LATE          = 'cancellation.too_late';
 	public const ALREADY_CANCELLED = 'cancellation.already_cancelled';
 	public const INVALID_TOKEN     = 'cancellation.invalid_token';
+	/** Pokus o Zrušení nad limit IP (Pneukarnik_Rate_Limit), Rezervace zůstala. */
+	public const RATE_LIMITED = 'cancellation.rate_limited';
 
 	/** HTTP status odmítnutého Zrušení podle kódu. */
 	private const STATUS = [

@@ -33,6 +33,25 @@ class Pneukarnik_Booking {
 	];
 
 	/**
+	 * Smí Zákazníci rezervovat online? Provozovatel to vypíná v Nastavení.
+	 * Zrušení odkazem z e‑mailu funguje i při vypnutí.
+	 */
+	public static function online_enabled(): bool {
+		return (bool) get_option( 'pneukarnik_booking_enabled', '1' );
+	}
+
+	/** Zpráva Provozovatele, kterou web při vypnutých online rezervacích ukáže místo formuláře. */
+	public static function online_disabled_message(): string {
+		$message = trim( (string) get_option( 'pneukarnik_booking_disabled_msg', '' ) );
+		return '' !== $message ? $message : __( 'Online rezervace jsou momentálně nedostupné. Kontaktujte nás telefonicky.', 'pneukarnik-booking' );
+	}
+
+	public static function save_online( bool $enabled, string $disabled_message ): void {
+		update_option( 'pneukarnik_booking_enabled', $enabled ? '1' : '0' );
+		update_option( 'pneukarnik_booking_disabled_msg', sanitize_textarea_field( $disabled_message ) );
+	}
+
+	/**
 	 * Vytvoří Rezervaci.
 	 *
 	 * Vstup: service_ids (seznam 1..n), date (Y-m-d), time (HH:MM), name, phone, email, plate,

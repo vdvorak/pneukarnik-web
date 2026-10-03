@@ -7,6 +7,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * POST /wp-json/pneukarnik/v1/bookings
+ *
+ * Při vypnutých online rezervacích 503 booking.disabled se zprávou Provozovatele,
+ * po vyčerpání limitu IP 429 booking.rate_limited (viz Pneukarnik_Rate_Limit).
  */
 class Pneukarnik_Rest_Bookings {
 
@@ -23,35 +26,29 @@ class Pneukarnik_Rest_Bookings {
 	}
 
 	public function create_booking( WP_REST_Request $request ): WP_REST_Response {
-		if ( ! (bool) get_option( 'pneukarnik_booking_enabled', '1' ) ) {
+		if ( ! Pneukarnik_Booking::online_enabled() ) {
 			return new WP_REST_Response(
 				[
 					'code'    => 'booking.disabled',
-					'message' => 'Online rezervace jsou momentálně nedostupné.',
-					'data'    => [ 'status' => 503 ],
+					'message' => 'booking.disabled',
+					'data'    => [
+						'status'           => 503,
+						'disabled_message' => Pneukarnik_Booking::online_disabled_message(),
+					],
 				],
 				503
 			);
 		}
 
-		$ip_key = null;
-		$count  = 0;
-		if ( ! is_user_logged_in() ) {
-			$ip       = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-			$ip_key   = 'pnk_rl_' . md5( $ip );
-			$count    = (int) get_transient( $ip_key );
-			$rl_limit = (int) get_option( 'pneukarnik_rate_limit', '10' );
-
-			if ( $count >= $rl_limit ) {
-				return new WP_REST_Response(
-					[
-						'code'    => 'booking.rate_limited',
-						'message' => 'Příliš mnoho rezervací. Zkuste to za hodinu.',
-						'data'    => [ 'status' => 429 ],
-					],
-					429
-				);
-			}
+		if ( Pneukarnik_Rate_Limit::exceeded( Pneukarnik_Rate_Limit::CREATE ) ) {
+			return new WP_REST_Response(
+				[
+					'code'    => 'booking.rate_limited',
+					'message' => 'booking.rate_limited',
+					'data'    => [ 'status' => 429 ],
+				],
+				429
+			);
 		}
 
 		/** @var mixed $data Tělo může být i jiná JSON hodnota než objekt (řetězec, číslo); pak chybí všechna pole. */
@@ -62,8 +59,8 @@ class Pneukarnik_Rest_Bookings {
 
 		$result = Pneukarnik_Booking::create( $data );
 
-		if ( $result['ok'] && null !== $ip_key ) {
-			set_transient( $ip_key, $count + 1, HOUR_IN_SECONDS );
+		if ( $result['ok'] ) {
+			Pneukarnik_Rate_Limit::hit( Pneukarnik_Rate_Limit::CREATE );
 		}
 
 		if ( ! $result['ok'] ) {

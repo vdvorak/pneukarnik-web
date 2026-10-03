@@ -86,7 +86,8 @@ export async function saveBookingSettings(page: Page): Promise<void> {
 	await page.getByLabel('Krok mřížky Termínů (min)').fill('30');
 	await page.getByLabel('Předstih pro dnešek (min)').fill('60');
 	await page.getByLabel('Horizont (dny dopředu)').fill('60');
-	await page.locator('input[name="rate_limit"]').fill('100');
+	await page.getByLabel('Limit Rezervací z jedné IP za hodinu').fill('100');
+	await page.getByLabel('Limit pokusů o Zrušení z jedné IP za hodinu').fill('100');
 	await page.getByRole('button', { name: 'Uložit nastavení' }).click();
 	await expect(page.getByText('Nastavení uložena.')).toBeVisible();
 }

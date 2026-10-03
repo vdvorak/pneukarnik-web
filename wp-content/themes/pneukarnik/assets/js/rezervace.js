@@ -10,7 +10,7 @@
  * @typedef {{ enabled: boolean, disabled_message: string, services: {id: number, slug: string, name: string, ask_stored_wheels: boolean}[], max_services: number, selected: number, min_date: string, max_date: string, api: string, nonce: string, phone: string, privacy_url: string }} Config
  * @typedef {{ time_start: string, time_end: string }} Termin
  * @typedef {{ name: 'spring' | 'autumn', from: string, to: string, leasing_from: string | null }} Season
- * @typedef {{ code: string, data?: { status: number, errors?: Record<string, string>, season?: Season } }} ApiError
+ * @typedef {{ code: string, data?: { status: number, errors?: Record<string, string>, season?: Season, disabled_message?: string } }} ApiError
  * @typedef {{ code: string, season: Season }} Restriction
  */
 
@@ -34,12 +34,15 @@ const FIELD_MESSAGES = {
 	consent_gdpr: { required: 'Bez souhlasu nemůžeme rezervaci přijmout.' },
 };
 
+/** @param {string} phone */
+const callText = (phone) => (phone ? ` Zavolejte nám prosím na ${phone}.` : '');
+
 /**
  * @param {string} phone
  * @returns {Record<string, string>}
  */
 function errorMessages(phone) {
-	const call = phone ? ` Zavolejte nám prosím na ${phone}.` : '';
+	const call = callText(phone);
 	return {
 		'booking.slot_taken': 'Vybraný termín si mezitím rezervoval někdo jiný. Vyberte prosím jiný.',
 		'booking.slot_unavailable': 'Vybraný termín už není v nabídce. Vyberte prosím jiný.',
@@ -206,8 +209,15 @@ function init() {
 		}
 	}
 
-	/** @param {ApiError} error */
-	const explain = (error) => (error.data?.season && seasonText(error.code, error.data.season, config.phone)) ?? messages[error.code];
+	/**
+	 * Text chyby. Online rezervace vypnuté až po načtení stránky: zpráva, kterou Provozovatel zadal.
+	 *
+	 * @param {ApiError} error
+	 */
+	const explain = (error) =>
+		(error.code === 'booking.disabled' && error.data?.disabled_message
+			? `${error.data.disabled_message}${callText(config.phone)}`
+			: (error.data?.season && seasonText(error.code, error.data.season, config.phone)) ?? messages[error.code]);
 
 	/** Dotaz na dostupnost: vybrané Služby a typ Zákazníka. */
 	function availabilityQuery() {

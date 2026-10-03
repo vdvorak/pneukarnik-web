@@ -22,9 +22,11 @@ $pneukarnik_messages   = [
 	Pneukarnik_Cancellation::TOO_LATE          => trim( sprintf( __( 'Online šlo rezervaci zrušit nejpozději %1$s. %2$s', 'pneukarnik' ), $pneukarnik_until, $pneukarnik_call ) ),
 	Pneukarnik_Cancellation::ALREADY_CANCELLED => __( 'Tato rezervace už je zrušená.', 'pneukarnik' ),
 	/* translators: %s: výzva k zavolání s telefonem */
+	Pneukarnik_Cancellation::RATE_LIMITED      => trim( sprintf( __( 'Z vašeho připojení přišlo příliš mnoho pokusů o zrušení. Rezervace zůstává, zkuste to prosím za hodinu. %s', 'pneukarnik' ), $pneukarnik_call ) ),
+	/* translators: %s: výzva k zavolání s telefonem */
 	Pneukarnik_Cancellation::INVALID_TOKEN     => trim( sprintf( __( 'Odkaz pro zrušení je neplatný nebo už vypršel. %s', 'pneukarnik' ), $pneukarnik_call ) ),
 ];
-$pneukarnik_offer_call = '' !== $pneukarnik_phone && in_array( $pneukarnik_code, [ Pneukarnik_Cancellation::TOO_LATE, Pneukarnik_Cancellation::INVALID_TOKEN ], true );
+$pneukarnik_offer_call = '' !== $pneukarnik_phone && in_array( $pneukarnik_code, [ Pneukarnik_Cancellation::TOO_LATE, Pneukarnik_Cancellation::RATE_LIMITED, Pneukarnik_Cancellation::INVALID_TOKEN ], true );
 
 get_header();
 ?>

@@ -38,9 +38,10 @@ class Pneukarnik_Admin_Settings {
 		$address              = get_option( 'pneukarnik_address', '' );
 		$maps_embed_url       = get_option( 'pneukarnik_maps_embed_url', '' );
 		$social_raw           = get_option( 'pneukarnik_social_links', '[]' );
-		$booking_enabled      = (bool) get_option( 'pneukarnik_booking_enabled', '1' );
-		$booking_disabled_msg = get_option( 'pneukarnik_booking_disabled_msg', 'Online rezervace jsou momentálně nedostupné. Kontaktujte nás telefonicky.' );
-		$rate_limit           = (int) get_option( 'pneukarnik_rate_limit', '10' );
+		$booking_enabled      = Pneukarnik_Booking::online_enabled();
+		$booking_disabled_msg = Pneukarnik_Booking::online_disabled_message();
+		$create_limit         = Pneukarnik_Rate_Limit::limit( Pneukarnik_Rate_Limit::CREATE );
+		$cancel_limit         = Pneukarnik_Rate_Limit::limit( Pneukarnik_Rate_Limit::CANCEL );
 		$ical_token           = Pneukarnik_Rest_Calendar::get_or_create_token();
 		$ical_url             = rest_url( PNEUKARNIK_REST_NAMESPACE . '/calendar' ) . '?token=' . $ical_token;
 		$days_labels          = [
@@ -79,20 +80,27 @@ class Pneukarnik_Admin_Settings {
 								<input type="checkbox" name="booking_enabled" value="1" <?php checked( $booking_enabled ); ?>>
 								<?php esc_html_e( 'Zákazníci mohou rezervovat online', 'pneukarnik-booking' ); ?>
 							</label>
+							<p class="description"><?php esc_html_e( 'Při vypnutí web nové online Rezervace nepřijme. Zrušení odkazem z e‑mailu funguje dál.', 'pneukarnik-booking' ); ?></p>
 						</td>
 					</tr>
 					<tr>
-						<th><?php esc_html_e( 'Zpráva při vypnutí', 'pneukarnik-booking' ); ?></th>
+						<th><label for="pnk-disabled-msg"><?php esc_html_e( 'Zpráva při vypnutí', 'pneukarnik-booking' ); ?></label></th>
 						<td>
-							<textarea name="booking_disabled_msg" rows="3" class="regular-text"><?php echo esc_textarea( $booking_disabled_msg ); ?></textarea>
-							<p class="description"><?php esc_html_e( 'Zobrazí se zákazníkům místo formuláře, pokud jsou rezervace vypnuté.', 'pneukarnik-booking' ); ?></p>
+							<textarea id="pnk-disabled-msg" name="booking_disabled_msg" rows="3" class="regular-text"><?php echo esc_textarea( $booking_disabled_msg ); ?></textarea>
+							<p class="description"><?php esc_html_e( 'Zobrazí se Zákazníkům místo formuláře, pod ní telefon z Kontaktů.', 'pneukarnik-booking' ); ?></p>
 						</td>
 					</tr>
 					<tr>
-						<th><?php esc_html_e( 'Max rezervací per IP / hod', 'pneukarnik-booking' ); ?></th>
+						<th><label for="pnk-create-limit"><?php esc_html_e( 'Limit Rezervací z jedné IP za hodinu', 'pneukarnik-booking' ); ?></label></th>
 						<td>
-							<input type="number" name="rate_limit" value="<?php echo esc_attr( (string) $rate_limit ); ?>" min="1" max="100">
-							<p class="description"><?php esc_html_e( 'Platí jen pro nepřihlášené uživatele. Při překročení: HTTP 429.', 'pneukarnik-booking' ); ?></p>
+							<input id="pnk-create-limit" type="number" name="rate_limit" value="<?php echo esc_attr( (string) $create_limit ); ?>" min="<?php echo (int) Pneukarnik_Rate_Limit::MIN; ?>" max="<?php echo (int) Pneukarnik_Rate_Limit::MAX; ?>">
+						</td>
+					</tr>
+					<tr>
+						<th><label for="pnk-cancel-limit"><?php esc_html_e( 'Limit pokusů o Zrušení z jedné IP za hodinu', 'pneukarnik-booking' ); ?></label></th>
+						<td>
+							<input id="pnk-cancel-limit" type="number" name="cancel_rate_limit" value="<?php echo esc_attr( (string) $cancel_limit ); ?>" min="<?php echo (int) Pneukarnik_Rate_Limit::MIN; ?>" max="<?php echo (int) Pneukarnik_Rate_Limit::MAX; ?>">
+							<p class="description"><?php esc_html_e( 'Limity chrání kalendář před zahlcením. Platí jen pro nepřihlášené, přihlášený Provozovatel je nemá.', 'pneukarnik-booking' ); ?></p>
 						</td>
 					</tr>
 				</table>
@@ -299,9 +307,9 @@ class Pneukarnik_Admin_Settings {
 		$hours_saved = Pneukarnik_Working_Hours::save( $hours );
 
 		// Online booking toggle
-		update_option( 'pneukarnik_booking_enabled', ! empty( $_POST['booking_enabled'] ) ? '1' : '0' );
-		update_option( 'pneukarnik_booking_disabled_msg', sanitize_textarea_field( wp_unslash( $_POST['booking_disabled_msg'] ?? '' ) ) );
-		update_option( 'pneukarnik_rate_limit', max( 1, min( 100, (int) ( $_POST['rate_limit'] ?? 10 ) ) ) );
+		Pneukarnik_Booking::save_online( ! empty( $_POST['booking_enabled'] ), (string) wp_unslash( $_POST['booking_disabled_msg'] ?? '' ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitizuje save_online().
+		Pneukarnik_Rate_Limit::save_limit( Pneukarnik_Rate_Limit::CREATE, (int) ( $_POST['rate_limit'] ?? Pneukarnik_Rate_Limit::limit( Pneukarnik_Rate_Limit::CREATE ) ) );
+		Pneukarnik_Rate_Limit::save_limit( Pneukarnik_Rate_Limit::CANCEL, (int) ( $_POST['cancel_rate_limit'] ?? Pneukarnik_Rate_Limit::limit( Pneukarnik_Rate_Limit::CANCEL ) ) );
 
 		// Scalar options
 		update_option( 'pneukarnik_grid_step', max( 5, min( 240, (int) ( $_POST['grid_step'] ?? 30 ) ) ) );

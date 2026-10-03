@@ -118,16 +118,21 @@ final class Pneukarnik_Booking_Pages {
 		if ( 'zruseni' !== self::current() || 'POST' !== ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) {
 			return;
 		}
-		$token  = isset( $_POST['r'] ) ? sanitize_key( wp_unslash( $_POST['r'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- viz výše.
+		$token = isset( $_POST['r'] ) ? sanitize_key( wp_unslash( $_POST['r'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- viz výše.
+		$url   = Pneukarnik_Cancellation::url( $token );
+		if ( ! Pneukarnik_Rate_Limit::attempt( Pneukarnik_Rate_Limit::CANCEL ) ) {
+			wp_safe_redirect( add_query_arg( 'omezeno', '1', $url ), 303 );
+			exit;
+		}
 		$result = Pneukarnik_Cancellation::cancel_by_token( $token );
-		$url    = Pneukarnik_Cancellation::url( $token );
 		wp_safe_redirect( $result['ok'] ? add_query_arg( 'zruseno', '1', $url ) : $url, 303 );
 		exit;
 	}
 
 	/**
 	 * Data pro stránku Zrušení podle odkazu v adrese. code: allowed, too_late, already_cancelled,
-	 * cancelled (hned po Zrušení) nebo invalid_token (pak bez Rezervace).
+	 * cancelled (hned po Zrušení), rate_limited (pokus o Zrušení nad limit IP)
+	 * nebo invalid_token (pak bez Rezervace).
 	 *
 	 * @return array{token:string,code:string,booking:array{date:string,time_start:string,time_end:string,services:list<string>,plate:string,status:string}|null,cancel_until:string,prefill_url:string,phone:string}
 	 */
@@ -135,11 +140,15 @@ final class Pneukarnik_Booking_Pages {
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- jen čtení podle tajného tokenu.
 		$token     = isset( $_GET['r'] ) ? sanitize_key( wp_unslash( $_GET['r'] ) ) : '';
 		$just_done = isset( $_GET['zruseno'] );
+		$limited   = isset( $_GET['omezeno'] );
 		// phpcs:enable
 		$preview = Pneukarnik_Cancellation::preview( $token );
 		$code    = $preview['code'] ?? Pneukarnik_Cancellation::INVALID_TOKEN;
 		if ( $just_done && Pneukarnik_Cancellation::ALREADY_CANCELLED === $code ) {
 			$code = Pneukarnik_Cancellation::CANCELLED;
+		}
+		if ( $limited && Pneukarnik_Cancellation::ALLOWED === $code ) {
+			$code = Pneukarnik_Cancellation::RATE_LIMITED;
 		}
 		return [
 			'token'        => $token,
@@ -173,8 +182,8 @@ final class Pneukarnik_Booking_Pages {
 		$today = Pneukarnik_Clock::today();
 
 		return [
-			'enabled'          => (bool) get_option( 'pneukarnik_booking_enabled', '1' ),
-			'disabled_message' => (string) get_option( 'pneukarnik_booking_disabled_msg', __( 'Online rezervace jsou momentálně nedostupné. Kontaktujte nás telefonicky.', 'pneukarnik-booking' ) ),
+			'enabled'          => Pneukarnik_Booking::online_enabled(),
+			'disabled_message' => Pneukarnik_Booking::online_disabled_message(),
 			'services'         => array_map(
 				static fn( Pneukarnik_Service $s ): array => [
 					'id'                => $s->id,

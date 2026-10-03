@@ -37,6 +37,7 @@ spl_autoload_register(
 			'Pneukarnik_Booking'              => 'includes/class-booking.php',
 			'Pneukarnik_Booking_Pages'        => 'includes/class-booking-pages.php',
 			'Pneukarnik_Cancellation'         => 'includes/class-cancellation.php',
+			'Pneukarnik_Rate_Limit'           => 'includes/class-rate-limit.php',
 			'Pneukarnik_Notifications'        => 'includes/class-notifications.php',
 			'Pneukarnik_Email'                => 'includes/class-email.php',
 			'Pneukarnik_GDPR'                 => 'includes/class-gdpr.php',
