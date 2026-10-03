@@ -1,0 +1,14 @@
+parameters:
+	level: 5
+	paths:
+		- wp-content/plugins/pneukarnik-booking
+		- wp-content/themes/pneukarnik
+		- tests/phpunit
+	excludePaths:
+		- wp-content/plugins/pneukarnik-booking/lib/*
+	scanFiles:
+		- wp-content/plugins/pneukarnik-booking/lib/fpdf/fpdf.php
+	scanDirectories:
+		- vendor/wp-phpunit/wp-phpunit/includes
+	bootstrapFiles:
+		- tests/phpstan-bootstrap.php

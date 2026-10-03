@@ -1,0 +1,17 @@
+{
+	"name": "pneukarnik-web",
+	"private": true,
+	"description": "Kouřové testy webu pneukarnik.cz (Playwright nad lokálním Docker WordPressem).",
+	"scripts": {
+		"test:e2e": "playwright test",
+		"typecheck": "tsc"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"devDependencies": {
+		"@playwright/test": "^1.63.0",
+		"@types/node": "^26.6.4",
+		"typescript": "^7.0.2"
+	}
+}

@@ -1,0 +1,38 @@
+{
+	"name": "vdvorak/pneukarnik-web",
+	"description": "Web pneukarnik.cz: šablona a rezervační plugin (vývojové nástroje).",
+	"type": "project",
+	"license": "proprietary",
+	"require": {
+		"php": ">=8.1"
+	},
+	"config": {
+		"platform": {
+			"php": "8.3"
+		},
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true,
+			"phpstan/extension-installer": true
+		}
+	},
+	"require-dev": {
+		"phpunit/phpunit": "^9.6",
+		"yoast/phpunit-polyfills": "^4.0",
+		"wp-phpunit/wp-phpunit": "7.1.*",
+		"wp-coding-standards/wpcs": "^3",
+		"phpcompatibility/phpcompatibility-wp": "*",
+		"phpstan/phpstan": "^2",
+		"szepeviktor/phpstan-wordpress": "^2",
+		"phpstan/extension-installer": "^1.4"
+	},
+	"scripts": {
+		"lint": [
+			"@phpcs",
+			"@phpstan"
+		],
+		"phpcs": "phpcs",
+		"phpstan": "phpstan analyse --memory-limit=1G --no-progress",
+		"fix": "phpcbf",
+		"test": "phpunit"
+	}
+}

@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<ruleset name="pneukarnik">
+	<description>WordPress Coding Standards pro šablonu a plugin.</description>
+
+	<file>wp-content/plugins/pneukarnik-booking</file>
+	<file>wp-content/themes/pneukarnik</file>
+	<file>tests/phpunit</file>
+
+	<!-- Přibalená knihovna třetí strany. -->
+	<exclude-pattern>wp-content/plugins/pneukarnik-booking/lib/*</exclude-pattern>
+
+	<arg name="extensions" value="php"/>
+	<arg name="colors"/>
+	<arg value="sp"/>
+	<arg name="parallel" value="8"/>
+
+	<config name="testVersion" value="8.1-"/>
+	<config name="minimum_wp_version" value="7.1"/>
+
+	<rule ref="PHPCompatibilityWP"/>
+	<rule ref="WordPress-Extra">
+		<!-- Krátká syntaxe polí a běžné (ne Yoda) podmínky, jak je psaný převzatý plugin. -->
+		<exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
+		<exclude name="WordPress.PHP.YodaConditions"/>
+		<exclude name="Universal.Operators.DisallowShortTernary"/>
+		<!-- Soubory tříd se jmenují bez prefixu (class-booking.php pro Pneukarnik_Booking). -->
+		<exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+		<!-- error_log je záměrné provozní logování (např. neodeslaný e‑mail), ne ladicí výpis. -->
+		<exclude name="WordPress.PHP.DevelopmentFunctions.error_log_error_log"/>
+	</rule>
+
+	<rule ref="WordPress.WP.Capabilities">
+		<properties>
+			<property name="custom_capabilities" type="array">
+				<element value="pneukarnik_manage_bookings"/>
+				<element value="pneukarnik_view_bookings"/>
+			</property>
+		</properties>
+	</rule>
+	<rule ref="Generic.Arrays.DisallowLongArraySyntax"/>
+
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="pneukarnik-booking"/>
+				<element value="pneukarnik"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- Testy používají názvy souborů podle PHPUnit (FooTest.php), ne WordPressu. -->
+	<rule ref="WordPress.Files.FileName">
+		<exclude-pattern>tests/phpunit/*</exclude-pattern>
+	</rule>
+</ruleset>

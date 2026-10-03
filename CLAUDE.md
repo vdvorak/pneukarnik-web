@@ -1,5 +1,9 @@
 # pneukarnik-web
 
+## Vývoj
+
+Lokální prostředí, testy a lint: viz `README.md` (`make up`, `make check`, jeden test: `make test-php ARGS="--filter …"`).
+
 ## Agent skills
 
 ### Issue tracker
