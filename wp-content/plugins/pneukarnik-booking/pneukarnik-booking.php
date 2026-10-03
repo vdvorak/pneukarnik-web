@@ -34,6 +34,7 @@ spl_autoload_register(
 			'Pneukarnik_Closed_Dates'       => 'includes/class-closed-dates.php',
 			'Pneukarnik_Slot_Engine'        => 'includes/class-slot-engine.php',
 			'Pneukarnik_Booking'            => 'includes/class-booking.php',
+			'Pneukarnik_Booking_Pages'      => 'includes/class-booking-pages.php',
 			'Pneukarnik_Cancellation'       => 'includes/class-cancellation.php',
 			'Pneukarnik_Template'           => 'includes/class-template.php',
 			'Pneukarnik_Notifications'      => 'includes/class-notifications.php',
@@ -98,6 +99,7 @@ add_action( 'plugins_loaded', [ 'Pneukarnik_GDPR', 'init' ] );
 add_action( 'plugins_loaded', [ 'Pneukarnik_DB', 'maybe_upgrade' ] );
 add_action( 'plugins_loaded', 'pneukarnik_ensure_capabilities' );
 Pneukarnik_Service_Type::init();
+Pneukarnik_Booking_Pages::init();
 add_action( 'init', [ 'Pneukarnik_Admin_Service_Meta', 'init' ] );
 add_action( 'rest_api_init', 'pneukarnik_register_rest_routes' );
 add_action( 'admin_menu', 'pneukarnik_register_admin_menus' );
@@ -142,7 +144,7 @@ function pneukarnik_register_admin_menus(): void {
 		[ 'Pneukarnik_Admin_Bookings', 'render_page' ]
 	);
 
-	add_submenu_page(
+	$settings_hook = add_submenu_page(
 		'pneukarnik-booking',
 		__( 'Nastavení', 'pneukarnik-booking' ),
 		__( 'Nastavení', 'pneukarnik-booking' ),
@@ -150,6 +152,9 @@ function pneukarnik_register_admin_menus(): void {
 		'pneukarnik-settings',
 		[ 'Pneukarnik_Admin_Settings', 'render_page' ]
 	);
+	if ( $settings_hook ) {
+		add_action( "load-{$settings_hook}", [ 'Pneukarnik_Admin_Settings', 'handle_post' ] );
+	}
 
 	add_submenu_page(
 		'pneukarnik-booking',

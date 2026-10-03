@@ -13,6 +13,7 @@ class ClockTest extends Pneukarnik_REST_Test_Case {
 	public function set_up(): void {
 		parent::set_up();
 		$this->service_id = $this->create_service( 60 );
+		$this->set_booking_rules( 60 );
 		$this->set_working_hours_every_day(
 			[
 				[

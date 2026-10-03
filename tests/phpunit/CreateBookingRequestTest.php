@@ -30,6 +30,6 @@ class CreateBookingRequestTest extends Pneukarnik_REST_Test_Case {
 		$response = rest_do_request( $request );
 
 		$this->assertSame( 422, $response->get_status() );
-		$this->assertSame( 'validation.required', $response->get_data()['code'] );
+		$this->assertSame( 'booking.invalid_fields', $response->get_data()['code'] );
 	}
 }

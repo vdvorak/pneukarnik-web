@@ -61,3 +61,41 @@ export async function publishService(page: Page, s: ServiceFields): Promise<void
 	await expect(page.locator('#publish')).not.toHaveClass(/disabled/);
 	await Promise.all([page.waitForURL(/\/post\.php\?post=\d+&action=edit/), page.click('#publish')]);
 }
+
+const WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri'] as const;
+
+/** Pracovní doba Po–Pá 8–12 a 13–17, víkend zavřeno, a pravidla Termínů přes Nastavení pluginu. */
+export async function saveBookingSettings(page: Page): Promise<void> {
+	await page.goto('/wp-admin/admin.php?page=pneukarnik-settings');
+	for (const day of ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']) {
+		const open = page.locator(`input[name="day_open[${day}]"]`);
+		if (!(WEEKDAYS as readonly string[]).includes(day)) {
+			await open.uncheck();
+			continue;
+		}
+		await open.check();
+		await page.locator(`input[name="day_from1[${day}]"]`).fill('08:00');
+		await page.locator(`input[name="day_to1[${day}]"]`).fill('12:00');
+		await page.locator(`input[name="day_from2[${day}]"]`).fill('13:00');
+		await page.locator(`input[name="day_to2[${day}]"]`).fill('17:00');
+	}
+	await page.getByLabel('Krok mřížky Termínů (min)').fill('30');
+	await page.getByLabel('Předstih pro dnešek (min)').fill('60');
+	await page.getByLabel('Horizont (dny dopředu)').fill('60');
+	await page.locator('input[name="rate_limit"]').fill('100');
+	await page.getByRole('button', { name: 'Uložit nastavení' }).click();
+	await expect(page.getByText('Nastavení uložena.')).toBeVisible();
+}
+
+/** n-tý pracovní den (Po–Pá) počínaje pozítřkem, jako YYYY-MM-DD v místním čase. */
+export function upcomingWeekday(n: number): string {
+	const day = new Date();
+	day.setDate(day.getDate() + 2);
+	let found = -1;
+	for (;;) {
+		if (day.getDay() !== 0 && day.getDay() !== 6 && ++found === n) break;
+		day.setDate(day.getDate() + 1);
+	}
+	const pad = (value: number) => String(value).padStart(2, '0');
+	return `${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}`;
+}

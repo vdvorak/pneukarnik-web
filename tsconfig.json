@@ -6,7 +6,20 @@
 		"strict": true,
 		"noEmit": true,
 		"skipLibCheck": true,
-		"types": ["node"]
+		"types": [
+			"node"
+		],
+		"lib": [
+			"ES2022",
+			"DOM",
+			"DOM.Iterable"
+		],
+		"allowJs": true,
+		"checkJs": true
 	},
-	"include": ["playwright.config.ts", "tests/e2e/**/*.ts"]
+	"include": [
+		"playwright.config.ts",
+		"tests/e2e/**/*.ts",
+		"wp-content/themes/pneukarnik/assets/js/**/*.js"
+	]
 }

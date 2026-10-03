@@ -23,5 +23,6 @@
 				<a href="<?php echo esc_url( Pneukarnik_Service::category_url( $pneukarnik_category ) ); ?>"><?php echo esc_html( $pneukarnik_label ); ?></a>
 			<?php endforeach; ?>
 		<?php endif; ?>
+		<a href="<?php echo esc_url( home_url( '/rezervace/' ) ); ?>"><?php esc_html_e( 'Rezervace', 'pneukarnik' ); ?></a>
 	</nav>
 </header>

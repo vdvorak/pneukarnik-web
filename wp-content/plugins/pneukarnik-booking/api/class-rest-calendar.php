@@ -136,16 +136,16 @@ class Pneukarnik_Rest_Calendar {
 			if ( $note ) {
 				$desc_parts[] = 'Poznámka: ' . $note;
 			}
-			$description = implode( '\n', $desc_parts );
+			$description = implode( '\n', array_map( [ self::class, 'escape_text' ], $desc_parts ) );
 
 			$lines[] = 'BEGIN:VEVENT';
 			$lines[] = 'UID:booking-' . (int) $b['id'] . '@pneukarnik.cz';
 			$lines[] = 'DTSTAMP:' . $now_utc;
 			$lines[] = 'DTSTART:' . $dtstart;
 			$lines[] = 'DTEND:' . $dtend;
-			$lines[] = self::fold( 'SUMMARY:' . $service . ' — ' . $customer );
+			$lines[] = self::fold( 'SUMMARY:' . self::escape_text( $service . ' — ' . $customer ) );
 			$lines[] = self::fold( 'DESCRIPTION:' . $description );
-			$lines[] = self::fold( 'LOCATION:' . str_replace( ',', '\,', $address ) );
+			$lines[] = self::fold( 'LOCATION:' . self::escape_text( $address ) );
 			$lines[] = 'STATUS:CONFIRMED';
 			$lines[] = 'END:VEVENT';
 		}
@@ -157,6 +157,15 @@ class Pneukarnik_Rest_Calendar {
 
 	// RFC 5545 line folding: max 75 octets per line, continuation with CRLF + space.
 	// mb_strcut nerozdělí vícebajtový znak UTF-8 (čeština) mezi dva řádky.
+	/**
+	 * Escapování hodnoty TEXT podle RFC 5545: zpětné lomítko, středník, čárka a konce řádků.
+	 * Text od Zákazníka tak nemůže přidat vlastní řádky ani události.
+	 */
+	private static function escape_text( string $text ): string {
+		$text = str_replace( [ '\\', ';', ',' ], [ '\\\\', '\\;', '\\,' ], $text );
+		return str_replace( [ "\r\n", "\r", "\n" ], '\\n', $text );
+	}
+
 	private static function fold( string $line ): string {
 		$output = '';
 		$length = strlen( $line );

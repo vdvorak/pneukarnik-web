@@ -54,17 +54,10 @@ class Pneukarnik_Rest_Bookings {
 			}
 		}
 
-		/** @var mixed $data Tělo může být i jiná JSON hodnota než objekt (řetězec, číslo). */
+		/** @var mixed $data Tělo může být i jiná JSON hodnota než objekt (řetězec, číslo); pak chybí všechna pole. */
 		$data = $request->get_json_params();
-		if ( ! is_array( $data ) || [] === $data ) {
-			return new WP_REST_Response(
-				[
-					'code'    => 'validation.required',
-					'message' => 'Invalid JSON body',
-					'data'    => [ 'status' => 422 ],
-				],
-				422
-			);
+		if ( ! is_array( $data ) ) {
+			$data = [];
 		}
 
 		$result = Pneukarnik_Booking::create( $data );
@@ -74,28 +67,26 @@ class Pneukarnik_Rest_Bookings {
 		}
 
 		if ( ! $result['ok'] ) {
-			$status = $result['status'];
-			$resp   = [
+			$body = [
 				'code'    => $result['code'],
 				'message' => $result['code'],
-				'data'    => [ 'status' => $status ],
+				'data'    => [ 'status' => $result['status'] ],
 			];
-			if ( isset( $result['field'] ) ) {
-				$resp['data']['field'] = $result['field'];
+			if ( isset( $result['errors'] ) ) {
+				$body['data']['errors'] = $result['errors'];
 			}
-			return new WP_REST_Response( $resp, $status );
+			return new WP_REST_Response( $body, $result['status'] );
 		}
 
-		// Return only non-PII fields — customer PII must not appear in public response.
-		$b = $result['booking'];
+		// Bez osobních údajů: stránka potvrzení si Rezervaci najde podle tokenu.
+		$booking = $result['booking'];
 		return new WP_REST_Response(
 			[
-				'id'           => $b['id'],
-				'booking_date' => $b['booking_date'],
-				'time_start'   => $b['time_start'],
-				'time_end'     => $b['time_end'],
-				'service_name' => $b['service_name'],
-				'status'       => $b['status'],
+				'date'             => $booking['booking_date'],
+				'time_start'       => $booking['time_start'],
+				'time_end'         => $booking['time_end'],
+				'service_name'     => $booking['service_name'],
+				'confirmation_url' => Pneukarnik_Booking::confirmation_url( $result['confirmation_token'] ),
 			],
 			201
 		);

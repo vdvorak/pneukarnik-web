@@ -8,7 +8,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Pneukarnik_DB {
 
 	private const DB_VERSION_OPTION = 'pneukarnik_db_version';
-	private const DB_VERSION        = '1.3';
+	private const DB_VERSION        = '1.4';
+
+	/** Testy běží uvnitř transakce WP test suite, transakce pluginu pak používají savepoint. */
+	private static bool $savepoints = false;
 
 	public static function activate(): void {
 		self::create_tables();
@@ -37,8 +40,70 @@ class Pneukarnik_DB {
 		}
 
 		self::create_tables();
+
+		// 1.3 → 1.4: dílna má kapacitu 1, unikátní klíč po Službách už neplatí (dbDelta indexy nemaže).
+		if ( $installed && version_compare( (string) $installed, '1.4', '<' ) ) {
+			global $wpdb;
+			$table = self::bookings_table();
+			if ( $wpdb->get_var( $wpdb->prepare( 'SHOW INDEX FROM %i WHERE Key_name = %s', $table, 'uq_slot' ) ) ) {
+				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i DROP INDEX uq_slot', $table ) );
+			}
+		}
+
 		update_option( self::DB_VERSION_OPTION, self::DB_VERSION );
 		pneukarnik_ensure_capabilities();
+	}
+
+	public static function use_savepoints( bool $enabled ): void {
+		self::$savepoints = $enabled;
+	}
+
+	public static function begin(): void {
+		global $wpdb;
+		if ( self::$savepoints ) {
+			$wpdb->query( 'SAVEPOINT pneukarnik' );
+		} else {
+			$wpdb->query( 'START TRANSACTION' );
+		}
+	}
+
+	public static function commit(): void {
+		global $wpdb;
+		if ( self::$savepoints ) {
+			$wpdb->query( 'RELEASE SAVEPOINT pneukarnik' );
+		} else {
+			$wpdb->query( 'COMMIT' );
+		}
+	}
+
+	public static function rollback(): void {
+		global $wpdb;
+		if ( self::$savepoints ) {
+			$wpdb->query( 'ROLLBACK TO SAVEPOINT pneukarnik' );
+		} else {
+			$wpdb->query( 'ROLLBACK' );
+		}
+	}
+
+	/**
+	 * Provede $callback se zámkem dílny na daný den (MySQL GET_LOCK), aby se dvě Rezervace
+	 * téhož dne nevyhodnocovaly souběžně.
+	 *
+	 * @template T
+	 * @param callable(): T $callback
+	 * @return T|null null, když se zámek nepodařilo získat do 10 s.
+	 */
+	public static function with_day_lock( string $date, callable $callback ): mixed {
+		global $wpdb;
+		$name = $wpdb->prefix . 'pneukarnik_day_' . $date;
+		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 10)', $name ) ) ) {
+			return null;
+		}
+		try {
+			return $callback();
+		} finally {
+			$wpdb->query( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $name ) );
+		}
 	}
 
 	private static function create_tables(): void {
@@ -55,6 +120,7 @@ class Pneukarnik_DB {
 			customer_email          VARCHAR(255) NOT NULL,
 			customer_phone          VARCHAR(50)  NOT NULL,
 			customer_note           TEXT         DEFAULT NULL,
+			vehicle                 VARCHAR(100) DEFAULT NULL,
 			booking_date            DATE         NOT NULL,
 			time_start              TIME         NOT NULL,
 			time_end                TIME         NOT NULL,
@@ -63,12 +129,15 @@ class Pneukarnik_DB {
 			cancel_token_expires_at DATETIME     DEFAULT NULL,
 			cancelled_at            DATETIME     DEFAULT NULL,
 			cancel_reason           VARCHAR(255) DEFAULT NULL,
+			confirm_token_hash      CHAR(64)     DEFAULT NULL,
+			consent_gdpr_at         DATETIME     DEFAULT NULL,
+			source                  VARCHAR(20)  NOT NULL DEFAULT 'web',
 			reminder_sent           TINYINT(1)   NOT NULL DEFAULT 0,
 			created_at              DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
-			UNIQUE KEY uq_slot (service_id, booking_date, time_start),
 			KEY idx_email (customer_email),
 			KEY idx_date (booking_date),
+			KEY idx_confirm_token (confirm_token_hash),
 			KEY idx_status (status)
 		) ENGINE=InnoDB $charset_collate;";
 

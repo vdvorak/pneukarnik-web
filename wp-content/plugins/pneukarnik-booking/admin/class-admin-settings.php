@@ -9,22 +9,29 @@ if ( ! defined( 'ABSPATH' ) ) {
 // phpcs:disable WordPress.Security.NonceVerification.Recommended
 
 /**
- * WP Admin settings page — working hours, season, time_gap, cancellation_days, contacts, iCal.
+ * WP Admin settings page — Pracovní doba, pravidla Termínů, sezóna, zrušení, kontakty, iCal.
  */
 class Pneukarnik_Admin_Settings {
+
+	/**
+	 * Zpracování formuláře před výstupem administrace (háček load-{stránka}), aby šlo přesměrovat.
+	 */
+	public static function handle_post(): void {
+		if ( isset( $_POST['pneukarnik_settings_nonce'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce ověří handle_save().
+			self::handle_save();
+		}
+	}
 
 	public static function render_page(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'Nemáte oprávnění.', 'pneukarnik-booking' ) );
 		}
 
-		if ( isset( $_POST['pneukarnik_settings_nonce'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce ověří handle_save().
-			self::handle_save();
-		}
-
 		$hours                = Pneukarnik_Working_Hours::get_all();
 		$season               = Pneukarnik_Season::get_settings();
-		$time_gap             = Pneukarnik_Working_Hours::get_time_gap();
+		$grid_step            = Pneukarnik_Working_Hours::get_grid_step();
+		$lead_minutes         = Pneukarnik_Working_Hours::get_lead_minutes();
+		$horizon_days         = Pneukarnik_Working_Hours::get_horizon_days();
 		$cancellation_days    = Pneukarnik_Working_Hours::get_cancellation_days();
 		$phone                = get_option( 'pneukarnik_phone', '' );
 		$email                = get_option( 'pneukarnik_email', '' );
@@ -50,6 +57,9 @@ class Pneukarnik_Admin_Settings {
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Nastavení pneukarník', 'pneukarnik-booking' ); ?></h1>
 
+			<?php if ( isset( $_GET['hours_error'] ) ) : ?>
+				<div class="notice notice-error"><p><?php esc_html_e( 'Pracovní doba se neuložila: každý blok musí mít začátek před koncem a dva bloky se nesmí překrývat. Ostatní nastavení se uložilo.', 'pneukarnik-booking' ); ?></p></div>
+			<?php endif; ?>
 			<?php if ( isset( $_GET['saved'] ) ) : ?>
 				<div class="notice notice-success"><p><?php esc_html_e( 'Nastavení uložena.', 'pneukarnik-booking' ); ?></p></div>
 			<?php endif; ?>
@@ -117,8 +127,22 @@ class Pneukarnik_Admin_Settings {
 				<h2><?php esc_html_e( 'Rezervace', 'pneukarnik-booking' ); ?></h2>
 				<table class="form-table">
 					<tr>
-						<th><?php esc_html_e( 'Rozestup mezi službami (min)', 'pneukarnik-booking' ); ?></th>
-						<td><input type="number" name="time_gap" value="<?php echo esc_attr( (string) $time_gap ); ?>" min="0" max="120"></td>
+						<th><label for="pnk-grid-step"><?php esc_html_e( 'Krok mřížky Termínů (min)', 'pneukarnik-booking' ); ?></label></th>
+						<td>
+							<input id="pnk-grid-step" type="number" name="grid_step" value="<?php echo esc_attr( (string) $grid_step ); ?>" min="5" max="240" step="5">
+							<p class="description"><?php esc_html_e( 'Termíny začínají od začátku každého bloku Pracovní doby po tomto kroku.', 'pneukarnik-booking' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="pnk-lead"><?php esc_html_e( 'Předstih pro dnešek (min)', 'pneukarnik-booking' ); ?></label></th>
+						<td>
+							<input id="pnk-lead" type="number" name="lead_minutes" value="<?php echo esc_attr( (string) $lead_minutes ); ?>" min="0" max="1440" step="5">
+							<p class="description"><?php esc_html_e( 'Dnešní Termín jde rezervovat nejdřív tolik minut předem.', 'pneukarnik-booking' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="pnk-horizon"><?php esc_html_e( 'Horizont (dny dopředu)', 'pneukarnik-booking' ); ?></label></th>
+						<td><input id="pnk-horizon" type="number" name="horizon_days" value="<?php echo esc_attr( (string) $horizon_days ); ?>" min="1" max="365"></td>
 					</tr>
 					<tr>
 						<th><?php esc_html_e( 'Min. dní pro zrušení', 'pneukarnik-booking' ); ?></th>
@@ -239,7 +263,7 @@ class Pneukarnik_Admin_Settings {
 			}
 			$hours[ $day ] = $phases ?: null;
 		}
-		Pneukarnik_Working_Hours::save( $hours );
+		$hours_saved = Pneukarnik_Working_Hours::save( $hours );
 
 		// Online booking toggle
 		update_option( 'pneukarnik_booking_enabled', ! empty( $_POST['booking_enabled'] ) ? '1' : '0' );
@@ -247,7 +271,9 @@ class Pneukarnik_Admin_Settings {
 		update_option( 'pneukarnik_rate_limit', max( 1, min( 100, (int) ( $_POST['rate_limit'] ?? 10 ) ) ) );
 
 		// Scalar options
-		update_option( 'pneukarnik_time_gap', (int) ( $_POST['time_gap'] ?? 0 ) );
+		update_option( 'pneukarnik_grid_step', max( 5, min( 240, (int) ( $_POST['grid_step'] ?? 30 ) ) ) );
+		update_option( 'pneukarnik_lead_minutes', max( 0, min( 1440, (int) ( $_POST['lead_minutes'] ?? 60 ) ) ) );
+		update_option( 'pneukarnik_horizon_days', max( 1, min( 365, (int) ( $_POST['horizon_days'] ?? 60 ) ) ) );
 		update_option( 'pneukarnik_cancellation_days', (int) ( $_POST['cancellation_days'] ?? 1 ) );
 		update_option( 'pneukarnik_phone', sanitize_text_field( wp_unslash( $_POST['pneukarnik_phone'] ?? '' ) ) );
 		update_option( 'pneukarnik_email', sanitize_email( wp_unslash( $_POST['pneukarnik_email'] ?? '' ) ) );
@@ -273,7 +299,8 @@ class Pneukarnik_Admin_Settings {
 			update_option( 'pneukarnik_social_links', wp_json_encode( $social_decoded ) );
 		}
 
-		wp_safe_redirect( add_query_arg( 'saved', '1', wp_get_referer() ?: admin_url( 'admin.php?page=pneukarnik-settings' ) ) );
+		$result = $hours_saved ? [ 'saved' => '1' ] : [ 'hours_error' => '1' ];
+		wp_safe_redirect( add_query_arg( $result, admin_url( 'admin.php?page=pneukarnik-settings' ) ) );
 		exit;
 	}
 }

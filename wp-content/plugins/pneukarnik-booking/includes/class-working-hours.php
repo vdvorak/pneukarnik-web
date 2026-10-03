@@ -41,33 +41,49 @@ class Pneukarnik_Working_Hours {
 	}
 
 	/**
+	 * Uloží Pracovní dobu: pro každý den 0–2 bloky „od–do“, které se nepřekrývají.
+	 *
 	 * @param array<string, list<array<string, string>>|null> $hours Neověřený vstup z administrace.
+	 * @return bool false, když je některý blok neplatný (nic se neuloží).
 	 */
 	public static function save( array $hours ): bool {
 		$validated = [];
 		foreach ( self::DAYS as $day ) {
-			$day_hours = $hours[ $day ] ?? null;
-			if ( $day_hours === null ) {
-				$validated[ $day ] = null;
-				continue;
-			}
-			$phases = [];
-			foreach ( $day_hours as $phase ) {
-				if ( ! self::is_valid_time( $phase['from'] ?? '' ) || ! self::is_valid_time( $phase['to'] ?? '' ) ) {
+			$blocks = [];
+			foreach ( (array) ( $hours[ $day ] ?? [] ) as $block ) {
+				$from = (string) ( $block['from'] ?? '' );
+				$to   = (string) ( $block['to'] ?? '' );
+				if ( ! self::is_valid_time( $from ) || ! self::is_valid_time( $to ) || $from >= $to ) {
 					return false;
 				}
-				$phases[] = [
-					'from' => $phase['from'],
-					'to'   => $phase['to'],
+				$blocks[] = [
+					'from' => $from,
+					'to'   => $to,
 				];
 			}
-			$validated[ $day ] = $phases ?: null;
+			usort( $blocks, static fn( array $a, array $b ): int => strcmp( $a['from'], $b['from'] ) );
+			if ( count( $blocks ) > 2 || ( 2 === count( $blocks ) && $blocks[1]['from'] < $blocks[0]['to'] ) ) {
+				return false;
+			}
+			$validated[ $day ] = $blocks ?: null;
 		}
-		return update_option( self::OPTION_KEY, wp_json_encode( $validated ) );
+		update_option( self::OPTION_KEY, wp_json_encode( $validated ) );
+		return true;
 	}
 
-	public static function get_time_gap(): int {
-		return (int) get_option( 'pneukarnik_time_gap', 0 );
+	/** Krok mřížky Termínů v minutách, mřížka začíná na začátku každého bloku Pracovní doby. */
+	public static function get_grid_step(): int {
+		return max( 5, (int) get_option( 'pneukarnik_grid_step', 30 ) );
+	}
+
+	/** Minimální předstih pro dnešní Termíny v minutách. */
+	public static function get_lead_minutes(): int {
+		return max( 0, (int) get_option( 'pneukarnik_lead_minutes', 60 ) );
+	}
+
+	/** Kolik dní dopředu lze rezervovat (dnešek + horizont včetně). */
+	public static function get_horizon_days(): int {
+		return max( 0, (int) get_option( 'pneukarnik_horizon_days', 60 ) );
 	}
 
 	public static function get_cancellation_days(): int {
@@ -75,6 +91,6 @@ class Pneukarnik_Working_Hours {
 	}
 
 	private static function is_valid_time( string $time ): bool {
-		return (bool) preg_match( '/^\d{2}:\d{2}$/', $time );
+		return (bool) preg_match( '/^([01]\d|2[0-3]):[0-5]\d$/', $time );
 	}
 }

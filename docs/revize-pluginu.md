@@ -52,18 +52,18 @@ Seřazené podle ticketu, který je vyřeší. Nic z toho dnes neběží v provo
 
 ### Rezervační model (#4, #5)
 
-1. **Kapacita není jedna dílna.** Výpočet Termínů, zámek i `UNIQUE KEY uq_slot (service_id, booking_date, time_start)` pracují pro každou Službu zvlášť. Dvě různé Služby jde zarezervovat na stejný čas.
-2. **Překryv se nehlídá.** Kontroluje se jen shodný začátek. Delší Služba začínající dřív se s jinou Rezervací překryje, stejně jako na starém webu.
-3. **Zámek proti souběhu nestačí.** `SELECT … FOR UPDATE` na neexistujícím řádku nezamkne překrývající se úseky, jen shodný začátek (a to díky UNIQUE). Zamykat se musí celý den dílny.
-4. **Transakce uvnitř `Pneukarnik_Booking::create()`.** Volá `START TRANSACTION`/`COMMIT`, a tím v testech (`WP_UnitTestCase` běží v transakci) commitne testovací data. Testy vytváření Rezervací s tím musí počítat.
-5. **Mřížka Termínů.** Krok je `Délka + time_gap`, ne nastavitelná mřížka od začátku bloku Pracovní doby.
+1. **Kapacita není jedna dílna.** Výpočet Termínů, zámek i `UNIQUE KEY uq_slot (service_id, booking_date, time_start)` pracují pro každou Službu zvlášť. Dvě různé Služby jde zarezervovat na stejný čas. **Vyřešeno v #4:** obsazenost se počítá napříč Službami, `uq_slot` odstraněn (DB 1.4).
+2. **Překryv se nehlídá.** Kontroluje se jen shodný začátek. Delší Služba začínající dřív se s jinou Rezervací překryje, stejně jako na starém webu. **Vyřešeno v #4:** Termín se nabízí i ukládá, jen když celý úsek nic nepřekrývá.
+3. **Zámek proti souběhu nestačí.** `SELECT … FOR UPDATE` na neexistujícím řádku nezamkne překrývající se úseky, jen shodný začátek (a to díky UNIQUE). Zamykat se musí celý den dílny. **Vyřešeno v #4:** zámek dne přes `GET_LOCK` a uvnitř transakce kontrola překryvu. Hlídá to test souběhu v Playwrightu.
+4. **Transakce uvnitř `Pneukarnik_Booking::create()`.** Volá `START TRANSACTION`/`COMMIT`, a tím v testech (`WP_UnitTestCase` běží v transakci) commitne testovací data. Testy vytváření Rezervací s tím musí počítat. **Vyřešeno v #4:** v testech plugin místo vlastní transakce použije savepoint (`Pneukarnik_DB::use_savepoints`).
+5. **Mřížka Termínů.** Krok je `Délka + time_gap`, ne nastavitelná mřížka od začátku bloku Pracovní doby. **Vyřešeno v #4:** nastavitelný krok mřížky od začátku bloku, `time_gap` zrušen.
 6. **Rezervace má jen jednu Službu** (`service_id`).
-7. **Cache Termínů.** Transient na 1 min (klíč Služba + den) se po nové Rezervaci smaže jen pro tutéž Službu. U jedné dílny ovlivní Rezervace všechny Služby daného dne.
-8. **Minulé dny.** Výpočet Termínů je nabízí (filtruje jen dnešek), vytvoření je pak odmítne. Chybí nastavitelný předstih a horizont.
+7. **Cache Termínů.** Transient na 1 min (klíč Služba + den) se po nové Rezervaci smaže jen pro tutéž Službu. U jedné dílny ovlivní Rezervace všechny Služby daného dne. **Vyřešeno v #4:** cache Termínů zrušena, výpočet je levný.
+8. **Minulé dny.** Výpočet Termínů je nabízí (filtruje jen dnešek), vytvoření je pak odmítne. Chybí nastavitelný předstih a horizont. **Vyřešeno v #4:** předstih i horizont jsou nastavitelné, minulé dny Termíny nemají.
 9. **Telefonickou Rezervaci nejde zadat mimo Pracovní dobu.** Zadání Provozovatelem jde přes stejnou validaci jako web.
-10. **Zrušený Termín už nejde znovu zarezervovat.** Zámek i `UNIQUE KEY uq_slot` ignorují stav, zatímco výpočet Termínů bere jako obsazené jen potvrzené Rezervace. Web Termín nabídne, vytvoření pak vrátí 409.
-11. **Nekonečná smyčka ve výpočtu Termínů.** Při `Délka + time_gap ≤ 0` se smyčka nikdy nepohne. Délka 0 i záporný `time_gap` jde uložit, server je nekontroluje, a každý `/slots` pak skončí vyčerpáním paměti.
-12. **Pád na nečekaných typech a datech.** Validace volá `trim`/`preg_match` na hodnoty z JSON bez přetypování (`strict_types`), takže telefon poslaný jako číslo shodí server. Datum se kontroluje jen formátem: `2027-13-01` projde a `DateTimeImmutable` pak vyhodí výjimku (500), v `/slots` i ve vytvoření.
+10. **Zrušený Termín už nejde znovu zarezervovat.** Zámek i `UNIQUE KEY uq_slot` ignorují stav, zatímco výpočet Termínů bere jako obsazené jen potvrzené Rezervace. Web Termín nabídne, vytvoření pak vrátí 409. **Vyřešeno v #4.**
+11. **Nekonečná smyčka ve výpočtu Termínů.** Při `Délka + time_gap ≤ 0` se smyčka nikdy nepohne. Délka 0 i záporný `time_gap` jde uložit, server je nekontroluje, a každý `/slots` pak skončí vyčerpáním paměti. **Částečně v #4:** `time_gap` zrušen, krok mřížky je min. 5 min a Služba s Délkou 0 nemá Termíny.
+12. **Pád na nečekaných typech a datech.** Validace volá `trim`/`preg_match` na hodnoty z JSON bez přetypování (`strict_types`), takže telefon poslaný jako číslo shodí server. Datum se kontroluje jen formátem: `2027-13-01` projde a `DateTimeImmutable` pak vyhodí výjimku (500), v `/slots` i ve vytvoření. **Vyřešeno v #4:** pole se ověřují bez pádů a datum se kontroluje přes `checkdate`.
 
 ### Výjimky a Sezóny (#6, #7)
 
@@ -78,16 +78,16 @@ Seřazené podle ticketu, který je vyřeší. Nic z toho dnes neběží v provo
 18. **Zrušení Provozovatelem přes REST** pouští jen `manage_options`, ne capability „spravovat rezervace“.
 19. **E‑mail Provozovateli chodí vždy**, zadání ho chce zapínatelný. Odesílatel „Jan Kárník Autoservis“ je v kódu natvrdo.
 20. **Rate limiting** počítá jen úspěšné Rezervace (zkoušení neomezí). Bere `REMOTE_ADDR`, takže za proxy sdílí limit všichni. Zrušení limit nemá.
-21. **Poznámka zákazníka** jde přes `sanitize_text_field`, které smaže konce řádků.
+21. **Poznámka zákazníka** jde přes `sanitize_text_field`, které smaže konce řádků. **Vyřešeno v #4:** `sanitize_textarea_field`.
 
 ### Administrace, PDF, iCal (#11, #12)
 
 22. **Oprávnění jsou nekonzistentní.** Nastavení a uzavřené dny chtějí `manage_options`, seznam vlastní capabilities. Zadání: capabilities „spravovat“ a „prohlížet rezervace“.
 23. **Mazání uzavřeného dne jde přes GET.** Nonce sice má, ale data mění GET požadavek.
-24. **Formuláře administrace nepřesměrují.** Zpracování POST (Zrušení, nová Rezervace, Nastavení, uzavřené dny) běží až uvnitř stránky, po odeslání hlavičky administrace. `wp_safe_redirect` pak selže na „headers already sent“ a uživatel místo hlášky uvidí useknutou stránku. Zpracování patří do `load-{$hook}` nebo `admin_post_*`.
+24. **Formuláře administrace nepřesměrují.** Zpracování POST (Zrušení, nová Rezervace, Nastavení, uzavřené dny) běží až uvnitř stránky, po odeslání hlavičky administrace. `wp_safe_redirect` pak selže na „headers already sent“ a uživatel místo hlášky uvidí useknutou stránku. Zpracování patří do `load-{$hook}` nebo `admin_post_*`. **Částečně v #4:** Nastavení se zpracuje v `load-{stránka}`, ostatní formuláře řeší #11.
 25. **PDF neumí UTF‑8.** FPDF čeština se transliteruje (`iconv //TRANSLIT`) a hlavičky jsou bez diakritiky. Zvážit tFPDF s TTF fontem.
 26. **iCal feed obsahuje osobní údaje** (jméno, telefon, poznámka). Chrání ho jen tajný token v URL. To je v pořádku, token jde přegenerovat a porovnává se přes `hash_equals`.
-27. **iCal neescapuje text.** Jméno, telefon a firma jdou do SUMMARY/DESCRIPTION bez escapování podle RFC 5545 (`\n`, `,`, `;`, `\`) a ze vstupu se z nich neodstraňují konce řádků. Veřejně vytvořená Rezervace tak může do kalendáře Provozovatele vložit vlastní řádky i celé události.
+27. **iCal neescapuje text.** Jméno, telefon a firma jdou do SUMMARY/DESCRIPTION bez escapování podle RFC 5545 (`\n`, `,`, `;`, `\`) a ze vstupu se z nich neodstraňují konce řádků. Veřejně vytvořená Rezervace tak může do kalendáře Provozovatele vložit vlastní řádky i celé události. **Vyřešeno v #4:** escapování TEXT podle RFC 5545, hlídá to test.
 
 ### Služby, nastavení, GDPR (#3, #15, #20)
 

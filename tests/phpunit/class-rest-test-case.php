@@ -8,7 +8,14 @@ declare(strict_types=1);
 
 abstract class Pneukarnik_REST_Test_Case extends WP_UnitTestCase {
 
+	public function set_up(): void {
+		parent::set_up();
+		// WP test case běží v transakci; plugin pak místo vlastní transakce použije savepoint.
+		Pneukarnik_DB::use_savepoints( true );
+	}
+
 	public function tear_down(): void {
+		Pneukarnik_DB::use_savepoints( false );
 		Pneukarnik_Clock::reset();
 		parent::tear_down();
 	}
@@ -58,6 +65,15 @@ abstract class Pneukarnik_REST_Test_Case extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Pravidla nabídky Termínů: krok mřížky, předstih pro dnešek (minuty), horizont (dny).
+	 */
+	protected function set_booking_rules( int $grid_step, int $lead_minutes = 0, int $horizon_days = 365 ): void {
+		update_option( 'pneukarnik_grid_step', $grid_step );
+		update_option( 'pneukarnik_lead_minutes', $lead_minutes );
+		update_option( 'pneukarnik_horizon_days', $horizon_days );
+	}
+
+	/**
 	 * @return list<string> Začátky nabízených volných Termínů (HH:MM).
 	 */
 	protected function free_starts( int $service_id, string $date ): array {
@@ -69,8 +85,29 @@ abstract class Pneukarnik_REST_Test_Case extends WP_UnitTestCase {
 				'date'       => $date,
 			]
 		);
-		$this->assertSame( 200, $response->get_status() );
-		$slots = array_filter( $response->get_data()['slots'], static fn( array $slot ): bool => $slot['available'] );
-		return array_values( array_map( static fn( array $slot ): string => $slot['time_start'], $slots ) );
+		$this->assertSame( 200, $response->get_status(), (string) wp_json_encode( $response->get_data() ) );
+		return array_map( static fn( array $slot ): string => $slot['time_start'], $response->get_data()['slots'] );
+	}
+
+	/**
+	 * Platný požadavek na vytvoření Rezervace, jednotlivá pole jde přepsat.
+	 *
+	 * @param array<string, mixed> $overrides
+	 */
+	protected function book( int $service_id, string $date, string $time, array $overrides = [] ): WP_REST_Response {
+		return $this->rest(
+			'POST',
+			'/bookings',
+			$overrides + [
+				'service_id'   => $service_id,
+				'date'         => $date,
+				'time'         => $time,
+				'name'         => 'Jan Novák',
+				'phone'        => '+420 603 123 456',
+				'email'        => 'jan@example.test',
+				'plate'        => '1AB 2345',
+				'consent_gdpr' => true,
+			]
+		);
 	}
 }

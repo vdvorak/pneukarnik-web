@@ -7,6 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * GET /wp-json/pneukarnik/v1/slots?service_id=&date=YYYY-MM-DD
+ * Volné Termíny Služby pro den.
  */
 class Pneukarnik_Rest_Slots {
 
@@ -27,7 +28,7 @@ class Pneukarnik_Rest_Slots {
 					'date'       => [
 						'required'          => true,
 						'type'              => 'string',
-						'validate_callback' => static fn( $v ) => (bool) preg_match( '/^\d{4}-\d{2}-\d{2}$/', $v ),
+						'validate_callback' => static fn( $v ): bool => is_string( $v ) && (bool) preg_match( '/^(\d{4})-(\d{2})-(\d{2})$/', $v, $m ) && checkdate( (int) $m[2], (int) $m[3], (int) $m[1] ),
 					],
 				],
 			]
@@ -36,41 +37,34 @@ class Pneukarnik_Rest_Slots {
 
 	public function list_slots( WP_REST_Request $request ): WP_REST_Response {
 		$service_id = (int) $request->get_param( 'service_id' );
-		$date       = $request->get_param( 'date' );
+		$date       = (string) $request->get_param( 'date' );
+		$service    = Pneukarnik_Service::find( $service_id );
 
-		$post = get_post( $service_id );
-		if ( ! $post || $post->post_type !== 'pneukarnik_service' || $post->post_status !== 'publish' ) {
+		$refusal = Pneukarnik_Booking::service_refusal( $service );
+		if ( null !== $refusal || null === $service ) {
+			$refusal ??= [
+				'code'   => 'booking.service_not_found',
+				'status' => 404,
+			];
 			return new WP_REST_Response(
 				[
-					'code'    => 'booking.service_not_found',
-					'message' => 'Služba nenalezena',
-					'data'    => [ 'status' => 404 ],
+					'code'    => $refusal['code'],
+					'message' => $refusal['code'],
+					'data'    => [ 'status' => $refusal['status'] ],
 				],
-				404
+				$refusal['status']
 			);
 		}
 
-		$cache_key = 'pnk_slots_' . $service_id . '_' . $date;
-		$cached    = get_transient( $cache_key );
-
-		if ( false !== $cached ) {
-			return new WP_REST_Response( $cached, 200 );
-		}
-
-		$slots = Pneukarnik_Slot_Engine::get_slots( $service_id, $date );
-
-		$data = [
-			'date'       => $date,
-			'service_id' => $service_id,
-			'slots'      => $slots,
-		];
-
-		set_transient( $cache_key, $data, MINUTE_IN_SECONDS );
-
-		return new WP_REST_Response( $data, 200 );
-	}
-
-	public static function invalidate_for_service_date( int $service_id, string $date ): void {
-		delete_transient( 'pnk_slots_' . $service_id . '_' . $date );
+		$response = new WP_REST_Response(
+			[
+				'date'       => $date,
+				'service_id' => $service_id,
+				'slots'      => Pneukarnik_Slot_Engine::free_termins( $service->duration, $date ),
+			],
+			200
+		);
+		$response->header( 'Cache-Control', 'no-store' );
+		return $response;
 	}
 }

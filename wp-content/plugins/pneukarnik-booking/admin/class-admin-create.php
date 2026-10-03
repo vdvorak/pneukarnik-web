@@ -130,31 +130,39 @@ class Pneukarnik_Admin_Create {
 			'customer_plate'   => sanitize_text_field( wp_unslash( $_POST['customer_plate'] ?? '' ) ),
 			'customer_email'   => sanitize_email( wp_unslash( $_POST['customer_email'] ?? '' ) ),
 			'customer_phone'   => sanitize_text_field( wp_unslash( $_POST['customer_phone'] ?? '' ) ),
-			'customer_note'    => sanitize_text_field( wp_unslash( $_POST['customer_note'] ?? '' ) ) ?: null,
+			'customer_note'    => sanitize_textarea_field( wp_unslash( $_POST['customer_note'] ?? '' ) ),
 		];
 
-		$result = Pneukarnik_Booking::create( $values );
+		// Telefonická objednávka: souhlas GDPR se neuděluje přes web. Celé přepracování formuláře je #11.
+		$result = Pneukarnik_Booking::create(
+			[
+				'service_id' => $values['service_id'],
+				'date'       => $values['booking_date'],
+				'time'       => $values['time_start'],
+				'name'       => $values['customer_name'],
+				'company'    => (string) $values['customer_company'],
+				'phone'      => $values['customer_phone'],
+				'email'      => $values['customer_email'],
+				'plate'      => $values['customer_plate'],
+				'note'       => $values['customer_note'],
+			],
+			Pneukarnik_Booking::SOURCE_ADMIN
+		);
 
 		if ( $result['ok'] ) {
 			return true;
 		}
 
 		$messages = [
-			'validation.required'          => 'Vyplňte všechna povinná pole.',
+			'booking.invalid_fields'       => 'Zkontrolujte pole: %s.',
 			'booking.service_not_found'    => 'Služba neexistuje.',
 			'booking.service_not_bookable' => 'Tato služba není rezervovatelná.',
 			'booking.seasonal_only'        => 'V aktivní sezóně jsou dostupné jen sezónní služby.',
-			'booking.invalid_date'         => 'Neplatné nebo minulé datum.',
-			'booking.closed_date'          => 'Tento den je uzavřen.',
-			'booking.slot_unavailable'     => 'Vybraný čas není dostupný (mimo pracovní dobu nebo obsazeno).',
-			'booking.slot_taken'           => 'Tento slot byl právě obsazen jinou rezervací.',
-			'validation.invalid_email'     => 'Neplatný email.',
-			'validation.invalid_phone'     => 'Neplatné telefonní číslo.',
-			'validation.invalid_plate'     => 'Neplatný formát SPZ.',
-			'validation.max_length'        => 'Poznámka je příliš dlouhá (max 500 znaků).',
+			'booking.slot_unavailable'     => 'Vybraný čas není v nabídce (mimo Pracovní dobu, mřížku nebo horizont).',
+			'booking.slot_taken'           => 'V tomto čase už je jiná Rezervace.',
 		];
 
-		$error = $messages[ $result['code'] ] ?? $result['code'];
+		$error = sprintf( $messages[ $result['code'] ] ?? $result['code'], implode( ', ', array_keys( $result['errors'] ?? [] ) ) );
 		return false;
 	}
 

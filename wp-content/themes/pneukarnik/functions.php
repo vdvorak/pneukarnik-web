@@ -24,7 +24,19 @@ add_action(
 add_action(
 	'wp_enqueue_scripts',
 	static function (): void {
-		$theme = wp_get_theme();
-		wp_enqueue_style( 'pneukarnik', get_stylesheet_uri(), [], (string) $theme->get( 'Version' ) );
+		$version = (string) wp_get_theme()->get( 'Version' );
+		wp_enqueue_style( 'pneukarnik', get_stylesheet_uri(), [], $version );
+		if ( class_exists( 'Pneukarnik_Booking_Pages' ) && 'rezervace' === Pneukarnik_Booking_Pages::current() ) {
+			wp_enqueue_script(
+				'pneukarnik-rezervace',
+				get_theme_file_uri( 'assets/js/rezervace.js' ),
+				[],
+				$version,
+				[
+					'strategy'  => 'defer',
+					'in_footer' => true,
+				]
+			);
+		}
 	}
 );
