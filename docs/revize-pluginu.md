@@ -93,8 +93,8 @@ Seřazené podle ticketu, který je vyřeší. Nic z toho dnes neběží v provo
 
 28. **Služba je neveřejný CPT.** Má ikonu jako třídu Font Awesome a slevu přímo ve Službě. Model se mění: Kategorie, detail Služby, Akce jako samostatný typ. **Vyřešeno v #3:** Služba má Kategorii, strukturovaná pole detailu a veřejné adresy. Pole starého pluginu (`_service_icon`, `_service_index`, `_service_is_autoservice`, sleva) se už nečtou, jejich převod řeší #21.
 29. **Kontakty a sociální sítě v Nastavení.** Sociální sítě se zadávají jako ruční JSON a je tam embed URL mapy. Patří do jednoho místa kontaktů a mapa bude načítaná až po kliknutí. **Vyřešeno v #15 a #16:** kontakty a mapa po kliknutí v #15. Sociální sítě (Facebook, Instagram, Google Firma) jsou pole v sekci Kontakt, čte je `Pneukarnik_Contact::social()`. DB 1.10 převede starý JSON `pneukarnik_social_links` a smaže ho.
-30. **Anonymizace po 2 letech**, zadání chce 1 rok. Zpracuje max. 200 záznamů za běh a nic dalšího v tom běhu neopakuje.
-31. **Výmaz osobních údajů (GDPR eraser) vynechá záznamy.** Stránkuje přes `OFFSET` nad `customer_email = %s`, ale každá stránka e‑mail přepíše. Další stránka pak přeskočí dosud neanonymizované řádky a výmaz se přesto ohlásí jako hotový (u zákazníka s víc než 25 Rezervacemi).
+30. **Anonymizace po 2 letech**, zadání chce 1 rok. Zpracuje max. 200 záznamů za běh a nic dalšího v tom běhu neopakuje. **Vyřešeno v #20:** anonymizace přesně 1 rok po Termínu (datum i čas), všechny Rezervace v jednom běhu. Maže i vůz, leasingovou společnost a důvod Zrušení a ruší i token potvrzení. Úloha se plánuje při `init` (denně ve 3:00), ne jen při aktivaci. Volba `pneukarnik_gdpr_retention_years` zmizela, lhůtu slibuje text Ochrany osobních údajů.
+31. **Výmaz osobních údajů (GDPR eraser) vynechá záznamy.** Stránkuje přes `OFFSET` nad `customer_email = %s`, ale každá stránka e‑mail přepíše. Další stránka pak přeskočí dosud neanonymizované řádky a výmaz se přesto ohlásí jako hotový (u zákazníka s víc než 25 Rezervacemi). **Vyřešeno v #20:** každá dávka bere prvních 25 dosud neanonymizovaných Rezervací e‑mailu a anonymizuje stejná pole jako denní úloha.
 
 ### Bezpečnost: v pořádku
 

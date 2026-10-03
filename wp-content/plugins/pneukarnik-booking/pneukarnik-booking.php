@@ -92,10 +92,6 @@ function pneukarnik_activate(): void {
 	// Adresy Služeb se přegenerují při dalším požadavku (Pneukarnik_Service_Type::maybe_flush_rewrites).
 	delete_option( 'pneukarnik_rewrite_version' );
 	pneukarnik_ensure_capabilities();
-	// Schedule daily GDPR anonymisation cron at 03:00
-	if ( ! wp_next_scheduled( Pneukarnik_GDPR::CRON_HOOK ) ) {
-		wp_schedule_event( Pneukarnik_Clock::next_at( 3 )->getTimestamp(), 'daily', Pneukarnik_GDPR::CRON_HOOK );
-	}
 }
 
 function pneukarnik_deactivate(): void {

@@ -6,27 +6,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * GDPR compliance for pneukarnik booking data.
+ * Osobní údaje v Rezervacích.
  *
- * Registers WordPress personal data exporter and eraser so site admins
- * can respond to GDPR subject-access and erasure requests from WP Admin
- * (Tools → Export Personal Data / Erase Personal Data).
+ * Exportér a mazač pro nástroje WordPressu (Nástroje → Export / Smazání osobních údajů).
  *
- * Retention policy: bookings older than pneukarnik_gdpr_retention_years
- * (default 2 years) are anonymised automatically via a daily WP-Cron job.
- * Anonymisation replaces PII fields with empty strings / placeholders while
- * keeping aggregate booking records for business reporting.
+ * Denní plánovaná úloha anonymizuje Rezervace 1 rok po Termínu (slib v Ochraně osobních
+ * údajů): zmizí jméno, firma, telefon, e‑mail, SPZ, vůz, poznámka, leasingová společnost
+ * i důvod Zrušení a přestanou platit odkazy na potvrzení, Zrušení a „Objednat znovu“.
+ * Statistika zůstane: Služby, Termín, stav, zdroj, příznaky leasingu a uskladněných kol.
  */
 class Pneukarnik_GDPR {
 
-	/** Option key for retention period in years. */
-	private const RETENTION_OPTION = 'pneukarnik_gdpr_retention_years';
-
-	/** Default retention in years. */
-	private const RETENTION_DEFAULT = 2;
-
 	/** Cron hook for automatic anonymisation. */
 	public const CRON_HOOK = 'pneukarnik_gdpr_anonymise';
+
+	/** E‑mail anonymizované Rezervace, podle něj ji pozná is_anonymised(). */
+	private const ANONYMISED_EMAIL = 'anonymized@deleted.invalid';
 
 	// ------------------------------------------------------------------
 	// Bootstrap
@@ -36,6 +31,17 @@ class Pneukarnik_GDPR {
 		add_filter( 'wp_privacy_personal_data_exporters', [ self::class, 'register_exporter' ] );
 		add_filter( 'wp_privacy_personal_data_erasers', [ self::class, 'register_eraser' ] );
 		add_action( self::CRON_HOOK, [ self::class, 'run_anonymise_old_bookings' ] );
+		add_action( 'init', [ self::class, 'schedule' ] );
+	}
+
+	/**
+	 * Denně ve 3:00, naplánuje se samo i u už aktivního pluginu.
+	 */
+	public static function schedule(): void {
+		if ( wp_next_scheduled( self::CRON_HOOK ) ) {
+			return;
+		}
+		wp_schedule_event( Pneukarnik_Clock::next_at( 3 )->getTimestamp(), 'daily', self::CRON_HOOK );
 	}
 
 	// ------------------------------------------------------------------
@@ -180,21 +186,9 @@ class Pneukarnik_GDPR {
 		// Souhlasy s e‑maily (Připomínka přezutí, starý odběr) se smažou celé.
 		$subscriptions = 1 === $page ? Pneukarnik_Subscriptions::erase( $email_address ) : 0;
 
+		// Anonymizované Rezervace už e‑mail nemají, další dávka proto začíná vždy od začátku.
 		$per_page = 25;
-		$offset   = ( $page - 1 ) * $per_page;
-
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				'SELECT id FROM %i WHERE customer_email = %s ORDER BY id ASC LIMIT %d OFFSET %d',
-				$table,
-				strtolower( $email_address ),
-				$per_page,
-				$offset
-			),
-			ARRAY_A
-		);
-
-		if ( empty( $rows ) ) {
+		if ( self::ANONYMISED_EMAIL === strtolower( $email_address ) ) {
 			return [
 				'items_removed'  => $subscriptions,
 				'items_retained' => 0,
@@ -202,35 +196,20 @@ class Pneukarnik_GDPR {
 				'done'           => true,
 			];
 		}
-
-		$removed = $subscriptions;
-		foreach ( $rows as $row ) {
-			$updated = $wpdb->update(
+		$ids = $wpdb->get_col(
+			$wpdb->prepare(
+				'SELECT id FROM %i WHERE customer_email = %s ORDER BY id ASC LIMIT %d',
 				$table,
-				[
-					'customer_name'     => __( '[anonymizováno]', 'pneukarnik-booking' ),
-					'customer_company'  => null,
-					'customer_plate'    => __( '[anonymizováno]', 'pneukarnik-booking' ),
-					'customer_email'    => 'anonymized@deleted.invalid',
-					'customer_phone'    => '',
-					'customer_note'     => null,
-					// Invalidate cancel token so it can no longer be used.
-					'cancel_token_hash' => null,
-				],
-				[ 'id' => (int) $row['id'] ]
-			);
-			if ( false !== $updated ) {
-				++$removed;
-			}
-		}
-
-		$done = count( $rows ) < $per_page;
+				strtolower( $email_address ),
+				$per_page
+			)
+		);
 
 		return [
-			'items_removed'  => $removed,
+			'items_removed'  => $subscriptions + self::anonymise( $ids ),
 			'items_retained' => 0,
 			'messages'       => [],
-			'done'           => $done,
+			'done'           => count( $ids ) < $per_page,
 		];
 	}
 
@@ -239,60 +218,64 @@ class Pneukarnik_GDPR {
 	// ------------------------------------------------------------------
 
 	/**
-	 * Jestli už má Rezervace osobní údaje nahrazené (e‑mail končí .invalid).
+	 * Jestli už má Rezervace osobní údaje nahrazené.
 	 *
 	 * @param array{customer_email:string} $booking
 	 */
 	public static function is_anonymised( array $booking ): bool {
-		return str_ends_with( $booking['customer_email'], '.invalid' );
+		return self::ANONYMISED_EMAIL === $booking['customer_email'];
 	}
 
 	/**
-	 * Anonymise PII in old completed/cancelled bookings.
-	 * Triggered by WP-Cron daily hook.
+	 * Anonymizuje Rezervace, od jejichž Termínu uplynul 1 rok. Opakované spuštění nic nemění.
 	 */
 	public static function run_anonymise_old_bookings(): void {
 		global $wpdb;
-		$table = Pneukarnik_DB::bookings_table();
-
-		$years  = (int) get_option( self::RETENTION_OPTION, self::RETENTION_DEFAULT );
-		$cutoff = Pneukarnik_Clock::today()->modify( "-{$years} years" )->format( 'Y-m-d' );
-
-		// Only anonymise bookings that are past (booking_date < cutoff) and already
-		// settled (confirmed = event occurred, cancelled = no PII needed).
-		// Skip records already anonymised (email ends with .invalid).
 		$ids = $wpdb->get_col(
 			$wpdb->prepare(
 				'SELECT id FROM %i
-				 WHERE booking_date < %s
-				   AND customer_email NOT LIKE %s
-				 LIMIT 200',
-				$table,
-				$cutoff,
-				'%' . $wpdb->esc_like( '.invalid' )
+				 WHERE TIMESTAMP(booking_date, time_start) + INTERVAL 1 YEAR <= %s
+				   AND customer_email <> %s
+				 ORDER BY id ASC',
+				Pneukarnik_DB::bookings_table(),
+				Pneukarnik_Clock::now()->format( 'Y-m-d H:i:s' ),
+				self::ANONYMISED_EMAIL
 			)
 		);
+		self::anonymise( $ids );
+	}
 
-		if ( empty( $ids ) ) {
-			return;
-		}
-
+	/**
+	 * Nahradí osobní údaje Rezervací a zneplatní jejich tokeny.
+	 *
+	 * @param array<int|string> $ids
+	 * @return int Počet anonymizovaných Rezervací.
+	 */
+	private static function anonymise( array $ids ): int {
+		global $wpdb;
+		$count = 0;
 		foreach ( $ids as $id ) {
-			$wpdb->update(
-				$table,
+			$updated = $wpdb->update(
+				Pneukarnik_DB::bookings_table(),
 				[
-					'customer_name'     => __( '[anonymizováno]', 'pneukarnik-booking' ),
-					'customer_company'  => null,
-					'customer_plate'    => __( '[anonymizováno]', 'pneukarnik-booking' ),
-					'customer_email'    => 'anonymized@deleted.invalid',
-					'customer_phone'    => '',
-					'customer_note'     => null,
-					'cancel_token_hash' => null,
+					'customer_name'      => __( '[anonymizováno]', 'pneukarnik-booking' ),
+					'customer_company'   => null,
+					'customer_plate'     => __( '[anonymizováno]', 'pneukarnik-booking' ),
+					'customer_email'     => self::ANONYMISED_EMAIL,
+					'customer_phone'     => '',
+					'customer_note'      => null,
+					'vehicle'            => null,
+					'leasing_company'    => null,
+					'cancel_reason'      => null,
+					'cancel_token_hash'  => null,
+					'confirm_token_hash' => null,
 				],
 				[ 'id' => (int) $id ]
 			);
+			if ( false !== $updated ) {
+				++$count;
+			}
 		}
-
-		error_log( sprintf( '[pneukarnik] GDPR: anonymised %d bookings older than %d years (cutoff %s)', count( $ids ), $years, $cutoff ) );
+		return $count;
 	}
 }
