@@ -1,0 +1,3 @@
+# Vlastní WordPress šablona, ne headless
+
+Web bude vlastní WordPress šablona: WordPress vykresluje stránky i administraci. Předchozí pokus (`~/dev/AI/pneukarnik`, nasazený na `/nova/`) používal headless WP se SolidJS frontendem a SSG. Pro jeden lokální servis to znamenalo dva deploye, ruční synchronizaci SEO dat (statické schema.org, OG tagy) a CSR detaily služeb. Šablona běží na existujícím hostingu, Provozovatel vidí v adminu náhled změn a SEO je dostupné přímo bez dalšího kroku. Služby se upravují přes strukturovaná pole, ne volným editorem, takže nově přidaná Služba vypadá stejně jako ostatní.
