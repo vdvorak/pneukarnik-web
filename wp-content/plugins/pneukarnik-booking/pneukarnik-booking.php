@@ -54,7 +54,8 @@ spl_autoload_register(
 			'Pneukarnik_Rest_Calendar'        => 'api/class-rest-calendar.php',
 			'Pneukarnik_Admin_Settings'       => 'admin/class-admin-settings.php',
 			'Pneukarnik_Admin_Bookings'       => 'admin/class-admin-bookings.php',
-			'Pneukarnik_Admin_Pdf'            => 'admin/class-admin-pdf.php',
+			'Pneukarnik_Day_Sheet'            => 'includes/class-day-sheet.php',
+			'Pneukarnik_File_Response'        => 'api/class-file-response.php',
 			'Pneukarnik_Admin_Service_Meta'   => 'admin/class-admin-service-meta.php',
 			'Pneukarnik_Admin_Day_Exceptions' => 'admin/class-admin-day-exceptions.php',
 		];
@@ -106,7 +107,6 @@ Pneukarnik_Booking_Pages::init();
 add_action( 'init', [ 'Pneukarnik_Admin_Service_Meta', 'init' ] );
 add_action( 'rest_api_init', 'pneukarnik_register_rest_routes' );
 add_action( 'admin_menu', 'pneukarnik_register_admin_menus' );
-add_action( 'admin_post_pneukarnik_export_day_pdf', [ 'Pneukarnik_Admin_Pdf', 'handle_export' ] );
 
 // Cache invalidation
 add_action( 'save_post_pneukarnik_service', [ 'Pneukarnik_Rest_Services', 'invalidate_cache' ] );
@@ -120,6 +120,7 @@ function pneukarnik_invalidate_post_cache( int $post_id ): void {
 }
 
 function pneukarnik_register_rest_routes(): void {
+	Pneukarnik_File_Response::init();
 	( new Pneukarnik_Rest_Services() )->register_routes();
 	( new Pneukarnik_Rest_Slots() )->register_routes();
 	( new Pneukarnik_Rest_Available_Days() )->register_routes();

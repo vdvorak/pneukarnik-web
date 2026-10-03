@@ -15,6 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * GET   /admin/bookings/{id}               detail
  * PATCH /admin/bookings/{id}               úprava (kontakt, poznámka, Služby, Termín)
  * POST  /admin/bookings/{id}/cancel {reason}   Zrušení Provozovatelem, bez Lhůty
+ * GET   /admin/day-sheet?date=             PDF denní přehled k tisku (odkaz s _wpnonce)
  *
  * Mimo Pracovní dobu se zadání i přesun odmítne kódem booking.outside_working_hours,
  * dokud nepřijde outside_working_hours: true. Překryv (booking.slot_taken) nikdy.
@@ -43,6 +44,15 @@ class Pneukarnik_Rest_Admin {
 			[
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'calendar' ],
+				'permission_callback' => $view,
+			]
+		);
+		register_rest_route(
+			PNEUKARNIK_REST_NAMESPACE,
+			'/admin/day-sheet',
+			[
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'day_sheet' ],
 				'permission_callback' => $view,
 			]
 		);
@@ -115,6 +125,28 @@ class Pneukarnik_Rest_Admin {
 			];
 		}
 		return self::no_store( new WP_REST_Response( [ 'days' => $days ], 200 ) );
+	}
+
+	public function day_sheet( WP_REST_Request $request ): WP_REST_Response {
+		$date = self::date_param( $request->get_param( 'date' ) );
+		if ( null === $date ) {
+			return self::refusal( 'day_sheet.invalid_date', 400 );
+		}
+		$ymd = $date->format( 'Y-m-d' );
+		return new Pneukarnik_File_Response( Pneukarnik_Day_Sheet::render( $ymd ), 'application/pdf', "rezervace-{$ymd}.pdf" );
+	}
+
+	/**
+	 * Odkaz na PDF přehled dne pro přihlášeného (nonce WordPress REST v adrese).
+	 */
+	public static function day_sheet_url( string $date ): string {
+		return add_query_arg(
+			[
+				'date'     => $date,
+				'_wpnonce' => wp_create_nonce( 'wp_rest' ),
+			],
+			rest_url( PNEUKARNIK_REST_NAMESPACE . '/admin/day-sheet' )
+		);
 	}
 
 	public function list_bookings( WP_REST_Request $request ): WP_REST_Response {

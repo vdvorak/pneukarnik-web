@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, request as newRequest, test } from '@playwright/test';
 import { E2E_PREFIX, login, publishService, saveBookingSettings, uniqueTitle, upcomingWeekday } from './support/admin';
 
 const serviceTitle = uniqueTitle('Přezutí kalendář');
@@ -80,4 +80,23 @@ test('Zadání mimo Pracovní dobu se musí vědomě potvrdit', async ({ page })
 
 	await expect(page.getByRole('status')).toHaveText('Rezervace zadána.');
 	await expect(page.locator('.pnk-cal__booking', { hasText: `${customer} večer` })).toContainText('18:00–19:00');
+});
+
+test('Odkaz PDF u dne stáhne přehled jen přihlášenému', async ({ page, baseURL }) => {
+	await login(page);
+	await page.goto(`/wp-admin/admin.php?page=pneukarnik-booking&view=day&date=${day}`);
+	const href = await page.getByRole('link', { name: /^PDF přehled/ }).getAttribute('href');
+	expect(href).toContain(`date=${day}`);
+
+	const pdf = await page.request.get(href ?? '');
+	expect(pdf.status()).toBe(200);
+	expect(pdf.headers()['content-type']).toBe('application/pdf');
+	expect((await pdf.body()).subarray(0, 5).toString()).toBe('%PDF-');
+
+	// Bez přihlášení odkaz s nonce selže (WordPress odmítne nonce bez cookie).
+	const anonymous = await newRequest.newContext({ baseURL });
+	const refused = await anonymous.get(href ?? '');
+	expect([401, 403]).toContain(refused.status());
+	expect(refused.headers()['content-type']).not.toBe('application/pdf');
+	await anonymous.dispose();
 });

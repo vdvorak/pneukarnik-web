@@ -47,6 +47,10 @@
 	font-weight: 600;
 }
 
+.pnk-cal__pdf {
+	font-size: 11px;
+}
+
 .pnk-cal__today.pnk-cal__head {
 	background: #f0f6fc;
 }

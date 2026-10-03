@@ -42,8 +42,7 @@ class Pneukarnik_Admin_Settings {
 		$booking_disabled_msg = Pneukarnik_Booking::online_disabled_message();
 		$create_limit         = Pneukarnik_Rate_Limit::limit( Pneukarnik_Rate_Limit::CREATE );
 		$cancel_limit         = Pneukarnik_Rate_Limit::limit( Pneukarnik_Rate_Limit::CANCEL );
-		$ical_token           = Pneukarnik_Rest_Calendar::get_or_create_token();
-		$ical_url             = rest_url( PNEUKARNIK_REST_NAMESPACE . '/calendar' ) . '?token=' . $ical_token;
+		$ical_url             = Pneukarnik_Rest_Calendar::url();
 		$days_labels          = [
 			'mon' => 'Pondělí',
 			'tue' => 'Úterý',
@@ -241,21 +240,21 @@ class Pneukarnik_Admin_Settings {
 					</tr>
 				</table>
 
-				<h2><?php esc_html_e( 'iCal feed', 'pneukarnik-booking' ); ?></h2>
+				<h2><?php esc_html_e( 'Rezervace v kalendáři telefonu (iCal)', 'pneukarnik-booking' ); ?></h2>
 				<table class="form-table">
 					<tr>
-						<th><?php esc_html_e( 'URL pro kalendář', 'pneukarnik-booking' ); ?></th>
+						<th><label for="pnk-ical-url"><?php esc_html_e( 'Tajný odkaz', 'pneukarnik-booking' ); ?></label></th>
 						<td>
-							<input type="text" readonly value="<?php echo esc_attr( $ical_url ); ?>" class="large-text" onclick="this.select()">
-							<p class="description"><?php esc_html_e( 'Přidejte tuto URL do Google Calendar / Apple Calendar jako webový kalendář.', 'pneukarnik-booking' ); ?></p>
+							<input id="pnk-ical-url" type="text" readonly value="<?php echo esc_attr( $ical_url ); ?>" class="large-text" onclick="this.select()">
+							<p class="description"><?php esc_html_e( 'Přidejte odkaz do kalendáře v telefonu (Google Kalendář: Přidat kalendář → Z URL, iPhone: Kalendáře → Přidat odebíraný kalendář). Odkaz obsahuje jména a telefony Zákazníků, nikomu ho neposílejte.', 'pneukarnik-booking' ); ?></p>
 						</td>
 					</tr>
 					<tr>
-						<th><?php esc_html_e( 'Resetovat token', 'pneukarnik-booking' ); ?></th>
+						<th><?php esc_html_e( 'Nový odkaz', 'pneukarnik-booking' ); ?></th>
 						<td>
 							<label>
 								<input type="checkbox" name="regen_ical_token" value="1">
-								<?php esc_html_e( 'Vygenerovat nový token (stará URL přestane fungovat)', 'pneukarnik-booking' ); ?>
+								<?php esc_html_e( 'Vytvořit nový tajný odkaz (starý hned přestane fungovat, třeba při ztrátě telefonu)', 'pneukarnik-booking' ); ?>
 							</label>
 						</td>
 					</tr>

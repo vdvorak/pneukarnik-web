@@ -40,15 +40,10 @@ final class Pneukarnik_Admin_Bookings {
 			<a class="page-title-action" href="<?php echo esc_url( Pneukarnik_Admin_Calendar::url() ); ?>"><?php esc_html_e( 'Kalendář', 'pneukarnik-booking' ); ?></a>
 			<hr class="wp-header-end">
 
-			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin:12px 0">
-				<input type="hidden" name="action" value="pneukarnik_export_day_pdf">
-				<?php wp_nonce_field( 'pneukarnik_export_day_pdf', 'pneukarnik_pdf_nonce' ); ?>
-				<label>
-					<?php esc_html_e( 'Tisk dne', 'pneukarnik-booking' ); ?>
-					<input type="text" name="pdf_date" value="<?php echo esc_attr( Pneukarnik_Clock::today()->format( 'd.m.Y' ) ); ?>" placeholder="DD.MM.RRRR" size="12">
-				</label>
-				<?php submit_button( __( 'Stáhnout PDF', 'pneukarnik-booking' ), 'secondary', '', false ); ?>
-			</form>
+			<p>
+				<a class="button" href="<?php echo esc_url( Pneukarnik_Rest_Admin::day_sheet_url( Pneukarnik_Clock::today()->format( 'Y-m-d' ) ) ); ?>" target="_blank"><?php esc_html_e( 'PDF přehled na dnes', 'pneukarnik-booking' ); ?></a>
+				<span class="description"><?php esc_html_e( 'Přehled jiného dne vytisknete z Kalendáře.', 'pneukarnik-booking' ); ?></span>
+			</p>
 
 			<form method="get" class="pnk-list-filters" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px">
 				<input type="hidden" name="page" value="<?php echo esc_attr( self::PAGE ); ?>">

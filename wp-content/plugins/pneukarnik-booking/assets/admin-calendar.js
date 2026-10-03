@@ -250,6 +250,7 @@ function init() {
 					h('button', { type: 'button', class: 'button-link', onclick: () => { state.view = 'day'; go(day.date); } }, `${DAY_SHORT[weekday(day.date)]} ${dayMonth(day.date)}`),
 					day.note && h('small', {}, day.note),
 					!day.hours && !day.note && h('small', {}, 'zavřeno'),
+					h('a', { class: 'pnk-cal__pdf', href: `${config.api}/admin/day-sheet?date=${day.date}&_wpnonce=${config.nonce}`, target: '_blank', 'aria-label': `PDF přehled ${longDay(day.date)}` }, 'PDF'),
 				),
 			);
 			const body = h('div', {
