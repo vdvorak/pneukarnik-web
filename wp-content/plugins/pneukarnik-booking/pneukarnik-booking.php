@@ -25,31 +25,33 @@ define( 'PNEUKARNIK_REST_NAMESPACE', 'pneukarnik/v1' );
 spl_autoload_register(
 	function ( string $class_name ): void {
 		$map = [
-			'Pneukarnik_Clock'              => 'includes/class-clock.php',
-			'Pneukarnik_DB'                 => 'includes/class-db.php',
-			'Pneukarnik_Service'            => 'includes/class-service.php',
-			'Pneukarnik_Service_Type'       => 'includes/class-service-type.php',
-			'Pneukarnik_Working_Hours'      => 'includes/class-working-hours.php',
-			'Pneukarnik_Season'             => 'includes/class-season.php',
-			'Pneukarnik_Closed_Dates'       => 'includes/class-closed-dates.php',
-			'Pneukarnik_Slot_Engine'        => 'includes/class-slot-engine.php',
-			'Pneukarnik_Booking'            => 'includes/class-booking.php',
-			'Pneukarnik_Booking_Pages'      => 'includes/class-booking-pages.php',
-			'Pneukarnik_Cancellation'       => 'includes/class-cancellation.php',
-			'Pneukarnik_Template'           => 'includes/class-template.php',
-			'Pneukarnik_Notifications'      => 'includes/class-notifications.php',
-			'Pneukarnik_GDPR'               => 'includes/class-gdpr.php',
-			'Pneukarnik_Rest_Services'      => 'api/class-rest-services.php',
-			'Pneukarnik_Rest_Slots'         => 'api/class-rest-slots.php',
-			'Pneukarnik_Rest_Bookings'      => 'api/class-rest-bookings.php',
-			'Pneukarnik_Rest_Cancel'        => 'api/class-rest-cancel.php',
-			'Pneukarnik_Rest_Calendar'      => 'api/class-rest-calendar.php',
-			'Pneukarnik_Admin_Settings'     => 'admin/class-admin-settings.php',
-			'Pneukarnik_Admin_Bookings'     => 'admin/class-admin-bookings.php',
-			'Pneukarnik_Admin_Create'       => 'admin/class-admin-create.php',
-			'Pneukarnik_Admin_Pdf'          => 'admin/class-admin-pdf.php',
-			'Pneukarnik_Admin_Service_Meta' => 'admin/class-admin-service-meta.php',
-			'Pneukarnik_Admin_Closed_Dates' => 'admin/class-admin-closed-dates.php',
+			'Pneukarnik_Clock'                => 'includes/class-clock.php',
+			'Pneukarnik_DB'                   => 'includes/class-db.php',
+			'Pneukarnik_Service'              => 'includes/class-service.php',
+			'Pneukarnik_Service_Type'         => 'includes/class-service-type.php',
+			'Pneukarnik_Working_Hours'        => 'includes/class-working-hours.php',
+			'Pneukarnik_Season'               => 'includes/class-season.php',
+			'Pneukarnik_Day_Exceptions'       => 'includes/class-day-exceptions.php',
+			'Pneukarnik_Holidays'             => 'includes/class-holidays.php',
+			'Pneukarnik_Slot_Engine'          => 'includes/class-slot-engine.php',
+			'Pneukarnik_Booking'              => 'includes/class-booking.php',
+			'Pneukarnik_Booking_Pages'        => 'includes/class-booking-pages.php',
+			'Pneukarnik_Cancellation'         => 'includes/class-cancellation.php',
+			'Pneukarnik_Template'             => 'includes/class-template.php',
+			'Pneukarnik_Notifications'        => 'includes/class-notifications.php',
+			'Pneukarnik_GDPR'                 => 'includes/class-gdpr.php',
+			'Pneukarnik_Rest_Services'        => 'api/class-rest-services.php',
+			'Pneukarnik_Rest_Slots'           => 'api/class-rest-slots.php',
+			'Pneukarnik_Rest_Available_Days'  => 'api/class-rest-available-days.php',
+			'Pneukarnik_Rest_Bookings'        => 'api/class-rest-bookings.php',
+			'Pneukarnik_Rest_Cancel'          => 'api/class-rest-cancel.php',
+			'Pneukarnik_Rest_Calendar'        => 'api/class-rest-calendar.php',
+			'Pneukarnik_Admin_Settings'       => 'admin/class-admin-settings.php',
+			'Pneukarnik_Admin_Bookings'       => 'admin/class-admin-bookings.php',
+			'Pneukarnik_Admin_Create'         => 'admin/class-admin-create.php',
+			'Pneukarnik_Admin_Pdf'            => 'admin/class-admin-pdf.php',
+			'Pneukarnik_Admin_Service_Meta'   => 'admin/class-admin-service-meta.php',
+			'Pneukarnik_Admin_Day_Exceptions' => 'admin/class-admin-day-exceptions.php',
 		];
 		if ( isset( $map[ $class_name ] ) ) {
 			require_once PNEUKARNIK_PLUGIN_DIR . $map[ $class_name ];
@@ -119,6 +121,7 @@ function pneukarnik_invalidate_post_cache( int $post_id ): void {
 function pneukarnik_register_rest_routes(): void {
 	( new Pneukarnik_Rest_Services() )->register_routes();
 	( new Pneukarnik_Rest_Slots() )->register_routes();
+	( new Pneukarnik_Rest_Available_Days() )->register_routes();
 	( new Pneukarnik_Rest_Bookings() )->register_routes();
 	( new Pneukarnik_Rest_Cancel() )->register_routes();
 	( new Pneukarnik_Rest_Calendar() )->register_routes();
@@ -156,14 +159,17 @@ function pneukarnik_register_admin_menus(): void {
 		add_action( "load-{$settings_hook}", [ 'Pneukarnik_Admin_Settings', 'handle_post' ] );
 	}
 
-	add_submenu_page(
+	$exceptions_hook = add_submenu_page(
 		'pneukarnik-booking',
-		__( 'Uzavřené termíny', 'pneukarnik-booking' ),
-		__( 'Uzavřené termíny', 'pneukarnik-booking' ),
+		__( 'Výjimky', 'pneukarnik-booking' ),
+		__( 'Výjimky', 'pneukarnik-booking' ),
 		'manage_options',
-		'pneukarnik-closed-dates',
-		[ 'Pneukarnik_Admin_Closed_Dates', 'render_page' ]
+		Pneukarnik_Admin_Day_Exceptions::PAGE,
+		[ 'Pneukarnik_Admin_Day_Exceptions', 'render_page' ]
 	);
+	if ( $exceptions_hook ) {
+		add_action( "load-{$exceptions_hook}", [ 'Pneukarnik_Admin_Day_Exceptions', 'handle_post' ] );
+	}
 }
 
 /**

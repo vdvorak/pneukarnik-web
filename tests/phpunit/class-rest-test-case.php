@@ -98,6 +98,24 @@ abstract class Pneukarnik_REST_Test_Case extends WP_UnitTestCase {
 	}
 
 	/**
+	 * @param int|list<int> $service_ids
+	 * @param string        $month       YYYY-MM
+	 * @return list<string> Dny měsíce s alespoň jedním volným Termínem (YYYY-MM-DD).
+	 */
+	protected function available_days( int|array $service_ids, string $month ): array {
+		$response = $this->rest(
+			'GET',
+			'/available-days',
+			[
+				'service_ids' => (array) $service_ids,
+				'month'       => $month,
+			]
+		);
+		$this->assertSame( 200, $response->get_status(), (string) wp_json_encode( $response->get_data() ) );
+		return $response->get_data()['days'];
+	}
+
+	/**
 	 * Platný požadavek na vytvoření Rezervace, jednotlivá pole jde přepsat.
 	 *
 	 * @param int|list<int>        $service_ids

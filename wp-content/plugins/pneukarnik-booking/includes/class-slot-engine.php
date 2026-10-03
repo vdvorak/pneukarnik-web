@@ -22,9 +22,13 @@ class Pneukarnik_Slot_Engine {
 	 * @return list<array{time_start:string,time_end:string}>
 	 */
 	public static function free_termins( int $duration, string $date ): array {
+		$offered = self::offered_intervals( $duration, $date );
+		if ( ! $offered ) {
+			return [];
+		}
 		$booked = self::confirmed_intervals( $date );
 		$free   = [];
-		foreach ( self::offered_intervals( $duration, $date ) as [ $start, $end ] ) {
+		foreach ( $offered as [ $start, $end ] ) {
 			if ( ! self::overlaps_any( $start, $end, $booked ) ) {
 				$free[] = [
 					'time_start' => self::minutes_to_hhmm( $start ),
@@ -56,19 +60,35 @@ class Pneukarnik_Slot_Engine {
 	}
 
 	/**
-	 * Efektivní Pracovní doba dne: Výjimka (zavřeno / vlastní bloky), jinak Pracovní doba dne v týdnu.
+	 * Efektivní Pracovní doba dne: Výjimka nebo svátek (zavřeno / vlastní bloky), jinak Pracovní doba dne v týdnu.
 	 *
 	 * @return list<array{from:string,to:string}>|null null = zavřeno
 	 */
 	public static function resolve_effective_hours( string $date ): ?array {
-		$closed = Pneukarnik_Closed_Dates::get_for_date( $date );
-		if ( $closed !== null ) {
-			if ( $closed['is_fully_closed'] ) {
-				return null;
-			}
-			return $closed['custom_hours'] ?? null;
+		$exception = Pneukarnik_Day_Exceptions::for_date( $date );
+		if ( null !== $exception ) {
+			return $exception['hours'];
 		}
 		return Pneukarnik_Working_Hours::get_for_date( Pneukarnik_Clock::at( $date ) );
+	}
+
+	/**
+	 * Dny měsíce, které mají pro úsek dané Délky alespoň jeden volný Termín.
+	 *
+	 * @param string $month YYYY-MM
+	 * @return list<string> YYYY-MM-DD
+	 */
+	public static function days_with_free_termin( int $duration, string $month ): array {
+		$days = [];
+		$day  = Pneukarnik_Clock::at( $month . '-01' );
+		$end  = $day->modify( 'first day of next month' );
+		for ( ; $day < $end; $day = $day->modify( '+1 day' ) ) {
+			$date = $day->format( 'Y-m-d' );
+			if ( self::free_termins( $duration, $date ) ) {
+				$days[] = $date;
+			}
+		}
+		return $days;
 	}
 
 	/**

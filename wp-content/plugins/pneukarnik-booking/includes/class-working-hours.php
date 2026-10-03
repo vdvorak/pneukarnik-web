@@ -49,26 +49,43 @@ class Pneukarnik_Working_Hours {
 	public static function save( array $hours ): bool {
 		$validated = [];
 		foreach ( self::DAYS as $day ) {
-			$blocks = [];
-			foreach ( (array) ( $hours[ $day ] ?? [] ) as $block ) {
-				$from = (string) ( $block['from'] ?? '' );
-				$to   = (string) ( $block['to'] ?? '' );
-				if ( ! self::is_valid_time( $from ) || ! self::is_valid_time( $to ) || $from >= $to ) {
-					return false;
-				}
-				$blocks[] = [
-					'from' => $from,
-					'to'   => $to,
-				];
-			}
-			usort( $blocks, static fn( array $a, array $b ): int => strcmp( $a['from'], $b['from'] ) );
-			if ( count( $blocks ) > 2 || ( 2 === count( $blocks ) && $blocks[1]['from'] < $blocks[0]['to'] ) ) {
+			$blocks = self::normalize_blocks( $hours[ $day ] ?? [] );
+			if ( null === $blocks ) {
 				return false;
 			}
 			$validated[ $day ] = $blocks ?: null;
 		}
 		update_option( self::OPTION_KEY, wp_json_encode( $validated ) );
 		return true;
+	}
+
+	/**
+	 * Bloky Pracovní doby jednoho dne seřazené podle začátku: 0–2 bloky „od–do“ (HH:MM),
+	 * které se nepřekrývají. Stejná pravidla platí pro Výjimku s jinou Pracovní dobou.
+	 *
+	 * @return list<array{from:string,to:string}>|null null, když je vstup neplatný.
+	 */
+	public static function normalize_blocks( mixed $blocks ): ?array {
+		if ( ! is_array( $blocks ) ) {
+			return null;
+		}
+		$normalized = [];
+		foreach ( $blocks as $block ) {
+			$from = is_array( $block ) ? (string) ( $block['from'] ?? '' ) : '';
+			$to   = is_array( $block ) ? (string) ( $block['to'] ?? '' ) : '';
+			if ( ! self::is_valid_time( $from ) || ! self::is_valid_time( $to ) || $from >= $to ) {
+				return null;
+			}
+			$normalized[] = [
+				'from' => $from,
+				'to'   => $to,
+			];
+		}
+		usort( $normalized, static fn( array $a, array $b ): int => strcmp( $a['from'], $b['from'] ) );
+		if ( count( $normalized ) > 2 || ( 2 === count( $normalized ) && $normalized[1]['from'] < $normalized[0]['to'] ) ) {
+			return null;
+		}
+		return $normalized;
 	}
 
 	/** Krok mřížky Termínů v minutách, mřížka začíná na začátku každého bloku Pracovní doby. */

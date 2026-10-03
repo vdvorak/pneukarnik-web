@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Pneukarnik_DB {
 
 	private const DB_VERSION_OPTION = 'pneukarnik_db_version';
-	private const DB_VERSION        = '1.5';
+	private const DB_VERSION        = '1.6';
 
 	/** Testy běží uvnitř transakce WP test suite, transakce pluginu pak používají savepoint. */
 	private static bool $savepoints = false;
@@ -55,8 +55,30 @@ class Pneukarnik_DB {
 			self::move_service_to_booking_services();
 		}
 
+		// 1.5 → 1.6: Výjimky s rozsahem a opakováním místo jednotlivých uzavřených dnů.
+		if ( $installed && version_compare( (string) $installed, '1.6', '<' ) ) {
+			self::move_closed_dates_to_day_exceptions();
+		}
+
 		update_option( self::DB_VERSION_OPTION, self::DB_VERSION );
 		pneukarnik_ensure_capabilities();
+	}
+
+	private static function move_closed_dates_to_day_exceptions(): void {
+		global $wpdb;
+		$closed_dates = $wpdb->prefix . 'pneukarnik_closed_dates';
+		if ( ! $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $closed_dates ) ) ) {
+			return;
+		}
+		$wpdb->query(
+			$wpdb->prepare(
+				'INSERT INTO %i (date_from, date_to, yearly, hours, note, created_at)
+				 SELECT date, date, 0, IF(is_fully_closed = 1, NULL, custom_hours), note, created_at FROM %i ORDER BY id',
+				self::day_exceptions_table(),
+				$closed_dates
+			)
+		);
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE %i', $closed_dates ) );
 	}
 
 	private static function move_service_to_booking_services(): void {
@@ -166,15 +188,18 @@ class Pneukarnik_DB {
 			KEY idx_status (status)
 		) ENGINE=InnoDB $charset_collate;";
 
-		$closed_dates = "CREATE TABLE {$wpdb->prefix}pneukarnik_closed_dates (
-			id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-			date            DATE            NOT NULL,
-			is_fully_closed TINYINT(1)      NOT NULL DEFAULT 1,
-			custom_hours    JSON            DEFAULT NULL,
-			note            VARCHAR(255)    DEFAULT NULL,
-			created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-			PRIMARY KEY (id),
-			UNIQUE KEY uq_date (date)
+		// Výjimky. hours NULL = zavřeno, jinak JSON se 1–2 bloky {from, to}.
+		// yearly = opakovat každý rok podle dne a měsíce date_from–date_to.
+		$day_exceptions = "CREATE TABLE {$wpdb->prefix}pneukarnik_day_exceptions (
+			id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			date_from  DATE            NOT NULL,
+			date_to    DATE            NOT NULL,
+			yearly     TINYINT(1)      NOT NULL DEFAULT 0,
+			hours      JSON            DEFAULT NULL,
+			note       VARCHAR(255)    DEFAULT NULL,
+			created_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			KEY idx_range (yearly, date_from, date_to)
 		) ENGINE=InnoDB $charset_collate;";
 
 		// Služby Rezervace v pořadí, jak je Zákazník vybral. Název, Délka a cena platí k okamžiku vytvoření.
@@ -194,7 +219,7 @@ class Pneukarnik_DB {
 		) ENGINE=InnoDB $charset_collate;";
 
 		dbDelta( $bookings );
-		dbDelta( $closed_dates );
+		dbDelta( $day_exceptions );
 		dbDelta( $booking_services );
 	}
 
@@ -209,9 +234,8 @@ class Pneukarnik_DB {
 		return $wpdb->prefix . 'pneukarnik_booking_services';
 	}
 
-	// Vrátí plný název tabulky uzavřených termínů
-	public static function closed_dates_table(): string {
+	public static function day_exceptions_table(): string {
 		global $wpdb;
-		return $wpdb->prefix . 'pneukarnik_closed_dates';
+		return $wpdb->prefix . 'pneukarnik_day_exceptions';
 	}
 }

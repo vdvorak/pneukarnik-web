@@ -1,6 +1,7 @@
 // @ts-check
 /**
- * Rezervační formulář: načte volné Termíny pro vybrané Služby a den a odešle Rezervaci na REST API pluginu.
+ * Rezervační formulář: kalendář dnů s volným Termínem, volné Termíny pro vybrané Služby a den
+ * a odeslání Rezervace na REST API pluginu.
  * Pravidla (mřížka, obsazenost, validace) jsou na serveru, tady se jen zobrazují jejich výsledky.
  */
 
@@ -51,6 +52,21 @@ function errorMessages(phone) {
 /** @param {string} hhmm */
 const humanTime = (hhmm) => hhmm.replace(/^0/, '');
 
+const monthTitle = new Intl.DateTimeFormat('cs', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+const dayLabel = new Intl.DateTimeFormat('cs', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+
+/**
+ * Dny kalendáře jako UTC půlnoci, aby výpočty nezávisely na časové zóně prohlížeče.
+ * @param {string} ymd YYYY-MM-DD nebo YYYY-MM
+ */
+function utcDate(ymd) {
+	const [year, month, day = 1] = ymd.split('-').map(Number);
+	return new Date(Date.UTC(year, month - 1, day));
+}
+
+/** @param {Date} date */
+const toYmd = (date) => date.toISOString().slice(0, 10);
+
 /**
  * @param {HTMLElement} element
  * @param {string} text
@@ -71,12 +87,21 @@ function init() {
 	const sablona = /** @type {HTMLTemplateElement} */ (document.getElementById('rez-sluzba-sablona'));
 	const pridat = /** @type {HTMLButtonElement} */ (document.getElementById('rez-pridat-sluzbu'));
 	const date = /** @type {HTMLInputElement} */ (form.elements.namedItem('date'));
+	const dny = /** @type {HTMLElement} */ (document.getElementById('kalendar-dny'));
+	const mesic = /** @type {HTMLElement} */ (document.getElementById('kalendar-mesic'));
+	const stav = /** @type {HTMLElement} */ (document.getElementById('kalendar-stav'));
+	const predchozi = /** @type {HTMLButtonElement} */ (document.getElementById('kalendar-predchozi'));
+	const dalsi = /** @type {HTMLButtonElement} */ (document.getElementById('kalendar-dalsi'));
 	const terminy = /** @type {HTMLElement} */ (document.getElementById('terminy'));
 	const zprava = /** @type {HTMLElement} */ (document.getElementById('rezervace-zprava'));
 	const submit = /** @type {HTMLButtonElement} */ (form.querySelector('button[type="submit"]'));
 	const maxServices = Math.min(config.max_services, config.services.length);
 	let request = 0;
+	let daysRequest = 0;
 	let rows = 1;
+	let month = config.min_date.slice(0, 7);
+	/** @type {Set<string>} */
+	let availableDays = new Set();
 
 	const serviceSelects = () => /** @type {HTMLSelectElement[]} */ ([...sluzby.querySelectorAll('select')]);
 	const serviceIds = () => serviceSelects().map((select) => select.value).filter(Boolean);
@@ -102,11 +127,81 @@ function init() {
 			row.remove();
 			syncServices();
 			pridat.focus();
+			loadDays();
 			loadTerminy();
 		});
 		sluzby.append(row);
 		syncServices();
 		select.focus();
+	}
+
+	/** Mřížka měsíce: dny bez volného Termínu jsou vypnuté (zašedlé). */
+	function renderCalendar() {
+		const first = utcDate(month);
+		mesic.textContent = monthTitle.format(first);
+		predchozi.disabled = month <= config.min_date.slice(0, 7);
+		dalsi.disabled = month >= config.max_date.slice(0, 7);
+
+		const cells = /** @type {HTMLElement[]} */ ([]);
+		for (let i = 0; i < (first.getUTCDay() + 6) % 7; i++) cells.push(document.createElement('td'));
+		for (const day = new Date(first); day.getUTCMonth() === first.getUTCMonth(); day.setUTCDate(day.getUTCDate() + 1)) {
+			const ymd = toYmd(day);
+			const button = Object.assign(document.createElement('button'), {
+				type: 'button',
+				textContent: String(day.getUTCDate()),
+				disabled: !availableDays.has(ymd),
+			});
+			button.dataset.date = ymd;
+			button.setAttribute('aria-label', dayLabel.format(day));
+			button.setAttribute('aria-pressed', String(ymd === date.value));
+			const cell = document.createElement('td');
+			cell.append(button);
+			cells.push(cell);
+		}
+		const weeks = [];
+		for (let i = 0; i < cells.length; i += 7) {
+			const row = document.createElement('tr');
+			row.append(...cells.slice(i, i + 7));
+			weeks.push(row);
+		}
+		dny.replaceChildren(...weeks);
+	}
+
+	async function loadDays() {
+		const current = ++daysRequest;
+		const ids = serviceIds();
+		availableDays = new Set();
+		if (ids.length === 0) {
+			setText(stav, 'Nejdřív vyberte službu, pak uvidíte volné dny.');
+			renderCalendar();
+			return;
+		}
+		setText(stav, 'Načítám volné dny…');
+		renderCalendar();
+		try {
+			const query = new URLSearchParams(ids.map((id) => ['service_ids[]', id]));
+			query.set('month', month);
+			const response = await fetch(`${config.api}/available-days?${query}`, { headers: { Accept: 'application/json' } });
+			if (current !== daysRequest) return;
+			const data = await response.json();
+			if (!response.ok) {
+				setText(stav, messages[/** @type {ApiError} */ (data).code] ?? 'Volné dny se nepodařilo načíst.');
+				return;
+			}
+			availableDays = new Set(/** @type {{ days: string[] }} */ (data).days);
+			setText(stav, availableDays.size ? 'Zašedlé dny nemají volný termín.' : 'V tomto měsíci nejsou volné termíny. Zkuste další měsíc.');
+			renderCalendar();
+		} catch {
+			if (current === daysRequest) setText(stav, messages.network);
+		}
+	}
+
+	/** @param {number} delta */
+	function moveMonth(delta) {
+		const first = utcDate(month);
+		first.setUTCMonth(first.getUTCMonth() + delta);
+		month = toYmd(first).slice(0, 7);
+		loadDays();
 	}
 
 	/** @param {string} text */
@@ -210,7 +305,7 @@ function init() {
 			} else {
 				setText(zprava, messages[error.code] ?? messages.network);
 				if (error.code === 'booking.slot_taken' || error.code === 'booking.slot_unavailable') {
-					await loadTerminy();
+					await Promise.all([loadTerminy(), loadDays()]);
 				}
 			}
 		} catch {
@@ -222,11 +317,22 @@ function init() {
 
 	sluzby.addEventListener('change', () => {
 		syncServices();
+		loadDays();
 		loadTerminy();
 	});
 	pridat.addEventListener('click', addService);
-	date.addEventListener('change', loadTerminy);
+	dny.addEventListener('click', (event) => {
+		const button = /** @type {HTMLElement} */ (event.target).closest('button');
+		if (!button?.dataset.date) return;
+		date.value = button.dataset.date;
+		dny.querySelectorAll('[aria-pressed="true"]').forEach((pressed) => pressed.setAttribute('aria-pressed', 'false'));
+		button.setAttribute('aria-pressed', 'true');
+		loadTerminy();
+	});
+	predchozi.addEventListener('click', () => moveMonth(-1));
+	dalsi.addEventListener('click', () => moveMonth(1));
 	syncServices();
+	loadDays();
 	form.addEventListener('submit', send);
 	loadTerminy();
 }

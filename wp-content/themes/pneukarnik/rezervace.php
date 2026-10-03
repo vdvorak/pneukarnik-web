@@ -64,11 +64,27 @@ get_header();
 				<span class="pole__chyba" id="chyba-service_ids"></span>
 			</p>
 
-			<p class="pole">
-				<label for="rez-den"><?php esc_html_e( 'Den', 'pneukarnik' ); ?></label>
-				<input id="rez-den" type="date" name="date" required min="<?php echo esc_attr( $pneukarnik_config['min_date'] ); ?>" max="<?php echo esc_attr( $pneukarnik_config['max_date'] ); ?>" aria-describedby="chyba-date">
+			<fieldset class="kalendar" aria-describedby="kalendar-stav chyba-date">
+				<legend><?php esc_html_e( 'Den', 'pneukarnik' ); ?></legend>
+				<input type="hidden" name="date" id="rez-den">
+				<p class="kalendar__hlavicka">
+					<button type="button" id="kalendar-predchozi" aria-label="<?php esc_attr_e( 'Předchozí měsíc', 'pneukarnik' ); ?>">‹</button>
+					<span id="kalendar-mesic" aria-live="polite"></span>
+					<button type="button" id="kalendar-dalsi" aria-label="<?php esc_attr_e( 'Další měsíc', 'pneukarnik' ); ?>">›</button>
+				</p>
+				<table class="kalendar__mrizka">
+					<thead>
+						<tr>
+							<?php foreach ( [ 'Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne' ] as $pneukarnik_weekday ) : ?>
+								<th scope="col"><?php echo esc_html( $pneukarnik_weekday ); ?></th>
+							<?php endforeach; ?>
+						</tr>
+					</thead>
+					<tbody id="kalendar-dny"></tbody>
+				</table>
+				<p id="kalendar-stav" class="pole__napoveda"></p>
 				<span class="pole__chyba" id="chyba-date"></span>
-			</p>
+			</fieldset>
 
 			<fieldset class="terminy">
 				<legend><?php esc_html_e( 'Volné termíny', 'pneukarnik' ); ?></legend>

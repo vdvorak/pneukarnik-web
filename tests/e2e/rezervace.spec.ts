@@ -1,5 +1,5 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
-import { login, publishService, saveBookingSettings, uniqueTitle, upcomingWeekday } from './support/admin';
+import { addClosedDay, E2E_PREFIX, login, pickDay, publishService, saveBookingSettings, uniqueTitle, upcomingWeekday } from './support/admin';
 
 // Dílna je jedna, testy si tedy nesmí brát Termíny navzájem.
 test.describe.configure({ mode: 'serial' });
@@ -59,7 +59,7 @@ test('Zákazník si z detailu Služby zarezervuje Termín a uvidí potvrzení', 
 	await page.getByRole('link', { name: 'Rezervovat' }).click();
 
 	await expect(page.getByLabel('Služba')).toHaveValue(String(serviceId));
-	await page.getByLabel('Den').fill(date);
+	await pickDay(page, date);
 	await page.getByLabel('8:00–9:00').check();
 	await page.getByLabel('Jméno nebo firma').fill(customer.name);
 	await page.getByLabel('Telefon').fill(customer.phone);
@@ -86,7 +86,7 @@ test('Zákazník přidá další Službu a Termín trvá součet Délek', async 
 	const extra = page.getByLabel('Další služba');
 	await expect(extra.locator(`option[value="${serviceId}"]`)).toBeDisabled();
 	await extra.selectOption(String(extraId));
-	await page.getByLabel('Den').fill(upcomingWeekday(4));
+	await pickDay(page, upcomingWeekday(4));
 	await page.getByLabel('8:00–9:30').check();
 	await page.getByLabel('Jméno nebo firma').fill(customer.name);
 	await page.getByLabel('Telefon').fill(customer.phone);
@@ -104,7 +104,7 @@ test('Zákazník přidá další Službu a Termín trvá součet Délek', async 
 test('Formulář bez údajů ukáže chyby u polí', async ({ page }) => {
 	await page.goto(`/rezervace/`);
 	await page.getByLabel('Služba').selectOption(String(serviceId));
-	await page.getByLabel('Den').fill(upcomingWeekday(1));
+	await pickDay(page, upcomingWeekday(1));
 	await page.getByLabel('9:00–10:00').check();
 	await page.getByRole('button', { name: 'Rezervovat' }).click();
 
@@ -117,7 +117,7 @@ test('Když Termín mezitím někdo obsadí, formulář to řekne a nabídne zby
 	const date = upcomingWeekday(2);
 	await page.goto(`/rezervace/`);
 	await page.getByLabel('Služba').selectOption(String(serviceId));
-	await page.getByLabel('Den').fill(date);
+	await pickDay(page, date);
 	await page.getByLabel('10:00–11:00').check();
 	await page.getByLabel('Jméno nebo firma').fill(customer.name);
 	await page.getByLabel('Telefon').fill(customer.phone);
@@ -140,4 +140,23 @@ test('Ze souběžných požadavků o stejný Termín uspěje právě jeden', asy
 	const statuses = responses.map((r) => r.status()).sort();
 
 	expect(statuses).toEqual([201, 409, 409, 409, 409, 409, 409, 409]);
+});
+
+test('Den s Výjimkou „zavřeno“ je v kalendáři zašedlý', async ({ page }) => {
+	const closed = upcomingWeekday(5);
+	const open = upcomingWeekday(6);
+	await login(page);
+	await addClosedDay(page, closed, `${E2E_PREFIX}dovolená`);
+
+	await page.goto('/rezervace/');
+	await page.getByLabel('Služba', { exact: true }).selectOption(String(serviceId));
+	while (!(await page.locator(`[data-date="${closed}"]`).isVisible())) {
+		await page.getByRole('button', { name: 'Další měsíc' }).click();
+	}
+
+	await expect(page.locator(`[data-date="${closed}"]`)).toBeDisabled();
+	if (open.slice(0, 7) === closed.slice(0, 7)) {
+		await expect(page.locator(`[data-date="${open}"]`)).toBeEnabled();
+	}
+	await expect(page.getByText('Zašedlé dny nemají volný termín.')).toBeVisible();
 });

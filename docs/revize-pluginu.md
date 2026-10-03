@@ -67,7 +67,7 @@ Seřazené podle ticketu, který je vyřeší. Nic z toho dnes neběží v provo
 
 ### Výjimky a Sezóny (#6, #7)
 
-13. **Výjimky jsou jen jednorázová data.** Chybí „opakovat každý rok“ a státní svátky ČR (včetně Velikonoc).
+13. **Výjimky jsou jen jednorázová data.** Chybí „opakovat každý rok“ a státní svátky ČR (včetně Velikonoc). **Vyřešeno v #6:** Výjimka má rozsah od–do a volbu „opakovat každý rok“ (tabulka `pneukarnik_day_exceptions`, DB 1.6, `pneukarnik_closed_dates` převedena a odstraněna). Svátky ČR se počítají v kódu a jde je jednotlivě vypnout.
 14. **Sezóna se počítá podle dnešního data, ne podle data Termínu.** Je jen jedna (rozsah MM‑DD + „vynutit“). Chybí jarní a podzimní a leasingové datum.
 
 ### Zrušení a e‑maily (#8, #10)
@@ -83,8 +83,8 @@ Seřazené podle ticketu, který je vyřeší. Nic z toho dnes neběží v provo
 ### Administrace, PDF, iCal (#11, #12)
 
 22. **Oprávnění jsou nekonzistentní.** Nastavení a uzavřené dny chtějí `manage_options`, seznam vlastní capabilities. Zadání: capabilities „spravovat“ a „prohlížet rezervace“.
-23. **Mazání uzavřeného dne jde přes GET.** Nonce sice má, ale data mění GET požadavek.
-24. **Formuláře administrace nepřesměrují.** Zpracování POST (Zrušení, nová Rezervace, Nastavení, uzavřené dny) běží až uvnitř stránky, po odeslání hlavičky administrace. `wp_safe_redirect` pak selže na „headers already sent“ a uživatel místo hlášky uvidí useknutou stránku. Zpracování patří do `load-{$hook}` nebo `admin_post_*`. **Částečně v #4:** Nastavení se zpracuje v `load-{stránka}`, ostatní formuláře řeší #11.
+23. **Mazání uzavřeného dne jde přes GET.** Nonce sice má, ale data mění GET požadavek. **Vyřešeno v #6:** Výjimka se maže formulářem POST s nonce.
+24. **Formuláře administrace nepřesměrují.** Zpracování POST (Zrušení, nová Rezervace, Nastavení, uzavřené dny) běží až uvnitř stránky, po odeslání hlavičky administrace. `wp_safe_redirect` pak selže na „headers already sent“ a uživatel místo hlášky uvidí useknutou stránku. Zpracování patří do `load-{$hook}` nebo `admin_post_*`. **Částečně v #4 a #6:** Nastavení a Výjimky se zpracují v `load-{stránka}`, ostatní formuláře řeší #11.
 25. **PDF neumí UTF‑8.** FPDF čeština se transliteruje (`iconv //TRANSLIT`) a hlavičky jsou bez diakritiky. Zvážit tFPDF s TTF fontem.
 26. **iCal feed obsahuje osobní údaje** (jméno, telefon, poznámka). Chrání ho jen tajný token v URL. To je v pořádku, token jde přegenerovat a porovnává se přes `hash_equals`.
 27. **iCal neescapuje text.** Jméno, telefon a firma jdou do SUMMARY/DESCRIPTION bez escapování podle RFC 5545 (`\n`, `,`, `;`, `\`) a ze vstupu se z nich neodstraňují konce řádků. Veřejně vytvořená Rezervace tak může do kalendáře Provozovatele vložit vlastní řádky i celé události. **Vyřešeno v #4:** escapování TEXT podle RFC 5545, hlídá to test.

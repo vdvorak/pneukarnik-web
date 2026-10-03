@@ -20,14 +20,7 @@ class Pneukarnik_Rest_Slots {
 				'callback'            => [ $this, 'list_slots' ],
 				'permission_callback' => '__return_true',
 				'args'                => [
-					'service_ids' => [
-						'required'    => true,
-						'type'        => 'array',
-						'items'       => [ 'type' => 'integer' ],
-						'minItems'    => 1,
-						'maxItems'    => Pneukarnik_Booking::MAX_SERVICES,
-						'uniqueItems' => true,
-					],
+					'service_ids' => self::service_ids_arg(),
 					'date'        => [
 						'required'          => true,
 						'type'              => 'string',
@@ -45,14 +38,7 @@ class Pneukarnik_Rest_Slots {
 
 		$resolved = Pneukarnik_Booking::resolve_services( $service_ids );
 		if ( ! $resolved['ok'] ) {
-			return new WP_REST_Response(
-				[
-					'code'    => $resolved['code'],
-					'message' => $resolved['code'],
-					'data'    => [ 'status' => $resolved['status'] ],
-				],
-				$resolved['status']
-			);
+			return self::refusal( $resolved );
 		}
 
 		$response = new WP_REST_Response(
@@ -65,5 +51,35 @@ class Pneukarnik_Rest_Slots {
 		);
 		$response->header( 'Cache-Control', 'no-store' );
 		return $response;
+	}
+
+	/**
+	 * Parametr service_ids: 1..n různých Služeb jedné Rezervace.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public static function service_ids_arg(): array {
+		return [
+			'required'    => true,
+			'type'        => 'array',
+			'items'       => [ 'type' => 'integer' ],
+			'minItems'    => 1,
+			'maxItems'    => Pneukarnik_Booking::MAX_SERVICES,
+			'uniqueItems' => true,
+		];
+	}
+
+	/**
+	 * @param array{code:string,status:int} $refusal Proč Služby nejde rezervovat online.
+	 */
+	public static function refusal( array $refusal ): WP_REST_Response {
+		return new WP_REST_Response(
+			[
+				'code'    => $refusal['code'],
+				'message' => $refusal['code'],
+				'data'    => [ 'status' => $refusal['status'] ],
+			],
+			$refusal['status']
+		);
 	}
 }

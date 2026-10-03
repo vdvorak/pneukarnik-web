@@ -87,15 +87,52 @@ export async function saveBookingSettings(page: Page): Promise<void> {
 	await expect(page.getByText('Nastavení uložena.')).toBeVisible();
 }
 
-/** n-tý pracovní den (Po–Pá) počínaje pozítřkem, jako YYYY-MM-DD v místním čase. */
+const pad = (value: number) => String(value).padStart(2, '0');
+
+/** Svátky ČR v roce jako MM-DD (Velký pátek a Velikonoční pondělí podle Velikonoc). */
+function holidays(year: number): Set<string> {
+	const a = year % 19;
+	const b = Math.floor(year / 100);
+	const c = year % 100;
+	const h = (19 * a + b - Math.floor(b / 4) - Math.floor((b - Math.floor((b + 8) / 25) + 1) / 3) + 15) % 30;
+	const l = (32 + 2 * (b % 4) + 2 * Math.floor(c / 4) - h - (c % 4)) % 7;
+	const m = Math.floor((a + 11 * h + 22 * l) / 451);
+	const easter = new Date(year, Math.floor((h + l - 7 * m + 114) / 31) - 1, ((h + l - 7 * m + 114) % 31) + 1);
+	const shifted = (days: number) => {
+		const day = new Date(easter);
+		day.setDate(day.getDate() + days);
+		return `${pad(day.getMonth() + 1)}-${pad(day.getDate())}`;
+	};
+	return new Set(['01-01', shifted(-2), shifted(1), '05-01', '05-08', '07-05', '07-06', '09-28', '10-28', '11-17', '12-24', '12-25', '12-26']);
+}
+
+/** n-tý pracovní den (Po–Pá mimo svátky) počínaje pozítřkem, jako YYYY-MM-DD v místním čase. */
 export function upcomingWeekday(n: number): string {
 	const day = new Date();
 	day.setDate(day.getDate() + 2);
 	let found = -1;
 	for (;;) {
-		if (day.getDay() !== 0 && day.getDay() !== 6 && ++found === n) break;
+		const workday = day.getDay() !== 0 && day.getDay() !== 6 && !holidays(day.getFullYear()).has(`${pad(day.getMonth() + 1)}-${pad(day.getDate())}`);
+		if (workday && ++found === n) break;
 		day.setDate(day.getDate() + 1);
 	}
-	const pad = (value: number) => String(value).padStart(2, '0');
 	return `${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}`;
+}
+
+/** Vybere den v kalendáři rezervačního formuláře, případně přejde na jeho měsíc. */
+export async function pickDay(page: Page, date: string): Promise<void> {
+	const day = page.locator(`[data-date="${date}"]`);
+	while (!(await day.isVisible())) {
+		await page.getByRole('button', { name: 'Další měsíc' }).click();
+	}
+	await day.click();
+}
+
+/** Přidá v administraci celodenní Výjimku „zavřeno“ na jeden den. */
+export async function addClosedDay(page: Page, date: string, note: string): Promise<void> {
+	await page.goto('/wp-admin/admin.php?page=pneukarnik-day-exceptions');
+	await page.getByLabel('Od', { exact: true }).fill(date);
+	await page.getByLabel('Poznámka').fill(note);
+	await page.getByRole('button', { name: 'Přidat Výjimku' }).click();
+	await expect(page.getByText('Výjimka uložena.')).toBeVisible();
 }
