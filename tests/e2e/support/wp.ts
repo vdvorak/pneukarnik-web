@@ -41,3 +41,21 @@ function wpCli(command: string[]): string {
 }
 
 const shellQuote = (value: string) => `'${value.replace(/'/g, `'\\''`)}'`;
+
+/**
+ * Zveřejněná Služba se všemi povinnými poli a daným slugem (formulář administrace slug nenastavuje).
+ * Název musí začínat E2E_PREFIX, aby ji smazal global-teardown. Vrací ID.
+ */
+export function createService(title: string, slug: string, category: 'pneuservis' | 'autoservis'): number {
+	const meta = { _service_category: category, _service_perex: 'Popis.', _service_price: '500', _service_duration: '60' };
+	return Number(
+		wpCli([
+			'wp', 'post', 'create', '--post_type=pneukarnik_service', '--post_status=publish', `--post_title=${title}`, `--post_name=${slug}`, `--meta_input=${JSON.stringify(meta)}`, '--porcelain',
+		]).trim(),
+	);
+}
+
+/** Smaže příspěvky (i Služby) natrvalo. */
+export function deletePosts(ids: number[]): void {
+	if (ids.length) wpCli(['wp', 'post', 'delete', ...ids.map(String), '--force', '--quiet']);
+}

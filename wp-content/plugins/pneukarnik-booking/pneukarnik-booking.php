@@ -77,6 +77,7 @@ spl_autoload_register(
 			'Pneukarnik_Admin_Guide_Meta'     => 'admin/class-admin-guide-meta.php',
 			'Pneukarnik_Admin_Day_Exceptions' => 'admin/class-admin-day-exceptions.php',
 			'Pneukarnik_Legacy_Import'        => 'includes/class-legacy-import.php',
+			'Pneukarnik_Old_Urls'             => 'includes/class-old-urls.php',
 			'Pneukarnik_Rest_Legacy_Import'   => 'api/class-rest-legacy-import.php',
 			'Pneukarnik_Admin_Legacy_Import'  => 'admin/class-admin-legacy-import.php',
 		];
@@ -124,6 +125,7 @@ Pneukarnik_Promotion_Type::init();
 Pneukarnik_Notice_Type::init();
 Pneukarnik_Guide_Type::init();
 Pneukarnik_Booking_Pages::init();
+Pneukarnik_Old_Urls::init();
 Pneukarnik_Seo::init();
 add_action( 'init', [ 'Pneukarnik_Admin_Service_Meta', 'init' ] );
 add_action( 'init', [ 'Pneukarnik_Admin_Promotion_Meta', 'init' ] );

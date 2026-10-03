@@ -21,7 +21,7 @@ get_header();
 		<?php pneukarnik_contact_cta( 'uvod__cta' ); ?>
 	</section>
 
-	<section class="uvod__kategorie">
+	<section class="uvod__kategorie" id="sluzby">
 		<h2><?php esc_html_e( 'Co pro vás uděláme', 'pneukarnik' ); ?></h2>
 		<ul class="dlazdice">
 			<?php foreach ( Pneukarnik_Service::categories() as $pneukarnik_category => $pneukarnik_label ) : ?>
