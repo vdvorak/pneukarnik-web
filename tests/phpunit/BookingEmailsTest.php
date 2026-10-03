@@ -144,20 +144,10 @@ class BookingEmailsTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	public function test_provozovatel_is_not_notified_about_bookings_entered_in_administration(): void {
-		$result = Pneukarnik_Booking::create(
-			[
-				'service_ids' => [ $this->tyres ],
-				'date'        => self::MONDAY,
-				'time'        => '09:00',
-				'name'        => 'Telefonická objednávka',
-				'phone'       => '603123456',
-				'email'       => self::CUSTOMER,
-				'plate'       => '1AB2345',
-			],
-			Pneukarnik_Booking::SOURCE_ADMIN
-		);
+		$this->log_in_as( 'administrator' );
 
-		$this->assertTrue( $result['ok'] );
+		$this->admin_booking( $this->admin_book( $this->tyres, self::MONDAY, '09:00', [ 'email' => self::CUSTOMER ] ) );
+
 		$this->assertSame( [ [ self::CUSTOMER ] ], array_column( $this->mails, 'to' ) );
 	}
 

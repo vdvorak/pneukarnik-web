@@ -150,20 +150,9 @@ class SeasonTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	public function test_provozovatel_can_enter_a_non_seasonal_service_in_season(): void {
-		$result = Pneukarnik_Booking::create(
-			[
-				'service_ids' => [ $this->oil ],
-				'date'        => '2027-03-10',
-				'time'        => '08:00',
-				'name'        => 'Telefonická objednávka',
-				'phone'       => '603123456',
-				'email'       => 'telefon@example.test',
-				'plate'       => '1AB2345',
-			],
-			Pneukarnik_Booking::SOURCE_ADMIN
-		);
+		$this->log_in_as( 'administrator' );
 
-		$this->assertTrue( $result['ok'], (string) wp_json_encode( $result ) );
+		$this->admin_booking( $this->admin_book( $this->oil, '2027-03-10', '08:00' ) );
 	}
 
 	/**

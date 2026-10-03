@@ -1,0 +1,205 @@
+/* Kalendář Rezervací v administraci (admin-calendar.js). */
+
+.pnk-cal__toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	margin: 12px 0;
+}
+
+.pnk-cal__label {
+	font-size: 1.1em;
+	margin: 0 8px;
+}
+
+.pnk-cal__views .button[aria-pressed="true"] {
+	background: #2271b1;
+	border-color: #2271b1;
+	color: #fff;
+}
+
+.pnk-cal__status:empty {
+	display: none;
+}
+
+.pnk-cal__grid {
+	display: grid;
+	grid-template-columns: 48px repeat(var(--pnk-days, 7), minmax(120px, 1fr));
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	overflow-x: auto;
+}
+
+.pnk-cal__head {
+	padding: 6px;
+	border-left: 1px solid #dcdcde;
+	border-bottom: 1px solid #c3c4c7;
+	text-align: center;
+}
+
+.pnk-cal__head small {
+	display: block;
+	color: #646970;
+}
+
+.pnk-cal__head .button-link {
+	font-weight: 600;
+}
+
+.pnk-cal__today.pnk-cal__head {
+	background: #f0f6fc;
+}
+
+.pnk-cal__axis {
+	position: relative;
+}
+
+.pnk-cal__hour {
+	position: absolute;
+	right: 6px;
+	transform: translateY(-50%);
+	font-size: 11px;
+	color: #646970;
+}
+
+.pnk-cal__hour:first-child {
+	transform: none;
+}
+
+.pnk-cal__body {
+	position: relative;
+	border-left: 1px solid #dcdcde;
+	background: #f6f7f7;
+}
+
+.pnk-cal__body[title] {
+	cursor: copy;
+}
+
+.pnk-cal__body--closed {
+	background: repeating-linear-gradient(135deg, #f0f0f1 0 8px, #e6e6e7 8px 16px);
+}
+
+.pnk-cal__open {
+	position: absolute;
+	left: 0;
+	right: 0;
+	background: #fff;
+}
+
+.pnk-cal__line {
+	position: absolute;
+	left: 0;
+	right: 0;
+	border-top: 1px solid #ececed;
+	z-index: 1;
+}
+
+.pnk-cal__booking {
+	position: absolute;
+	left: 3px;
+	right: 3px;
+	z-index: 2;
+	overflow: hidden;
+	padding: 2px 4px;
+	border: 0;
+	border-left: 4px solid #135e96;
+	border-radius: 3px;
+	background: #c5d9ed;
+	color: #1d2327;
+	font-size: 12px;
+	line-height: 1.3;
+	text-align: left;
+	cursor: pointer;
+}
+
+.pnk-cal__booking--web {
+	border-left-color: #00a32a;
+	background: #d1ecd7;
+}
+
+.pnk-cal__booking:focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: 1px;
+}
+
+.pnk-cal__booking strong,
+.pnk-cal__booking span,
+.pnk-cal__booking em {
+	display: block;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.pnk-cal__dialog {
+	width: min(560px, calc(100vw - 32px));
+	max-height: calc(100vh - 64px);
+	padding: 16px 20px;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+}
+
+.pnk-cal__dialog::backdrop {
+	background: rgb(0 0 0 / 0.4);
+}
+
+.pnk-cal__dialog h2 {
+	margin-top: 0;
+}
+
+.pnk-cal__detail {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	gap: 4px 16px;
+}
+
+.pnk-cal__detail dt {
+	color: #646970;
+}
+
+.pnk-cal__detail dd {
+	margin: 0;
+	white-space: pre-line;
+}
+
+.pnk-cal__services {
+	display: grid;
+	gap: 2px;
+	margin-bottom: 8px;
+}
+
+.pnk-cal__termin {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	align-items: center;
+}
+
+.pnk-cal__field label {
+	display: block;
+	font-weight: 600;
+}
+
+.pnk-cal__field input,
+.pnk-cal__field textarea {
+	width: 100%;
+}
+
+.pnk-cal__error,
+.pnk-cal__form-error {
+	display: block;
+	color: #b32d2e;
+}
+
+.pnk-cal__actions {
+	display: flex;
+	gap: 8px;
+	margin-bottom: 0;
+}
+
+.pnk-cal__danger.button-primary {
+	background: #b32d2e;
+	border-color: #b32d2e;
+}

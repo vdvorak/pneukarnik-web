@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Pneukarnik_DB {
 
 	private const DB_VERSION_OPTION = 'pneukarnik_db_version';
-	private const DB_VERSION        = '1.8';
+	private const DB_VERSION        = '1.9';
 
 	/** Testy běží uvnitř transakce WP test suite, transakce pluginu pak používají savepoint. */
 	private static bool $savepoints = false;
@@ -80,6 +80,12 @@ class Pneukarnik_DB {
 				add_option( 'pneukarnik_cancellation_hours', 24 * max( 0, (int) $days ) );
 				delete_option( 'pneukarnik_cancellation_days' );
 			}
+		}
+
+		// 1.8 → 1.9: zdroj Rezervace zadané v administraci se jmenuje podle slovníku „provozovatel“.
+		if ( $installed && version_compare( (string) $installed, '1.9', '<' ) ) {
+			global $wpdb;
+			$wpdb->query( $wpdb->prepare( 'UPDATE %i SET source = %s WHERE source = %s', self::bookings_table(), Pneukarnik_Booking::SOURCE_PROVOZOVATEL, 'admin' ) );
 		}
 
 		update_option( self::DB_VERSION_OPTION, self::DB_VERSION );

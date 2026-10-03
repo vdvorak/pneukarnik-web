@@ -179,6 +179,44 @@ abstract class Pneukarnik_REST_Test_Case extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Přihlásí nového uživatele s rolí (administrator, pneukarnik_manager, pneukarnik_viewer, subscriber …).
+	 */
+	protected function log_in_as( string $role ): void {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => $role ] ) );
+	}
+
+	/**
+	 * Telefonická objednávka Provozovatelem (POST /admin/bookings) jen s povinnými poli,
+	 * jednotlivá pole jde přepsat nebo doplnit. Přihlášení zařídí volající.
+	 *
+	 * @param int|list<int>        $service_ids
+	 * @param array<string, mixed> $overrides
+	 */
+	protected function admin_book( int|array $service_ids, string $date, string $time, array $overrides = [] ): WP_REST_Response {
+		return $this->rest(
+			'POST',
+			'/admin/bookings',
+			$overrides + [
+				'service_ids' => (array) $service_ids,
+				'date'        => $date,
+				'time'        => $time,
+				'name'        => 'Telefonická objednávka',
+				'phone'       => '603 123 456',
+			]
+		);
+	}
+
+	/**
+	 * Rezervace z úspěšné odpovědi /admin/bookings.
+	 *
+	 * @return array<string, mixed>
+	 */
+	protected function admin_booking( WP_REST_Response $response, int $status = 201 ): array {
+		$this->assertSame( $status, $response->get_status(), (string) wp_json_encode( $response->get_data() ) );
+		return $response->get_data()['booking'];
+	}
+
+	/**
 	 * Odeslané e‑maily od zavolání capture_mails(), jak je předal WordPress PHPMaileru.
 	 *
 	 * @var list<array{to:list<string>,subject:string,html:string,text:string,from_name:string,reply_to:list<string>}>

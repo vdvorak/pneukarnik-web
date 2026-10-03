@@ -42,9 +42,9 @@ class Pneukarnik_Slot_Engine {
 	/**
 	 * Jestli je Termín v nabídce dne bez ohledu na obsazenost (mřížka, Pracovní doba, předstih, horizont).
 	 */
-	public static function is_offered( int $duration, string $date, string $time_start, bool $customer_limits = true ): bool {
+	public static function is_offered( int $duration, string $date, string $time_start ): bool {
 		$start = self::hhmm_to_minutes( $time_start );
-		foreach ( self::offered_intervals( $duration, $date, $customer_limits ) as [ $candidate ] ) {
+		foreach ( self::offered_intervals( $duration, $date ) as [ $candidate ] ) {
 			if ( $candidate === $start ) {
 				return true;
 			}
@@ -53,10 +53,23 @@ class Pneukarnik_Slot_Engine {
 	}
 
 	/**
-	 * Jestli úsek dne překrývá potvrzenou Rezervaci.
+	 * Jestli úsek dne překrývá potvrzenou Rezervaci (kromě $except_id, která se přesouvá).
 	 */
-	public static function overlaps_confirmed( string $date, string $time_start, string $time_end ): bool {
-		return self::overlaps_any( self::hhmm_to_minutes( $time_start ), self::hhmm_to_minutes( $time_end ), self::confirmed_intervals( $date ) );
+	public static function overlaps_confirmed( string $date, string $time_start, string $time_end, int $except_id = 0 ): bool {
+		return self::overlaps_any( self::hhmm_to_minutes( $time_start ), self::hhmm_to_minutes( $time_end ), self::confirmed_intervals( $date, $except_id ) );
+	}
+
+	/**
+	 * Jestli celý úsek [začátek, konec) v minutách leží v jednom bloku efektivní Pracovní doby dne.
+	 * Bez mřížky, předstihu a horizontu (zadání Provozovatelem).
+	 */
+	public static function within_working_hours( string $date, int $start, int $end ): bool {
+		foreach ( self::resolve_effective_hours( $date ) ?? [] as $block ) {
+			if ( $start >= self::hhmm_to_minutes( $block['from'] ) && $end <= self::hhmm_to_minutes( $block['to'] ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -92,22 +105,22 @@ class Pneukarnik_Slot_Engine {
 	}
 
 	/**
-	 * Předstih a horizont platí pro Zákazníky, ne pro Provozovatele (telefonické objednávky).
+	 * Online nabídka: mřížka, předstih pro dnešek a horizont.
 	 *
 	 * @return list<array{0:int,1:int}> [začátek, konec] v minutách od půlnoci
 	 */
-	private static function offered_intervals( int $duration, string $date, bool $customer_limits = true ): array {
+	private static function offered_intervals( int $duration, string $date ): array {
 		if ( $duration <= 0 ) {
 			return [];
 		}
 		$today = Pneukarnik_Clock::today();
 		$day   = Pneukarnik_Clock::at( $date );
-		if ( $day < $today || ( $customer_limits && $day > $today->modify( '+' . Pneukarnik_Working_Hours::get_horizon_days() . ' days' ) ) ) {
+		if ( $day < $today || $day > $today->modify( '+' . Pneukarnik_Working_Hours::get_horizon_days() . ' days' ) ) {
 			return [];
 		}
 
 		$earliest = 0;
-		if ( $customer_limits && $day == $today ) { // phpcs:ignore Universal.Operators.StrictComparisons.LooseEqual -- porovnání okamžiků DateTimeImmutable.
+		if ( $day == $today ) { // phpcs:ignore Universal.Operators.StrictComparisons.LooseEqual -- porovnání okamžiků DateTimeImmutable.
 			$from_now = Pneukarnik_Clock::now()->modify( '+' . Pneukarnik_Working_Hours::get_lead_minutes() . ' minutes' );
 			if ( $from_now->format( 'Y-m-d' ) !== $date ) {
 				return [];
@@ -132,13 +145,14 @@ class Pneukarnik_Slot_Engine {
 	/**
 	 * @return list<array{0:int,1:int}>
 	 */
-	private static function confirmed_intervals( string $date ): array {
+	private static function confirmed_intervals( string $date, int $except_id = 0 ): array {
 		global $wpdb;
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT TIME_FORMAT(time_start, '%%H:%%i') AS s, TIME_FORMAT(time_end, '%%H:%%i') AS e FROM %i WHERE booking_date = %s AND status = 'CONFIRMED'",
+				"SELECT TIME_FORMAT(time_start, '%%H:%%i') AS s, TIME_FORMAT(time_end, '%%H:%%i') AS e FROM %i WHERE booking_date = %s AND status = 'CONFIRMED' AND id <> %d",
 				Pneukarnik_DB::bookings_table(),
-				$date
+				$date,
+				$except_id
 			),
 			ARRAY_A
 		);

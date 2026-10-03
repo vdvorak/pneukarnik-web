@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Pneukarnik_Admin_Pdf {
 
 	public static function handle_export(): void {
-		if ( ! current_user_can( 'pneukarnik_view_bookings' ) && ! current_user_can( 'pneukarnik_manage_bookings' ) && ! current_user_can( 'manage_options' ) ) {
+		if ( ! Pneukarnik_Access::can_view() ) {
 			wp_die( esc_html__( 'Nemáte oprávnění.', 'pneukarnik-booking' ) );
 		}
 

@@ -112,7 +112,7 @@ final class Pneukarnik_Notifications {
 		return ( new Pneukarnik_Email( self::provozovatel_subject( __( 'Nová rezervace: %1$s, %2$s', 'pneukarnik-booking' ), $booking ) ) )
 			->heading( __( 'Nová online rezervace', 'pneukarnik-booking' ) )
 			->details( self::visit( $booking ) + self::customer( $booking ) )
-			->button( __( 'Otevřít v administraci', 'pneukarnik-booking' ), admin_url( 'admin.php?page=pneukarnik-booking&booking_id=' . (int) $booking['id'] ) );
+			->button( __( 'Otevřít v administraci', 'pneukarnik-booking' ), Pneukarnik_Admin_Calendar::url( $booking['booking_date'], (int) $booking['id'] ) );
 	}
 
 	/**

@@ -8,11 +8,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * GET  /wp-json/pneukarnik/v1/cancellation?token=   detail Rezervace z odkazu a co odkaz udělá
  * POST /wp-json/pneukarnik/v1/cancellation {token}  Zrušení odkazem z e‑mailu
- * POST /wp-json/pneukarnik/v1/bookings/{id}/cancel  Zrušení Provozovatelem
  *
  * Kódy: cancellation.allowed, .cancelled, .too_late, .already_cancelled, .invalid_token,
  * .rate_limited (429, každý POST odkazem se počítá do limitu IP, viz Pneukarnik_Rate_Limit).
- * Odpovědi bez osobních údajů Zákazníka.
+ * Odpovědi bez osobních údajů Zákazníka. Zrušení Provozovatelem: Pneukarnik_Rest_Admin.
  */
 class Pneukarnik_Rest_Cancel {
 
@@ -33,22 +32,6 @@ class Pneukarnik_Rest_Cancel {
 				],
 			]
 		);
-
-		register_rest_route(
-			PNEUKARNIK_REST_NAMESPACE,
-			'/bookings/(?P<id>\d+)/cancel',
-			[
-				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'cancel_by_provozovatel' ],
-				'permission_callback' => static fn(): bool => current_user_can( 'manage_options' ),
-				'args'                => [
-					'id' => [
-						'type'              => 'integer',
-						'sanitize_callback' => 'absint',
-					],
-				],
-			]
-		);
 	}
 
 	public function preview( WP_REST_Request $request ): WP_REST_Response {
@@ -66,13 +49,6 @@ class Pneukarnik_Rest_Cancel {
 		/** @var mixed $body Tělo může být i jiná JSON hodnota než objekt. */
 		$body = $request->get_json_params();
 		return self::result( Pneukarnik_Cancellation::cancel_by_token( is_array( $body ) ? $body['token'] ?? null : null ) );
-	}
-
-	public function cancel_by_provozovatel( WP_REST_Request $request ): WP_REST_Response {
-		/** @var mixed $body Tělo může být i jiná JSON hodnota než objekt. */
-		$body   = $request->get_json_params();
-		$reason = is_array( $body ) && is_string( $body['reason'] ?? null ) ? sanitize_text_field( $body['reason'] ) : '';
-		return self::result( Pneukarnik_Cancellation::cancel_by_provozovatel( (int) $request->get_param( 'id' ), '' !== $reason ? $reason : null ) );
 	}
 
 	/**

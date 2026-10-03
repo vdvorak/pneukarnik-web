@@ -38,6 +38,9 @@ spl_autoload_register(
 			'Pneukarnik_Booking_Pages'        => 'includes/class-booking-pages.php',
 			'Pneukarnik_Cancellation'         => 'includes/class-cancellation.php',
 			'Pneukarnik_Rate_Limit'           => 'includes/class-rate-limit.php',
+			'Pneukarnik_Access'               => 'includes/class-access.php',
+			'Pneukarnik_Rest_Admin'           => 'api/class-rest-admin.php',
+			'Pneukarnik_Admin_Calendar'       => 'admin/class-admin-calendar.php',
 			'Pneukarnik_Notifications'        => 'includes/class-notifications.php',
 			'Pneukarnik_Email'                => 'includes/class-email.php',
 			'Pneukarnik_GDPR'                 => 'includes/class-gdpr.php',
@@ -51,7 +54,6 @@ spl_autoload_register(
 			'Pneukarnik_Rest_Calendar'        => 'api/class-rest-calendar.php',
 			'Pneukarnik_Admin_Settings'       => 'admin/class-admin-settings.php',
 			'Pneukarnik_Admin_Bookings'       => 'admin/class-admin-bookings.php',
-			'Pneukarnik_Admin_Create'         => 'admin/class-admin-create.php',
 			'Pneukarnik_Admin_Pdf'            => 'admin/class-admin-pdf.php',
 			'Pneukarnik_Admin_Service_Meta'   => 'admin/class-admin-service-meta.php',
 			'Pneukarnik_Admin_Day_Exceptions' => 'admin/class-admin-day-exceptions.php',
@@ -90,11 +92,7 @@ function pneukarnik_deactivate(): void {
 }
 
 function pneukarnik_ensure_capabilities(): void {
-	$admin = get_role( 'administrator' );
-	if ( $admin ) {
-		$admin->add_cap( 'pneukarnik_manage_bookings' );
-		$admin->add_cap( 'pneukarnik_view_bookings' );
-	}
+	Pneukarnik_Access::ensure();
 }
 
 // GDPR
@@ -129,30 +127,43 @@ function pneukarnik_register_rest_routes(): void {
 	( new Pneukarnik_Rest_Cancel() )->register_routes();
 	( new Pneukarnik_Rest_Prefill() )->register_routes();
 	( new Pneukarnik_Rest_Calendar() )->register_routes();
+	( new Pneukarnik_Rest_Admin() )->register_routes();
 }
 
 function pneukarnik_register_admin_menus(): void {
 	add_menu_page(
-		__( 'Pneukarnik', 'pneukarnik-booking' ),
-		__( 'Pneukarnik', 'pneukarnik-booking' ),
-		'pneukarnik_view_bookings',
-		'pneukarnik-booking',
-		[ 'Pneukarnik_Admin_Bookings', 'render_page' ],
+		__( 'Rezervace', 'pneukarnik-booking' ),
+		__( 'Rezervace', 'pneukarnik-booking' ),
+		Pneukarnik_Access::VIEW,
+		Pneukarnik_Admin_Calendar::PAGE,
+		[ 'Pneukarnik_Admin_Calendar', 'render_page' ],
 		'dashicons-car',
 		30
 	);
 
+	$calendar_hook = add_submenu_page(
+		Pneukarnik_Admin_Calendar::PAGE,
+		__( 'Kalendář', 'pneukarnik-booking' ),
+		__( 'Kalendář', 'pneukarnik-booking' ),
+		Pneukarnik_Access::VIEW,
+		Pneukarnik_Admin_Calendar::PAGE,
+		[ 'Pneukarnik_Admin_Calendar', 'render_page' ]
+	);
+	if ( $calendar_hook ) {
+		add_action( "admin_print_scripts-{$calendar_hook}", [ 'Pneukarnik_Admin_Calendar', 'enqueue' ] );
+	}
+
 	add_submenu_page(
-		'pneukarnik-booking',
-		__( 'Rezervace', 'pneukarnik-booking' ),
-		__( 'Rezervace', 'pneukarnik-booking' ),
-		'pneukarnik_view_bookings',
-		'pneukarnik-booking',
+		Pneukarnik_Admin_Calendar::PAGE,
+		__( 'Seznam rezervací', 'pneukarnik-booking' ),
+		__( 'Seznam', 'pneukarnik-booking' ),
+		Pneukarnik_Access::VIEW,
+		Pneukarnik_Admin_Bookings::PAGE,
 		[ 'Pneukarnik_Admin_Bookings', 'render_page' ]
 	);
 
 	$settings_hook = add_submenu_page(
-		'pneukarnik-booking',
+		Pneukarnik_Admin_Calendar::PAGE,
 		__( 'Nastavení', 'pneukarnik-booking' ),
 		__( 'Nastavení', 'pneukarnik-booking' ),
 		'manage_options',
@@ -164,7 +175,7 @@ function pneukarnik_register_admin_menus(): void {
 	}
 
 	$exceptions_hook = add_submenu_page(
-		'pneukarnik-booking',
+		Pneukarnik_Admin_Calendar::PAGE,
 		__( 'Výjimky', 'pneukarnik-booking' ),
 		__( 'Výjimky', 'pneukarnik-booking' ),
 		'manage_options',

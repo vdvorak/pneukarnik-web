@@ -15,11 +15,13 @@
 			"DOM.Iterable"
 		],
 		"allowJs": true,
-		"checkJs": true
+		"checkJs": true,
+		"moduleDetection": "force"
 	},
 	"include": [
 		"playwright.config.ts",
 		"tests/e2e/**/*.ts",
-		"wp-content/themes/pneukarnik/assets/js/**/*.js"
+		"wp-content/themes/pneukarnik/assets/js/**/*.js",
+		"wp-content/plugins/pneukarnik-booking/assets/**/*.js"
 	]
 }

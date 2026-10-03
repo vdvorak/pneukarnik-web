@@ -6,17 +6,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Vytvoření Rezervace a její načtení.
+ * Vytvoření, úprava a načtení Rezervace.
  *
  * Postup: validace polí → pravidla každé Služby → pravidla dne (Sezóna, leasing) → Termín je
  * v nabídce dne → se zámkem dne a v transakci ověřit, že úsek nic nepřekrývá, a zapsat.
  * Dílna má kapacitu 1.
  * Rezervace má 1..n Služeb a zabírá dílnu po dobu součtu jejich Délek.
+ *
+ * Provozovatel (telefonické objednávky): e‑mail a SPZ nepovinné, i Služby jen na telefon,
+ * bez Sezóny, mřížky, předstihu a horizontu. Mimo Pracovní dobu jen s outside_working_hours,
+ * překryv nikdy.
  */
 class Pneukarnik_Booking {
 
-	public const SOURCE_WEB   = 'web';
-	public const SOURCE_ADMIN = 'admin';
+	public const SOURCE_WEB          = 'web';
+	public const SOURCE_PROVOZOVATEL = 'provozovatel';
+
+	public const STATUS_CONFIRMED = 'CONFIRMED';
+	public const STATUS_CANCELLED = 'CANCELLED';
 
 	/** Nejvíc Služeb v jedné Rezervaci. */
 	public const MAX_SERVICES = 10;
@@ -56,40 +63,40 @@ class Pneukarnik_Booking {
 	 *
 	 * Vstup: service_ids (seznam 1..n), date (Y-m-d), time (HH:MM), name, phone, email, plate,
 	 * volitelně company, vehicle, note, leasing + leasing_company (povinná s leasingem),
-	 * stored_wheels (uloží se, jen když se na ně ptá některá ze Služeb), consent_gdpr (povinný jen z webu).
-	 * Sezóna a leasingové datum platí jen pro online Rezervace.
+	 * stored_wheels (z webu se uloží, jen když se na ně ptá některá ze Služeb), consent_gdpr (povinný jen z webu).
+	 * Sezóna a leasingové datum platí jen pro online Rezervace. Provozovatel: viz popis třídy.
 	 *
 	 * @param array<mixed> $data Neověřený vstup.
 	 * @return array{ok:true,booking:array<string,mixed>,confirmation_token:string}
 	 *       |array{ok:false,code:string,status:int,errors?:array<string,string>,season?:array<string,mixed>}
 	 */
 	public static function create( array $data, string $source = self::SOURCE_WEB ): array {
-		[ $input, $errors ] = self::validate_fields( $data, self::SOURCE_WEB === $source );
+		$online             = self::SOURCE_WEB === $source;
+		[ $input, $errors ] = self::validate_fields( $data, $online );
 		if ( $errors ) {
-			return [
-				'ok'     => false,
-				'code'   => 'booking.invalid_fields',
-				'status' => 422,
-				'errors' => $errors,
-			];
+			return self::invalid_fields( $errors );
 		}
 
-		$resolved = self::resolve_services( $input['service_ids'] );
+		$resolved = self::resolve_services( $input['service_ids'], $online );
 		if ( ! $resolved['ok'] ) {
 			return $resolved;
 		}
 		$services = $resolved['services'];
 		$duration = $resolved['duration'];
 
-		if ( self::SOURCE_WEB === $source ) {
+		if ( $online ) {
 			$refusal = self::day_refusal( $services, $input['leasing'], $input['date'] );
 			if ( null !== $refusal ) {
 				return $refusal;
 			}
-		}
-
-		if ( ! Pneukarnik_Slot_Engine::is_offered( $duration, $input['date'], $input['time'], self::SOURCE_WEB === $source ) ) {
-			return self::error( 'booking.slot_unavailable', 422 );
+			if ( ! Pneukarnik_Slot_Engine::is_offered( $duration, $input['date'], $input['time'] ) ) {
+				return self::error( 'booking.slot_unavailable', 422 );
+			}
+		} else {
+			$refusal = self::provozovatel_time_refusal( $input['date'], $input['time'], $duration, self::checked( $data['outside_working_hours'] ?? null ) );
+			if ( null !== $refusal ) {
+				return $refusal;
+			}
 		}
 
 		$time_end = Pneukarnik_Slot_Engine::minutes_to_hhmm( Pneukarnik_Slot_Engine::hhmm_to_minutes( $input['time'] ) + $duration );
@@ -118,19 +125,108 @@ class Pneukarnik_Booking {
 	}
 
 	/**
+	 * Úprava Rezervace Provozovatelem: kontakt, poznámka, leasing, uskladněná kola, Služby a Termín.
+	 * Chybějící pole zůstanou. Při změně Služeb nebo Termínu platí stejná pravidla času jako
+	 * při zadání Provozovatelem. Služby, které se nezměnily, si nechají název, Délku a cenu
+	 * z okamžiku vytvoření. Zrušenou Rezervaci upravit nejde.
+	 *
+	 * @param array<mixed> $data Neověřený vstup, pole jako u create() a outside_working_hours.
+	 * @return array{ok:true,booking:array<string,mixed>}
+	 *       |array{ok:false,code:string,status:int,errors?:array<string,string>}
+	 */
+	public static function update( int $id, array $data ): array {
+		$booking = self::get_by_id( $id );
+		if ( null === $booking ) {
+			return self::error( 'booking.not_found', 404 );
+		}
+		if ( self::STATUS_CONFIRMED !== $booking['status'] ) {
+			return self::error( 'booking.cancelled', 409 );
+		}
+
+		$current            = self::input_of( $booking );
+		[ $input, $errors ] = self::validate_fields( array_intersect_key( $data, $current ) + $current, false );
+		if ( $errors ) {
+			return self::invalid_fields( $errors );
+		}
+
+		$services = null;
+		$duration = (int) array_sum( array_column( $booking['services'], 'duration' ) );
+		if ( $input['service_ids'] !== $current['service_ids'] ) {
+			$resolved = self::resolve_services( $input['service_ids'], false );
+			if ( ! $resolved['ok'] ) {
+				return $resolved;
+			}
+			$services = $resolved['services'];
+			$duration = $resolved['duration'];
+		}
+
+		$moved = null !== $services || $input['date'] !== $current['date'] || $input['time'] !== $current['time'];
+		if ( ! $moved ) {
+			self::write_contact( $id, $input );
+			return [
+				'ok'      => true,
+				'booking' => self::get_by_id( $id ) ?? $booking,
+			];
+		}
+
+		$refusal = self::provozovatel_time_refusal( $input['date'], $input['time'], $duration, self::checked( $data['outside_working_hours'] ?? null ) );
+		if ( null !== $refusal ) {
+			return $refusal;
+		}
+		$time_end = Pneukarnik_Slot_Engine::minutes_to_hhmm( Pneukarnik_Slot_Engine::hhmm_to_minutes( $input['time'] ) + $duration );
+		$result   = Pneukarnik_DB::with_day_lock(
+			$input['date'],
+			static fn(): array => self::move_if_free( $id, $input, $services, $time_end )
+		);
+		if ( null === $result ) {
+			return self::error( 'booking.busy', 503 );
+		}
+		if ( ! $result['ok'] ) {
+			return $result;
+		}
+		return [
+			'ok'      => true,
+			'booking' => self::get_by_id( $id ) ?? $booking,
+		];
+	}
+
+	/**
+	 * Proč Provozovatel Rezervaci na tento čas zadat nemůže, nebo null. Mimo Pracovní dobu
+	 * (celý úsek v jednom bloku efektivní Pracovní doby dne) jen s vědomým potvrzením.
+	 *
+	 * @return array{ok:false,code:string,status:int}|null
+	 */
+	private static function provozovatel_time_refusal( string $date, string $time, int $duration, bool $outside_confirmed ): ?array {
+		$start = Pneukarnik_Slot_Engine::hhmm_to_minutes( $time );
+		if ( $duration <= 0 ) {
+			return self::error( 'booking.no_duration', 422 );
+		}
+		if ( $start + $duration > 24 * 60 ) {
+			return self::error( 'booking.past_midnight', 422 );
+		}
+		if ( ! $outside_confirmed && ! Pneukarnik_Slot_Engine::within_working_hours( $date, $start, $start + $duration ) ) {
+			return self::error( 'booking.outside_working_hours', 422 );
+		}
+		return null;
+	}
+
+	/**
 	 * Služby Rezervace v zadaném pořadí a součet jejich Délek, nebo důvod první Služby,
-	 * kterou rezervovat nejde.
+	 * kterou rezervovat nejde. Provozovatel (online = false) zadá i Službu jen na telefon.
 	 *
 	 * @param list<int> $service_ids
 	 * @return array{ok:true,services:list<Pneukarnik_Service>,duration:int}|array{ok:false,code:string,status:int}
 	 */
-	public static function resolve_services( array $service_ids ): array {
+	public static function resolve_services( array $service_ids, bool $online = true ): array {
 		$services = [];
 		foreach ( $service_ids as $id ) {
 			$service = Pneukarnik_Service::find( $id );
-			$refusal = self::service_refusal( $service );
-			if ( null !== $refusal || null === $service ) {
-				return $refusal ?? self::error( 'booking.service_not_found', 404 );
+			if ( null === $service || 'publish' !== $service->status ) {
+				return self::error( 'booking.service_not_found', 404 );
+			}
+			$refusal = $online ? self::service_refusal( $service ) : null;
+			if ( null !== $refusal ) {
+				return $refusal;
 			}
 			$services[] = $service;
 		}
@@ -278,6 +374,84 @@ class Pneukarnik_Booking {
 	}
 
 	/**
+	 * Potvrzené Rezervace ve dnech od–do (včetně) podle Termínu.
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	public static function confirmed_between( string $from, string $to ): array {
+		global $wpdb;
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE booking_date BETWEEN %s AND %s AND status = %s ORDER BY booking_date, time_start',
+				Pneukarnik_DB::bookings_table(),
+				$from,
+				$to,
+				self::STATUS_CONFIRMED
+			),
+			ARRAY_A
+		);
+		return array_map( [ self::class, 'hydrate' ], $rows ?: [] );
+	}
+
+	/**
+	 * Seznam Rezervací pro Provozovatele podle Termínu vzestupně.
+	 * Hledání podle jména (i firmy), SPZ a e‑mailu po částech textu, telefonu podle číslic.
+	 *
+	 * @param array{from?:string,to?:string,status?:string,search?:string} $filters status: CONFIRMED, CANCELLED, nebo prázdný = vše.
+	 * @return array{bookings:list<array<string,mixed>>,total:int}
+	 */
+	public static function search( array $filters, int $page, int $per_page ): array {
+		global $wpdb;
+		$wheres = [ '1=1' ];
+		$args   = [];
+		if ( '' !== ( $filters['from'] ?? '' ) ) {
+			$wheres[] = 'booking_date >= %s';
+			$args[]   = $filters['from'];
+		}
+		if ( '' !== ( $filters['to'] ?? '' ) ) {
+			$wheres[] = 'booking_date <= %s';
+			$args[]   = $filters['to'];
+		}
+		if ( '' !== ( $filters['status'] ?? '' ) ) {
+			$wheres[] = 'status = %s';
+			$args[]   = $filters['status'];
+		}
+		$search = trim( $filters['search'] ?? '' );
+		if ( '' !== $search ) {
+			$like   = '%' . $wpdb->esc_like( $search ) . '%';
+			$plate  = '%' . $wpdb->esc_like( strtoupper( (string) preg_replace( '/[\s\-]/', '', $search ) ) ) . '%';
+			$or     = [ 'customer_name LIKE %s', 'customer_company LIKE %s', 'customer_email LIKE %s', 'customer_plate LIKE %s' ];
+			$args   = [ ...$args, $like, $like, $like, $plate ];
+			$digits = (string) preg_replace( '/\D/', '', $search );
+			if ( strlen( $digits ) >= 3 ) {
+				$or[]   = "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(customer_phone, ' ', ''), '-', ''), '/', ''), '(', ''), ')', '') LIKE %s";
+				$args[] = '%' . $digits . '%';
+			}
+			$wheres[] = '(' . implode( ' OR ', $or ) . ')';
+		}
+		$where_sql = implode( ' AND ', $wheres );
+		$table     = Pneukarnik_DB::bookings_table();
+
+		// $where_sql skládá jen pevné fragmenty s placeholdery, hodnoty jdou přes prepare().
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+		$total = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE {$where_sql}", $table, ...$args ) );
+		$rows  = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM %i WHERE {$where_sql} ORDER BY booking_date, time_start, id LIMIT %d OFFSET %d",
+				$table,
+				...[ ...$args, $per_page, ( max( 1, $page ) - 1 ) * $per_page ]
+			),
+			ARRAY_A
+		);
+		// phpcs:enable
+
+		return [
+			'bookings' => array_map( [ self::class, 'hydrate' ], $rows ?: [] ),
+			'total'    => $total,
+		];
+	}
+
+	/**
 	 * @param array{service_ids:list<int>,date:string,time:string,name:string,company:string,phone:string,email:string,plate:string,vehicle:string,note:string,leasing:bool,leasing_company:string,stored_wheels:bool,consent_gdpr:bool} $input
 	 * @param list<Pneukarnik_Service> $services
 	 * @return array{ok:true,id:int,cancel_token:string,confirmation_token:string}|array{ok:false,code:string,status:int}
@@ -323,11 +497,11 @@ class Pneukarnik_Booking {
 				'vehicle'            => '' !== $input['vehicle'] ? $input['vehicle'] : null,
 				'leasing'            => $input['leasing'] ? 1 : 0,
 				'leasing_company'    => $input['leasing'] ? $input['leasing_company'] : null,
-				'stored_wheels'      => $input['stored_wheels'] && self::asks_stored_wheels( $services ) ? 1 : 0,
+				'stored_wheels'      => $input['stored_wheels'] && ( self::SOURCE_WEB !== $source || self::asks_stored_wheels( $services ) ) ? 1 : 0,
 				'booking_date'       => $input['date'],
 				'time_start'         => $input['time'],
 				'time_end'           => $time_end,
-				'status'             => 'CONFIRMED',
+				'status'             => self::STATUS_CONFIRMED,
 				'cancel_token_hash'  => hash( 'sha256', $cancel_token ),
 				'confirm_token_hash' => hash( 'sha256', $confirmation_token ),
 				'consent_gdpr_at'    => $input['consent_gdpr'] ? $now->format( 'Y-m-d H:i:s' ) : null,
@@ -341,24 +515,9 @@ class Pneukarnik_Booking {
 		}
 		$id = (int) $wpdb->insert_id;
 
-		foreach ( $services as $position => $service ) {
-			$price    = $service->price_by_vehicle ? null : $service->price;
-			$inserted = $wpdb->insert(
-				Pneukarnik_DB::booking_services_table(),
-				[
-					'booking_id'   => $id,
-					'position'     => $position,
-					'service_id'   => $service->id,
-					'service_name' => $service->title,
-					'duration'     => $service->duration,
-					'price'        => $price,
-					'price_from'   => null !== $price && $service->price_from ? 1 : 0,
-				]
-			);
-			if ( ! $inserted ) {
-				Pneukarnik_DB::rollback();
-				return self::error( 'booking.internal_error', 500 );
-			}
+		if ( ! self::insert_services( $id, $services ) ) {
+			Pneukarnik_DB::rollback();
+			return self::error( 'booking.internal_error', 500 );
 		}
 		Pneukarnik_DB::commit();
 
@@ -371,13 +530,152 @@ class Pneukarnik_Booking {
 	}
 
 	/**
+	 * Zapíše Služby Rezervace s názvem, Délkou a cenou platnými teď.
+	 *
+	 * @param list<Pneukarnik_Service> $services
+	 */
+	private static function insert_services( int $booking_id, array $services ): bool {
+		global $wpdb;
+		foreach ( $services as $position => $service ) {
+			$price    = $service->price_by_vehicle ? null : $service->price;
+			$inserted = $wpdb->insert(
+				Pneukarnik_DB::booking_services_table(),
+				[
+					'booking_id'   => $booking_id,
+					'position'     => $position,
+					'service_id'   => $service->id,
+					'service_name' => $service->title,
+					'duration'     => $service->duration,
+					'price'        => $price,
+					'price_from'   => null !== $price && $service->price_from ? 1 : 0,
+				]
+			);
+			if ( ! $inserted ) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Přesun Rezervace na jiný Termín nebo změna jejích Služeb: se zámkem dne a v transakci
+	 * ověřit, že úsek nepřekrývá jinou potvrzenou Rezervaci, a zapsat.
+	 *
+	 * @param array{service_ids:list<int>,date:string,time:string,name:string,company:string,phone:string,email:string,plate:string,vehicle:string,note:string,leasing:bool,leasing_company:string,stored_wheels:bool,consent_gdpr:bool} $input
+	 * @param list<Pneukarnik_Service>|null $services Nové Služby, null = beze změny.
+	 * @return array{ok:true}|array{ok:false,code:string,status:int}
+	 */
+	private static function move_if_free( int $id, array $input, ?array $services, string $time_end ): array {
+		global $wpdb;
+		Pneukarnik_DB::begin();
+		try {
+			if ( Pneukarnik_Slot_Engine::overlaps_confirmed( $input['date'], $input['time'], $time_end, $id ) ) {
+				Pneukarnik_DB::rollback();
+				return self::error( 'booking.slot_taken', 409 );
+			}
+			$moved    = $wpdb->update(
+				Pneukarnik_DB::bookings_table(),
+				[
+					'booking_date' => $input['date'],
+					'time_start'   => $input['time'],
+					'time_end'     => $time_end,
+				] + self::contact_columns( $input ),
+				[
+					'id'     => $id,
+					'status' => self::STATUS_CONFIRMED,
+				]
+			);
+			$replaced = null === $services || (
+				false !== $wpdb->delete( Pneukarnik_DB::booking_services_table(), [ 'booking_id' => $id ] )
+				&& self::insert_services( $id, $services )
+			);
+			if ( false === $moved || ! $replaced ) {
+				Pneukarnik_DB::rollback();
+				return self::error( 'booking.internal_error', 500 );
+			}
+			Pneukarnik_DB::commit();
+			return [ 'ok' => true ];
+		} catch ( \Throwable $e ) {
+			Pneukarnik_DB::rollback();
+			throw $e;
+		}
+	}
+
+	/**
+	 * @param array{name:string,company:string,phone:string,email:string,plate:string,vehicle:string,note:string,leasing:bool,leasing_company:string,stored_wheels:bool} $input
+	 */
+	private static function write_contact( int $id, array $input ): void {
+		global $wpdb;
+		$wpdb->update( Pneukarnik_DB::bookings_table(), self::contact_columns( $input ), [ 'id' => $id ] );
+	}
+
+	/**
+	 * Sloupce kontaktu a údajů o vozidle, které Provozovatel upravuje.
+	 *
+	 * @param array{name:string,company:string,phone:string,email:string,plate:string,vehicle:string,note:string,leasing:bool,leasing_company:string,stored_wheels:bool} $input
+	 * @return array<string, string|int|null>
+	 */
+	private static function contact_columns( array $input ): array {
+		return [
+			'customer_name'    => $input['name'],
+			'customer_company' => '' !== $input['company'] ? $input['company'] : null,
+			'customer_plate'   => $input['plate'],
+			'customer_email'   => strtolower( $input['email'] ),
+			'customer_phone'   => $input['phone'],
+			'customer_note'    => '' !== $input['note'] ? $input['note'] : null,
+			'vehicle'          => '' !== $input['vehicle'] ? $input['vehicle'] : null,
+			'leasing'          => $input['leasing'] ? 1 : 0,
+			'leasing_company'  => $input['leasing'] ? $input['leasing_company'] : null,
+			'stored_wheels'    => $input['stored_wheels'] ? 1 : 0,
+		];
+	}
+
+	/**
+	 * Uložená Rezervace jako vstup pro úpravu.
+	 *
+	 * @param array<string,mixed> $booking
+	 * @return array<string,mixed>
+	 */
+	private static function input_of( array $booking ): array {
+		return [
+			'service_ids'     => array_map( 'intval', array_column( $booking['services'], 'service_id' ) ),
+			'date'            => $booking['booking_date'],
+			'time'            => $booking['time_start'],
+			'name'            => $booking['customer_name'],
+			'company'         => (string) $booking['customer_company'],
+			'phone'           => $booking['customer_phone'],
+			'email'           => $booking['customer_email'],
+			'plate'           => $booking['customer_plate'],
+			'vehicle'         => (string) $booking['vehicle'],
+			'note'            => (string) $booking['customer_note'],
+			'leasing'         => $booking['leasing'],
+			'leasing_company' => (string) $booking['leasing_company'],
+			'stored_wheels'   => $booking['stored_wheels'],
+		];
+	}
+
+	/**
+	 * @param array<string,string> $errors
+	 * @return array{ok:false,code:string,status:int,errors:array<string,string>}
+	 */
+	private static function invalid_fields( array $errors ): array {
+		return [
+			'ok'     => false,
+			'code'   => 'booking.invalid_fields',
+			'status' => 422,
+			'errors' => $errors,
+		];
+	}
+
+	/**
 	 * Ověří a znormalizuje pole. Chyby jsou po polích se stabilními kódy:
-	 * required, invalid, too_long.
+	 * required, invalid, too_long. Online jsou povinné i e‑mail, SPZ a souhlas,
+	 * Provozovatel je zadat nemusí.
 	 *
 	 * @param array<mixed> $data
 	 * @return array{0:array{service_ids:list<int>,date:string,time:string,name:string,company:string,phone:string,email:string,plate:string,vehicle:string,note:string,leasing:bool,leasing_company:string,stored_wheels:bool,consent_gdpr:bool},1:array<string,string>}
 	 */
-	private static function validate_fields( array $data, bool $consent_required ): array {
+	private static function validate_fields( array $data, bool $online ): array {
 		$errors = [];
 		$text   = static function ( string $field ) use ( $data, &$errors ): string {
 			$value = $data[ $field ] ?? null;
@@ -436,10 +734,10 @@ class Pneukarnik_Booking {
 		$check( 'phone', $phone, true, static fn( string $v ): bool => (bool) preg_match( '/^\+?\d{9,15}$/', (string) preg_replace( '/[\s\-\/().]/', '', $v ) ) );
 
 		$email = sanitize_text_field( $text( 'email' ) );
-		$check( 'email', $email, true, static fn( string $v ): bool => (bool) is_email( $v ) );
+		$check( 'email', $email, $online, static fn( string $v ): bool => (bool) is_email( $v ) );
 
 		$plate = strtoupper( (string) preg_replace( '/[\s\-]/', '', $text( 'plate' ) ) );
-		$check( 'plate', $plate, true, static fn( string $v ): bool => (bool) preg_match( '/^[A-Z0-9]{2,10}$/', $v ) );
+		$check( 'plate', $plate, $online, static fn( string $v ): bool => (bool) preg_match( '/^[A-Z0-9]{2,10}$/', $v ) );
 
 		$vehicle = sanitize_text_field( $text( 'vehicle' ) );
 		$check( 'vehicle', $vehicle, false );
@@ -452,7 +750,7 @@ class Pneukarnik_Booking {
 		$check( 'leasing_company', $leasing ? $leasing_company : '', $leasing );
 
 		$consent = self::checked( $data['consent_gdpr'] ?? null );
-		if ( $consent_required && ! $consent ) {
+		if ( $online && ! $consent ) {
 			$errors['consent_gdpr'] = 'required';
 		}
 
