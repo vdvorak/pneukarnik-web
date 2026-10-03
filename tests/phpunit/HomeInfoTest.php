@@ -1,7 +1,7 @@
 <?php
 /**
  * Údaje pro Úvod a hlavičku: otevírací doba na 7 dní (stejná pravidla jako Termíny),
- * kontakty z Nastavení, Pohotovost jen po zapnutí, mapa a nejžádanější Služby.
+ * kontakty a sociální sítě z Nastavení, Pohotovost jen po zapnutí, mapa a nejžádanější Služby.
  */
 
 declare(strict_types=1);
@@ -112,6 +112,26 @@ class HomeInfoTest extends Pneukarnik_REST_Test_Case {
 
 		update_option( 'pneukarnik_maps_embed_url', 'https://www.google.com/maps/embed?pb=abc' );
 		$this->assertSame( 'https://www.google.com/maps/embed?pb=abc', Pneukarnik_Contact::map_embed_url() );
+	}
+
+	public function test_social_links_are_only_filled_web_addresses_in_fixed_order(): void {
+		update_option( 'pneukarnik_social_instagram', 'https://instagram.com/pneukarnik' );
+		update_option( 'pneukarnik_social_facebook', ' https://facebook.com/pneukarnik ' );
+		update_option( 'pneukarnik_social_google', 'javascript:alert(1)' );
+
+		$this->assertSame(
+			[
+				'facebook'  => [
+					'label' => 'Facebook',
+					'url'   => 'https://facebook.com/pneukarnik',
+				],
+				'instagram' => [
+					'label' => 'Instagram',
+					'url'   => 'https://instagram.com/pneukarnik',
+				],
+			],
+			Pneukarnik_Contact::social()
+		);
 	}
 
 	public function test_featured_services_are_published_ones_in_set_order(): void {

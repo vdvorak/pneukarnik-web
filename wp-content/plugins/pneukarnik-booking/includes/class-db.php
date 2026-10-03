@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Pneukarnik_DB {
 
 	private const DB_VERSION_OPTION = 'pneukarnik_db_version';
-	private const DB_VERSION        = '1.9';
+	private const DB_VERSION        = '1.10';
 
 	/** Testy běží uvnitř transakce WP test suite, transakce pluginu pak používají savepoint. */
 	private static bool $savepoints = false;
@@ -88,8 +88,24 @@ class Pneukarnik_DB {
 			$wpdb->query( $wpdb->prepare( 'UPDATE %i SET source = %s WHERE source = %s', self::bookings_table(), Pneukarnik_Booking::SOURCE_PROVOZOVATEL, 'admin' ) );
 		}
 
+		// 1.9 → 1.10: sociální sítě místo ručního JSONu v polích Kontaktu, jedno na síť.
+		if ( $installed && version_compare( (string) $installed, '1.10', '<' ) ) {
+			self::move_social_links_to_contact();
+		}
+
 		update_option( self::DB_VERSION_OPTION, self::DB_VERSION );
 		pneukarnik_ensure_capabilities();
+	}
+
+	private static function move_social_links_to_contact(): void {
+		$links = json_decode( (string) get_option( 'pneukarnik_social_links', '[]' ), true );
+		foreach ( is_array( $links ) ? $links : [] as $link ) {
+			$network = is_array( $link ) ? strtolower( (string) ( $link['platform'] ?? '' ) ) : '';
+			if ( isset( Pneukarnik_Contact::social_networks()[ $network ] ) ) {
+				add_option( Pneukarnik_Contact::OPTION_SOCIAL_PREFIX . $network, esc_url_raw( (string) ( $link['url'] ?? '' ), [ 'http', 'https' ] ) );
+			}
+		}
+		delete_option( 'pneukarnik_social_links' );
 	}
 
 	private static function move_closed_dates_to_day_exceptions(): void {

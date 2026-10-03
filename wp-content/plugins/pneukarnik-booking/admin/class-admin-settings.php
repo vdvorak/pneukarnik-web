@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // phpcs:disable WordPress.Security.NonceVerification.Recommended
 
 /**
- * WP Admin settings page — Pracovní doba, pravidla Termínů, Lhůta zrušení, Sezóny, e‑maily, kontakty, Pohotovost, Úvod, iCal.
+ * WP Admin settings page — Pracovní doba, pravidla Termínů, Lhůta zrušení, Sezóny, e‑maily, kontakty a sociální sítě, Pohotovost, Úvod, iCal.
  */
 class Pneukarnik_Admin_Settings {
 
@@ -34,7 +34,6 @@ class Pneukarnik_Admin_Settings {
 		$horizon_days         = Pneukarnik_Working_Hours::get_horizon_days();
 		$cancellation_hours   = Pneukarnik_Working_Hours::get_cancellation_hours();
 		$maps_embed_url       = (string) get_option( Pneukarnik_Contact::OPTION_MAPS_EMBED_URL, '' );
-		$social_raw           = get_option( 'pneukarnik_social_links', '[]' );
 		$booking_enabled      = Pneukarnik_Booking::online_enabled();
 		$booking_disabled_msg = Pneukarnik_Booking::online_disabled_message();
 		$create_limit         = Pneukarnik_Rate_Limit::limit( Pneukarnik_Rate_Limit::CREATE );
@@ -237,6 +236,12 @@ class Pneukarnik_Admin_Settings {
 							<p class="description"><?php esc_html_e( 'URL z Google Maps → Sdílet → Vložit mapu → atribut src iframe. Prázdné = mapa podle adresy. Mapa se na webu načte až po kliknutí Zákazníka.', 'pneukarnik-booking' ); ?></p>
 						</td>
 					</tr>
+					<?php foreach ( Pneukarnik_Contact::social_networks() as $network => $label ) : ?>
+						<tr>
+							<th><label for="pnk-social-<?php echo esc_attr( $network ); ?>"><?php echo esc_html( $label ); ?></label></th>
+							<td><input id="pnk-social-<?php echo esc_attr( $network ); ?>" type="url" name="social[<?php echo esc_attr( $network ); ?>]" value="<?php echo esc_attr( (string) get_option( Pneukarnik_Contact::OPTION_SOCIAL_PREFIX . $network, '' ) ); ?>" class="large-text" placeholder="https://"></td>
+						</tr>
+					<?php endforeach; ?>
 				</table>
 
 				<h2><?php esc_html_e( 'Pohotovost', 'pneukarnik-booking' ); ?></h2>
@@ -265,17 +270,6 @@ class Pneukarnik_Admin_Settings {
 						<td>
 							<textarea id="pnk-why-us" name="why_us" rows="4" class="large-text"><?php echo esc_textarea( (string) get_option( 'pneukarnik_why_us', '' ) ); ?></textarea>
 							<p class="description"><?php esc_html_e( 'Jeden důvod na řádek (rok založení, BestDrive, vybavení…). Prázdné = sekce se na Úvodu nezobrazí.', 'pneukarnik-booking' ); ?></p>
-						</td>
-					</tr>
-				</table>
-
-				<h2><?php esc_html_e( 'Sociální sítě (JSON)', 'pneukarnik-booking' ); ?></h2>
-				<table class="form-table">
-					<tr>
-						<th><?php esc_html_e( 'Social links JSON', 'pneukarnik-booking' ); ?></th>
-						<td>
-							<textarea name="social_links" rows="6" cols="60"><?php echo esc_textarea( $social_raw ); ?></textarea>
-							<p class="description"><?php esc_html_e( 'Format: [{"platform":"facebook","url":"https://...","label":"Facebook"}]', 'pneukarnik-booking' ); ?></p>
 						</td>
 					</tr>
 				</table>
@@ -373,6 +367,10 @@ class Pneukarnik_Admin_Settings {
 		update_option( Pneukarnik_Contact::OPTION_EMERGENCY_PHONE, sanitize_text_field( wp_unslash( $_POST['emergency_phone'] ?? '' ) ) );
 		update_option( Pneukarnik_Contact::OPTION_EMERGENCY_TEXT, sanitize_text_field( wp_unslash( $_POST['emergency_text'] ?? '' ) ) );
 		update_option( 'pneukarnik_why_us', sanitize_textarea_field( wp_unslash( $_POST['why_us'] ?? '' ) ) );
+		$social = (array) wp_unslash( $_POST['social'] ?? [] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitizuje esc_url_raw po položkách.
+		foreach ( array_keys( Pneukarnik_Contact::social_networks() ) as $network ) {
+			update_option( Pneukarnik_Contact::OPTION_SOCIAL_PREFIX . $network, esc_url_raw( (string) ( $social[ $network ] ?? '' ), [ 'http', 'https' ] ) );
+		}
 
 		// Sezóny
 		$posted  = (array) wp_unslash( $_POST['season'] ?? [] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- hodnoty projdou parse_day_month().
@@ -387,13 +385,6 @@ class Pneukarnik_Admin_Settings {
 		// iCal token regeneration
 		if ( ! empty( $_POST['regen_ical_token'] ) ) {
 			Pneukarnik_Rest_Calendar::regenerate_token();
-		}
-
-		// Social links — validate JSON
-		$social_raw     = wp_unslash( $_POST['social_links'] ?? '[]' );
-		$social_decoded = json_decode( $social_raw, true );
-		if ( is_array( $social_decoded ) ) {
-			update_option( 'pneukarnik_social_links', wp_json_encode( $social_decoded ) );
 		}
 
 		$result = [];

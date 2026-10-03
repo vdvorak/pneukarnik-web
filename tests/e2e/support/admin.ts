@@ -117,6 +117,29 @@ export async function publishNotice(page: Page, n: NoticeFields): Promise<void> 
 	await expect(page.getByText('Oznámení není zveřejněné')).toHaveCount(0);
 }
 
+export type GuideFields = {
+	title: string;
+	perex: string;
+	/** HTML textu Průvodce, zadá se v záložce Text editoru. */
+	text: string;
+	service: string;
+};
+
+/** Vyplní formulář Průvodce v administraci a klikne na Publikovat. */
+export async function publishGuide(page: Page, g: GuideFields): Promise<void> {
+	await page.goto('/wp-admin/post-new.php?post_type=pneukarnik_guide');
+	await page.fill('#title', g.title);
+	await page.getByLabel('Perex *').fill(g.perex);
+	await page.getByLabel('Služba pro rezervaci *').selectOption({ label: g.service });
+	await page.click('#content-html');
+	await page.fill('#content', g.text);
+	// Po opuštění názvu WordPress automaticky uloží koncept a mezitím zablokuje Publikovat (viz publishService()).
+	await expect(page.locator('#edit-slug-box')).not.toBeEmpty();
+	await expect(page.locator('#publish')).not.toHaveClass(/disabled/);
+	await Promise.all([page.waitForURL(/\/post\.php\?post=\d+&action=edit/), page.click('#publish')]);
+	await expect(page.getByText('Průvodce není zveřejněný')).toHaveCount(0);
+}
+
 /** Den posunutý o `days` od dneška jako YYYY-MM-DD v místním čase. */
 export function dayFromToday(days: number): string {
 	const day = new Date();

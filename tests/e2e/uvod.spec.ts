@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { dayFromToday, login, publishPromotion, publishService, uniqueTitle } from './support/admin';
 import { getOption, setOptions } from './support/wp';
 
-// Testy mění volby celého webu (adresa, Pohotovost, IČ/DIČ, „proč k nám“), jeden po druhém a nakonec je vrátí.
+// Testy Úvodu a Kontaktu mění volby celého webu (adresa, Pohotovost, IČ/DIČ, „proč k nám“), jeden po druhém a nakonec je vrátí.
 test.describe.configure({ mode: 'serial' });
 
 const touched = ['pneukarnik_address', 'pneukarnik_maps_embed_url', 'pneukarnik_why_us', 'pneukarnik_ico', 'pneukarnik_dic', 'pneukarnik_emergency_enabled', 'pneukarnik_emergency_phone', 'pneukarnik_emergency_text'];
@@ -102,4 +102,23 @@ test('Kontakty z Nastavení jsou v patičce a Pohotovost jen po zapnutí', async
 	await expect(emergency).toContainText('Pohotovost');
 	await expect(emergency.getByRole('link', { name: '+420 600 700 800' })).toHaveAttribute('href', 'tel:+420600700800');
 	await expect(emergency).toContainText('Defekt na cestě nonstop');
+});
+
+test('Kontakt má adresu, otevírací dobu, příjezd, mapu po kliknutí a fakturační údaje', async ({ page }) => {
+	setOptions({ pneukarnik_ico: '12345678', pneukarnik_dic: 'CZ12345678' });
+
+	await page.goto('/kontakt/');
+
+	await expect(page.locator('main h2')).toHaveText(['Adresa a spojení', 'Otevírací doba', 'Jak k nám', 'Mapa', 'Fakturační údaje']);
+	const contact = page.locator('.kontakt__spojeni');
+	await expect(contact).toContainText('Dobšická 10, 669 02 Znojmo');
+	await expect(contact.getByRole('link', { name: '+420 775 565 326' })).toHaveAttribute('href', 'tel:+420775565326');
+	await expect(page.locator('.kontakt__doba .oteviraci-doba tr')).toHaveCount(7);
+	await expect(page.locator('.kontakt__fakturace')).toContainText('IČ: 12345678');
+	await expect(page.locator('.kontakt__fakturace')).toContainText('DIČ: CZ12345678');
+	await expect(page.locator('.kontakt__mapa iframe')).toHaveCount(0);
+
+	await page.getByRole('button', { name: 'Zobrazit mapu' }).click();
+
+	await expect(page.locator('.kontakt__mapa iframe')).toHaveAttribute('src', /^https:\/\/www\.google\.com\/maps/);
 });

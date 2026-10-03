@@ -36,6 +36,8 @@ spl_autoload_register(
 			'Pneukarnik_Contact'              => 'includes/class-contact.php',
 			'Pneukarnik_Notice'               => 'includes/class-notice.php',
 			'Pneukarnik_Notice_Type'          => 'includes/class-notice-type.php',
+			'Pneukarnik_Guide'                => 'includes/class-guide.php',
+			'Pneukarnik_Guide_Type'           => 'includes/class-guide-type.php',
 			'Pneukarnik_Working_Hours'        => 'includes/class-working-hours.php',
 			'Pneukarnik_Season'               => 'includes/class-season.php',
 			'Pneukarnik_Day_Exceptions'       => 'includes/class-day-exceptions.php',
@@ -66,6 +68,7 @@ spl_autoload_register(
 			'Pneukarnik_Admin_Service_Meta'   => 'admin/class-admin-service-meta.php',
 			'Pneukarnik_Admin_Promotion_Meta' => 'admin/class-admin-promotion-meta.php',
 			'Pneukarnik_Admin_Notice_Meta'    => 'admin/class-admin-notice-meta.php',
+			'Pneukarnik_Admin_Guide_Meta'     => 'admin/class-admin-guide-meta.php',
 			'Pneukarnik_Admin_Day_Exceptions' => 'admin/class-admin-day-exceptions.php',
 		];
 		if ( isset( $map[ $class_name ] ) ) {
@@ -114,10 +117,12 @@ add_action( 'plugins_loaded', 'pneukarnik_ensure_capabilities' );
 Pneukarnik_Service_Type::init();
 Pneukarnik_Promotion_Type::init();
 Pneukarnik_Notice_Type::init();
+Pneukarnik_Guide_Type::init();
 Pneukarnik_Booking_Pages::init();
 add_action( 'init', [ 'Pneukarnik_Admin_Service_Meta', 'init' ] );
 add_action( 'init', [ 'Pneukarnik_Admin_Promotion_Meta', 'init' ] );
 add_action( 'init', [ 'Pneukarnik_Admin_Notice_Meta', 'init' ] );
+add_action( 'init', [ 'Pneukarnik_Admin_Guide_Meta', 'init' ] );
 add_action( 'rest_api_init', 'pneukarnik_register_rest_routes' );
 add_action( 'admin_menu', 'pneukarnik_register_admin_menus' );
 

@@ -24,6 +24,8 @@
 		<?php foreach ( Pneukarnik_Service::categories() as $pneukarnik_category => $pneukarnik_label ) : ?>
 			<a href="<?php echo esc_url( Pneukarnik_Service::category_url( $pneukarnik_category ) ); ?>"><?php echo esc_html( $pneukarnik_label ); ?></a>
 		<?php endforeach; ?>
+		<a href="<?php echo esc_url( home_url( '/o-nas/' ) ); ?>"><?php esc_html_e( 'O nás', 'pneukarnik' ); ?></a>
+		<a href="<?php echo esc_url( home_url( '/kontakt/' ) ); ?>"><?php esc_html_e( 'Kontakt', 'pneukarnik' ); ?></a>
 		<a href="<?php echo esc_url( home_url( '/rezervace/' ) ); ?>"><?php esc_html_e( 'Rezervace', 'pneukarnik' ); ?></a>
 	</nav>
 </header>

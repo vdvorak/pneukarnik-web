@@ -16,8 +16,8 @@ final class Pneukarnik_Service_Type {
 
 	public const QUERY_VAR = 'pnk_kategorie';
 
-	/** Při změně adres pluginu (Služby i stránky rezervace) zvyšte, přegenerují se samy. */
-	private const REWRITE_VERSION = '3';
+	/** Při změně adres pluginu (Služby, Průvodci i stránky rezervace) zvyšte, přegenerují se samy. */
+	private const REWRITE_VERSION = '4';
 
 	public static function init(): void {
 		add_action( 'init', [ self::class, 'register' ] );

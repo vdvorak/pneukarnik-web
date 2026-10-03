@@ -21,7 +21,9 @@ final class Pneukarnik_Contact {
 	public const OPTION_EMERGENCY_ENABLED = 'pneukarnik_emergency_enabled';
 	public const OPTION_EMERGENCY_PHONE   = 'pneukarnik_emergency_phone';
 	public const OPTION_EMERGENCY_TEXT    = 'pneukarnik_emergency_text';
-	private const DEFAULT_COMPANY         = 'Pneuservis a autoservis Jan Kárník';
+	/** Volba s adresou profilu podle sociální sítě: pneukarnik_social_{síť}. */
+	public const OPTION_SOCIAL_PREFIX = 'pneukarnik_social_';
+	private const DEFAULT_COMPANY     = 'Pneuservis a autoservis Jan Kárník';
 
 	/** Název Provozovatele pro web, e‑maily a fakturační údaje. */
 	public static function company(): string {
@@ -83,6 +85,38 @@ final class Pneukarnik_Contact {
 			'phone' => $phone,
 			'text'  => self::option( self::OPTION_EMERGENCY_TEXT ),
 		];
+	}
+
+	/**
+	 * Sociální sítě, které Provozovatel nabízí, s popiskem pro web.
+	 *
+	 * @return array<string, string> síť => popisek
+	 */
+	public static function social_networks(): array {
+		return [
+			'facebook'  => 'Facebook',
+			'instagram' => 'Instagram',
+			'google'    => __( 'Google Firma', 'pneukarnik-booking' ),
+		];
+	}
+
+	/**
+	 * Vyplněné odkazy na sociální sítě v pořadí social_networks().
+	 *
+	 * @return array<string, array{label:string,url:string}> síť => popisek a adresa
+	 */
+	public static function social(): array {
+		$links = [];
+		foreach ( self::social_networks() as $network => $label ) {
+			$url = esc_url_raw( self::option( self::OPTION_SOCIAL_PREFIX . $network ), [ 'http', 'https' ] );
+			if ( '' !== $url ) {
+				$links[ $network ] = [
+					'label' => $label,
+					'url'   => $url,
+				];
+			}
+		}
+		return $links;
 	}
 
 	private static function option( string $name ): string {
