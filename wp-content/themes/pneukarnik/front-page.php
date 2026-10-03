@@ -1,7 +1,7 @@
 <?php
 /**
  * Úvod v pořadí ze zadání: (Oznámení v hlavičce) → hero s telefonem a Rezervovat → Kategorie →
- * nejžádanější Služby → Aktuální akce → proč k nám → otevírací doba na 7 dní → mapa.
+ * nejžádanější Služby → Aktuální akce → proč k nám → Google recenze → otevírací doba na 7 dní → mapa.
  * Sekce bez obsahu se nevykreslí.
  *
  * @package Pneukarnik
@@ -10,6 +10,7 @@
 $pneukarnik_featured   = Pneukarnik_Service::featured();
 $pneukarnik_promotions = Pneukarnik_Promotion::current();
 $pneukarnik_why_us     = pneukarnik_why_us();
+$pneukarnik_reviews    = Pneukarnik_Reviews::summary();
 
 get_header();
 ?>
@@ -69,6 +70,13 @@ get_header();
 					<li><?php echo esc_html( $pneukarnik_reason ); ?></li>
 				<?php endforeach; ?>
 			</ul>
+		</section>
+	<?php endif; ?>
+
+	<?php if ( $pneukarnik_reviews ) : ?>
+		<section class="uvod__recenze">
+			<h2><?php esc_html_e( 'Hodnocení na Google', 'pneukarnik' ); ?></h2>
+			<?php pneukarnik_reviews( $pneukarnik_reviews ); ?>
 		</section>
 	<?php endif; ?>
 

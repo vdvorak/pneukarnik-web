@@ -34,6 +34,7 @@ spl_autoload_register(
 			'Pneukarnik_Publish_Guard'        => 'includes/class-publish-guard.php',
 			'Pneukarnik_Validity'             => 'includes/class-validity.php',
 			'Pneukarnik_Contact'              => 'includes/class-contact.php',
+			'Pneukarnik_Reviews'              => 'includes/class-reviews.php',
 			'Pneukarnik_Notice'               => 'includes/class-notice.php',
 			'Pneukarnik_Notice_Type'          => 'includes/class-notice-type.php',
 			'Pneukarnik_Guide'                => 'includes/class-guide.php',
@@ -88,11 +89,7 @@ function pneukarnik_activate(): void {
 	pneukarnik_ensure_capabilities();
 	// Schedule daily GDPR anonymisation cron at 03:00
 	if ( ! wp_next_scheduled( Pneukarnik_GDPR::CRON_HOOK ) ) {
-		$next_3am = Pneukarnik_Clock::today()->setTime( 3, 0 );
-		if ( $next_3am <= Pneukarnik_Clock::now() ) {
-			$next_3am = $next_3am->modify( '+1 day' );
-		}
-		wp_schedule_event( $next_3am->getTimestamp(), 'daily', Pneukarnik_GDPR::CRON_HOOK );
+		wp_schedule_event( Pneukarnik_Clock::next_at( 3 )->getTimestamp(), 'daily', Pneukarnik_GDPR::CRON_HOOK );
 	}
 }
 
@@ -102,6 +99,7 @@ function pneukarnik_deactivate(): void {
 	delete_option( 'rewrite_rules' );
 	delete_option( 'pneukarnik_rewrite_version' );
 	wp_clear_scheduled_hook( Pneukarnik_GDPR::CRON_HOOK );
+	wp_clear_scheduled_hook( Pneukarnik_Reviews::CRON_HOOK );
 }
 
 function pneukarnik_ensure_capabilities(): void {
@@ -110,6 +108,7 @@ function pneukarnik_ensure_capabilities(): void {
 
 // GDPR
 add_action( 'plugins_loaded', [ 'Pneukarnik_GDPR', 'init' ] );
+Pneukarnik_Reviews::init();
 
 // Bootstrap
 add_action( 'plugins_loaded', [ 'Pneukarnik_DB', 'maybe_upgrade' ] );

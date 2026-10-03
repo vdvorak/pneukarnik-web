@@ -1,21 +1,24 @@
 import { expect, test } from '@playwright/test';
 import { dayFromToday, login, publishPromotion, publishService, uniqueTitle } from './support/admin';
-import { getOption, setOptions } from './support/wp';
+import { getJsonOption, getOption, setJsonOption, setOptions } from './support/wp';
 
-// Testy Úvodu a Kontaktu mění volby celého webu (adresa, Pohotovost, IČ/DIČ, „proč k nám“), jeden po druhém a nakonec je vrátí.
+// Testy Úvodu a Kontaktu mění volby celého webu (adresa, Pohotovost, IČ/DIČ, „proč k nám“, recenze), jeden po druhém a nakonec je vrátí.
 test.describe.configure({ mode: 'serial' });
 
-const touched = ['pneukarnik_address', 'pneukarnik_maps_embed_url', 'pneukarnik_why_us', 'pneukarnik_ico', 'pneukarnik_dic', 'pneukarnik_emergency_enabled', 'pneukarnik_emergency_phone', 'pneukarnik_emergency_text'];
+const touched = ['pneukarnik_address', 'pneukarnik_maps_embed_url', 'pneukarnik_why_us', 'pneukarnik_ico', 'pneukarnik_dic', 'pneukarnik_emergency_enabled', 'pneukarnik_emergency_phone', 'pneukarnik_emergency_text', 'pneukarnik_reviews_enabled', 'pneukarnik_reviews_api_key', 'pneukarnik_reviews_place_id'];
 let original: Record<string, string> = {};
+let originalReviews: unknown = null;
 
 test.beforeAll(() => {
 	original = Object.fromEntries(touched.map((name) => [name, getOption(name)]));
+	originalReviews = getJsonOption('pneukarnik_reviews_cache');
 	// Mapa se bez vlastní adresy z Google Maps složí z adresy.
 	setOptions({ pneukarnik_address: 'Dobšická 10, 669 02 Znojmo', pneukarnik_maps_embed_url: '' });
 });
 
 test.afterAll(() => {
 	setOptions(original);
+	setJsonOption('pneukarnik_reviews_cache', originalReviews);
 });
 
 test('Úvod vykreslí vlastní šablona', async ({ page }) => {
@@ -121,4 +124,33 @@ test('Kontakt má adresu, otevírací dobu, příjezd, mapu po kliknutí a faktu
 	await page.getByRole('button', { name: 'Zobrazit mapu' }).click();
 
 	await expect(page.locator('.kontakt__mapa iframe')).toHaveAttribute('src', /^https:\/\/www\.google\.com\/maps/);
+});
+
+test('Google recenze z cache serveru jsou na Úvodu bez klíče API v HTML a bez požadavků na Google', async ({ page, request }) => {
+	const key = 'AIza-E2E-tajny-klic';
+	setOptions({ pneukarnik_reviews_enabled: '1', pneukarnik_reviews_api_key: key, pneukarnik_reviews_place_id: 'ChIJ-e2e' });
+	setJsonOption('pneukarnik_reviews_cache', {
+		updated_at: '2026-10-01 04:00',
+		data: {
+			rating: 4.8,
+			count: 123,
+			url: 'https://www.google.com/maps/place/?q=place_id:ChIJ-e2e',
+			reviews: [{ author: 'Eva Nováková', author_url: 'https://www.google.com/maps/contrib/2', rating: 5, text: 'Rychlé přezutí, milý personál.', date: '2026-09-20' }],
+		},
+	});
+	const google: string[] = [];
+	page.on('request', (r) => {
+		if (/google|gstatic|googleusercontent/.test(new URL(r.url()).hostname)) google.push(r.url());
+	});
+
+	await page.goto('/');
+
+	await expect(page.locator('main h2')).toContainText(['Proč k nám', 'Hodnocení na Google', 'Otevírací doba']);
+	const reviews = page.locator('.uvod__recenze');
+	await expect(reviews).toContainText('4,8 z 5 (123 hodnocení)');
+	await expect(reviews).toContainText('Rychlé přezutí, milý personál.');
+	await expect(reviews.getByRole('link', { name: 'Všechna hodnocení na Google' })).toHaveAttribute('href', 'https://www.google.com/maps/place/?q=place_id:ChIJ-e2e');
+	await page.waitForLoadState('networkidle');
+	expect(google).toEqual([]);
+	expect(await (await request.get('/')).text()).not.toContain(key);
 });

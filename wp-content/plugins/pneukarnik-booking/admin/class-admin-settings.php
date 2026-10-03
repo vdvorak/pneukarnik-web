@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // phpcs:disable WordPress.Security.NonceVerification.Recommended
 
 /**
- * WP Admin settings page — Pracovní doba, pravidla Termínů, Lhůta zrušení, Sezóny, e‑maily, kontakty a sociální sítě, Pohotovost, Úvod, iCal.
+ * WP Admin settings page — Pracovní doba, pravidla Termínů, Lhůta zrušení, Sezóny, e‑maily, kontakty a sociální sítě, Pohotovost, Úvod, Google recenze, iCal.
  */
 class Pneukarnik_Admin_Settings {
 
@@ -274,6 +274,52 @@ class Pneukarnik_Admin_Settings {
 					</tr>
 				</table>
 
+				<h2><?php esc_html_e( 'Google recenze', 'pneukarnik-booking' ); ?></h2>
+				<?php $reviews_status = Pneukarnik_Reviews::status(); ?>
+				<table class="form-table">
+					<tr>
+						<th><?php esc_html_e( 'Zobrazit recenze', 'pneukarnik-booking' ); ?></th>
+						<td>
+							<label><input type="checkbox" name="reviews_enabled" value="1" <?php checked( Pneukarnik_Reviews::enabled() ); ?>> <?php esc_html_e( 'Hodnocení a recenze z Google na Úvodu', 'pneukarnik-booking' ); ?></label>
+							<p class="description"><?php esc_html_e( 'Recenze se stahují na serveru jednou denně (a hned po zapnutí nebo změně klíče či místa), prohlížeč Zákazníka od Googlu nic nenačítá. Při vypnutí se nic nestahuje ani nezobrazuje.', 'pneukarnik-booking' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="pnk-reviews-key"><?php esc_html_e( 'Klíč Places API', 'pneukarnik-booking' ); ?></label></th>
+						<td>
+							<input id="pnk-reviews-key" type="password" name="reviews_api_key" value="" class="regular-text" autocomplete="off">
+							<p class="description">
+								<?php
+								$key_hint = Pneukarnik_Reviews::api_key_hint();
+								echo esc_html(
+									'' === $key_hint
+										? __( 'Zatím nezadaný. Klíč z Google Cloud Console s povoleným Places API (New).', 'pneukarnik-booking' )
+										/* translators: %s: poslední čtyři znaky klíče */
+										: sprintf( __( 'Uložený klíč končí %s. Prázdné pole klíč ponechá.', 'pneukarnik-booking' ), $key_hint )
+								);
+								?>
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="pnk-reviews-place"><?php esc_html_e( 'ID místa (Place ID)', 'pneukarnik-booking' ); ?></label></th>
+						<td><input id="pnk-reviews-place" type="text" name="reviews_place_id" value="<?php echo esc_attr( Pneukarnik_Reviews::place_id() ); ?>" class="regular-text" placeholder="ChIJ…"></td>
+					</tr>
+					<tr>
+						<th><?php esc_html_e( 'Stav', 'pneukarnik-booking' ); ?></th>
+						<td>
+							<?php if ( '' !== $reviews_status['updated_at'] ) : ?>
+								<p><?php echo esc_html( sprintf( /* translators: %s: datum a čas posledního stažení */ __( 'Naposledy staženo %s.', 'pneukarnik-booking' ), Pneukarnik_Clock::at( $reviews_status['updated_at'] )->format( 'j. n. Y H:i' ) ) ); ?></p>
+							<?php else : ?>
+								<p><?php esc_html_e( 'Zatím nestaženo, na webu se recenze nezobrazí.', 'pneukarnik-booking' ); ?></p>
+							<?php endif; ?>
+							<?php if ( '' !== $reviews_status['error'] ) : ?>
+								<p style="color:#b32d2e"><?php echo esc_html( sprintf( /* translators: %s: chyba z Google */ __( 'Poslední pokus selhal: %s. Na webu zůstávají poslední stažená data.', 'pneukarnik-booking' ), $reviews_status['error'] ) ); ?></p>
+							<?php endif; ?>
+						</td>
+					</tr>
+				</table>
+
 				<h2><?php esc_html_e( 'Rezervace v kalendáři telefonu (iCal)', 'pneukarnik-booking' ); ?></h2>
 				<table class="form-table">
 					<tr>
@@ -381,6 +427,12 @@ class Pneukarnik_Admin_Settings {
 			}
 		}
 		$seasons_saved = Pneukarnik_Season::save( $seasons );
+
+		Pneukarnik_Reviews::save_settings(
+			! empty( $_POST['reviews_enabled'] ),
+			(string) wp_unslash( $_POST['reviews_api_key'] ?? '' ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitizuje save_settings().
+			(string) wp_unslash( $_POST['reviews_place_id'] ?? '' ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitizuje save_settings().
+		);
 
 		// iCal token regeneration
 		if ( ! empty( $_POST['regen_ical_token'] ) ) {

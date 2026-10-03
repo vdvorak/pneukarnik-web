@@ -260,3 +260,42 @@ function pneukarnik_service_cta( Pneukarnik_Service $service ): void {
 	</div>
 	<?php
 }
+
+/**
+ * Google recenze z cache pluginu: hodnocení, počet, recenze a odkaz na všechna hodnocení.
+ * Nic se nenačítá od Googlu (ani fotky autorů), jen odkazy.
+ *
+ * @param array{rating:float,count:int,url:string,reviews:list<array{author:string,author_url:string,rating:int,text:string,date:string}>} $summary
+ */
+function pneukarnik_reviews( array $summary ): void {
+	$rating = number_format( $summary['rating'], 1, ',', '' );
+	?>
+	<p class="recenze__souhrn">
+		<?php
+		/* translators: 1: průměrné hodnocení, např. 4,8, 2: počet hodnocení */
+		echo esc_html( sprintf( __( '%1$s z 5 (%2$s hodnocení)', 'pneukarnik' ), $rating, number_format_i18n( $summary['count'] ) ) );
+		?>
+	</p>
+	<?php if ( $summary['reviews'] ) : ?>
+		<ul class="recenze">
+			<?php foreach ( $summary['reviews'] as $review ) : ?>
+				<li class="recenze__polozka">
+					<p class="recenze__hvezdy" aria-label="<?php echo esc_attr( sprintf( /* translators: %d: počet hvězdiček */ __( '%d z 5 hvězdiček', 'pneukarnik' ), $review['rating'] ) ); ?>"><?php echo esc_html( str_repeat( '★', $review['rating'] ) . str_repeat( '☆', 5 - $review['rating'] ) ); ?></p>
+					<blockquote><?php echo wp_kses_post( wpautop( esc_html( $review['text'] ) ) ); ?></blockquote>
+					<p class="recenze__autor">
+						<?php if ( '' !== $review['author_url'] ) : ?>
+							<a href="<?php echo esc_url( $review['author_url'] ); ?>" rel="noopener nofollow" target="_blank"><?php echo esc_html( $review['author'] ); ?></a>,
+						<?php else : ?>
+							<?php echo esc_html( $review['author'] ); ?>,
+						<?php endif; ?>
+						<?php echo esc_html( Pneukarnik_Clock::at( $review['date'] )->format( 'j. n. Y' ) ); ?>
+					</p>
+				</li>
+			<?php endforeach; ?>
+		</ul>
+	<?php endif; ?>
+	<?php if ( '' !== $summary['url'] ) : ?>
+		<p><a class="recenze__vse" href="<?php echo esc_url( $summary['url'] ); ?>" rel="noopener" target="_blank"><?php esc_html_e( 'Všechna hodnocení na Google', 'pneukarnik' ); ?></a></p>
+	<?php endif; ?>
+	<?php
+}

@@ -35,6 +35,12 @@ final class Pneukarnik_Clock {
 	}
 
 	/** Pro testy: zastaví čas. Řetězec se čte jako místní čas v Europe/Prague. */
+	/** Nejbližší celá hodina $hour místního času v budoucnu (dnes, nebo zítra), např. pro plánované úlohy. */
+	public static function next_at( int $hour ): \DateTimeImmutable {
+		$next = self::today()->setTime( $hour, 0 );
+		return $next > self::now() ? $next : $next->modify( '+1 day' );
+	}
+
 	public static function freeze( \DateTimeImmutable|string $at ): void {
 		self::$frozen = is_string( $at ) ? self::at( $at ) : $at;
 	}
