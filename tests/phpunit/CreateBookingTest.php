@@ -56,7 +56,7 @@ class CreateBookingTest extends Pneukarnik_REST_Test_Case {
 		$this->assertNotNull( $booking );
 		$this->assertSame( self::MONDAY, $booking['booking_date'] );
 		$this->assertSame( '09:00', $booking['time_start'] );
-		$this->assertSame( 'Přezutí', $booking['service_name'] );
+		$this->assertSame( [ 'Přezutí' ], array_column( $booking['services'], 'name' ) );
 		$this->assertSame( '1AB2345', $booking['customer_plate'] );
 		$this->assertNull( Pneukarnik_Booking::find_by_confirmation_token( str_repeat( 'a', 64 ) ) );
 	}
@@ -66,9 +66,9 @@ class CreateBookingTest extends Pneukarnik_REST_Test_Case {
 			'POST',
 			'/bookings',
 			[
-				'service_id' => $this->service,
-				'date'       => self::MONDAY,
-				'time'       => '09:00',
+				'service_ids' => [ $this->service ],
+				'date'        => self::MONDAY,
+				'time'        => '09:00',
 			]
 		);
 

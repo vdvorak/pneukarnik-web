@@ -37,12 +37,12 @@ abstract class Pneukarnik_REST_Test_Case extends WP_UnitTestCase {
 	/**
 	 * Zveřejněná Služba se všemi povinnými částmi.
 	 */
-	protected function create_service( int $duration_minutes, bool $seasonal = false ): int {
+	protected function create_service( int $duration_minutes, bool $seasonal = false, string $title = 'Přezutí' ): int {
 		return self::factory()->post->create(
 			[
 				'post_type'   => 'pneukarnik_service',
 				'post_status' => 'publish',
-				'post_title'  => 'Přezutí',
+				'post_title'  => $title,
 				'meta_input'  => [
 					'_service_category'    => 'pneuservis',
 					'_service_perex'       => 'Sezónní přezutí.',
@@ -74,17 +74,25 @@ abstract class Pneukarnik_REST_Test_Case extends WP_UnitTestCase {
 	}
 
 	/**
-	 * @return list<string> Začátky nabízených volných Termínů (HH:MM).
+	 * @param int|list<int> $service_ids Jedna Služba nebo víc Služeb jedné Rezervace.
 	 */
-	protected function free_starts( int $service_id, string $date ): array {
-		$response = $this->rest(
+	protected function slots( int|array $service_ids, string $date ): WP_REST_Response {
+		return $this->rest(
 			'GET',
 			'/slots',
 			[
-				'service_id' => $service_id,
-				'date'       => $date,
+				'service_ids' => (array) $service_ids,
+				'date'        => $date,
 			]
 		);
+	}
+
+	/**
+	 * @param int|list<int> $service_ids
+	 * @return list<string> Začátky nabízených volných Termínů (HH:MM).
+	 */
+	protected function free_starts( int|array $service_ids, string $date ): array {
+		$response = $this->slots( $service_ids, $date );
 		$this->assertSame( 200, $response->get_status(), (string) wp_json_encode( $response->get_data() ) );
 		return array_map( static fn( array $slot ): string => $slot['time_start'], $response->get_data()['slots'] );
 	}
@@ -92,14 +100,15 @@ abstract class Pneukarnik_REST_Test_Case extends WP_UnitTestCase {
 	/**
 	 * Platný požadavek na vytvoření Rezervace, jednotlivá pole jde přepsat.
 	 *
+	 * @param int|list<int>        $service_ids
 	 * @param array<string, mixed> $overrides
 	 */
-	protected function book( int $service_id, string $date, string $time, array $overrides = [] ): WP_REST_Response {
+	protected function book( int|array $service_ids, string $date, string $time, array $overrides = [] ): WP_REST_Response {
 		return $this->rest(
 			'POST',
 			'/bookings',
 			$overrides + [
-				'service_id'   => $service_id,
+				'service_ids'  => (array) $service_ids,
 				'date'         => $date,
 				'time'         => $time,
 				'name'         => 'Jan Novák',

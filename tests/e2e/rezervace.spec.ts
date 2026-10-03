@@ -5,7 +5,9 @@ import { login, publishService, saveBookingSettings, uniqueTitle, upcomingWeekda
 test.describe.configure({ mode: 'serial' });
 
 const serviceTitle = uniqueTitle('Přezutí rezervace');
+const extraTitle = uniqueTitle('Vyvážení rezervace');
 let serviceId = 0;
+let extraId = 0;
 
 const customer = {
 	name: 'E2E Zákazník',
@@ -16,7 +18,7 @@ const customer = {
 
 async function bookViaApi(request: APIRequestContext, date: string, time: string) {
 	return request.post('/wp-json/pneukarnik/v1/bookings', {
-		data: { service_id: serviceId, date, time, ...customer, name: 'E2E Konkurent', consent_gdpr: true },
+		data: { service_ids: [serviceId], date, time, ...customer, name: 'E2E Konkurent', consent_gdpr: true },
 	});
 }
 
@@ -32,11 +34,21 @@ test.beforeAll(async ({ browser, request }) => {
 		duration: 60,
 		bookable: true,
 	});
+	await publishService(page, {
+		title: extraTitle,
+		category: 'Pneuservis',
+		perex: 'Vyvážení pro test rezervace.',
+		price: 200,
+		duration: 30,
+		bookable: true,
+	});
 	await page.close();
 
 	const services: { id: number; name: string }[] = await (await request.get('/wp-json/pneukarnik/v1/services')).json();
 	serviceId = services.find((s) => s.name === serviceTitle)?.id ?? 0;
+	extraId = services.find((s) => s.name === extraTitle)?.id ?? 0;
 	expect(serviceId).toBeGreaterThan(0);
+	expect(extraId).toBeGreaterThan(0);
 });
 
 test('Zákazník si z detailu Služby zarezervuje Termín a uvidí potvrzení', async ({ page }) => {
@@ -65,6 +77,28 @@ test('Zákazník si z detailu Služby zarezervuje Termín a uvidí potvrzení', 
 	for (const secret of ['E2E', 'example.test', '603']) {
 		expect(page.url()).not.toContain(secret);
 	}
+});
+
+test('Zákazník přidá další Službu a Termín trvá součet Délek', async ({ page }) => {
+	await page.goto('/rezervace/');
+	await page.getByLabel('Služba', { exact: true }).selectOption(String(serviceId));
+	await page.getByRole('button', { name: '+ přidat další službu' }).click();
+	const extra = page.getByLabel('Další služba');
+	await expect(extra.locator(`option[value="${serviceId}"]`)).toBeDisabled();
+	await extra.selectOption(String(extraId));
+	await page.getByLabel('Den').fill(upcomingWeekday(4));
+	await page.getByLabel('8:00–9:30').check();
+	await page.getByLabel('Jméno nebo firma').fill(customer.name);
+	await page.getByLabel('Telefon').fill(customer.phone);
+	await page.getByLabel('E‑mail').fill(customer.email);
+	await page.getByLabel('SPZ').fill(customer.plate);
+	await page.getByLabel(/Souhlasím se zpracováním/).check();
+	await page.getByRole('button', { name: 'Rezervovat' }).click();
+
+	await expect(page).toHaveURL(/\/rezervace\/potvrzeni\/\?r=[0-9a-f]{64}$/);
+	await expect(page.locator('dt').filter({ hasText: 'Služby' })).toBeVisible();
+	await expect(page.locator('dd').filter({ hasText: serviceTitle })).toBeVisible();
+	await expect(page.locator('dd').filter({ hasText: extraTitle })).toBeVisible();
 });
 
 test('Formulář bez údajů ukáže chyby u polí', async ({ page }) => {

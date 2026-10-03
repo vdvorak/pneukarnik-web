@@ -8,13 +8,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Vytvoření Rezervace a její načtení.
  *
- * Postup: validace polí → pravidla Služby → Termín je v nabídce dne → se zámkem dne
+ * Postup: validace polí → pravidla každé Služby → Termín je v nabídce dne → se zámkem dne
  * a v transakci ověřit, že úsek nic nepřekrývá, a zapsat. Dílna má kapacitu 1.
+ * Rezervace má 1..n Služeb a zabírá dílnu po dobu součtu jejich Délek.
  */
 class Pneukarnik_Booking {
 
 	public const SOURCE_WEB   = 'web';
 	public const SOURCE_ADMIN = 'admin';
+
+	/** Nejvíc Služeb v jedné Rezervaci. */
+	public const MAX_SERVICES = 10;
 
 	/** Maximální délky textových polí. */
 	private const MAX_LENGTH = [
@@ -29,7 +33,7 @@ class Pneukarnik_Booking {
 	/**
 	 * Vytvoří Rezervaci.
 	 *
-	 * Vstup: service_id, date (Y-m-d), time (HH:MM), name, phone, email, plate,
+	 * Vstup: service_ids (seznam 1..n), date (Y-m-d), time (HH:MM), name, phone, email, plate,
 	 * volitelně company, vehicle a note, consent_gdpr (povinný jen z webu).
 	 *
 	 * @param array<mixed> $data Neověřený vstup.
@@ -47,20 +51,21 @@ class Pneukarnik_Booking {
 			];
 		}
 
-		$service = Pneukarnik_Service::find( $input['service_id'] );
-		$refusal = self::service_refusal( $service );
-		if ( null !== $refusal || null === $service ) {
-			return $refusal ?? self::error( 'booking.service_not_found', 404 );
+		$resolved = self::resolve_services( $input['service_ids'] );
+		if ( ! $resolved['ok'] ) {
+			return $resolved;
 		}
+		$services = $resolved['services'];
+		$duration = $resolved['duration'];
 
-		if ( ! Pneukarnik_Slot_Engine::is_offered( $service->duration, $input['date'], $input['time'], self::SOURCE_WEB === $source ) ) {
+		if ( ! Pneukarnik_Slot_Engine::is_offered( $duration, $input['date'], $input['time'], self::SOURCE_WEB === $source ) ) {
 			return self::error( 'booking.slot_unavailable', 422 );
 		}
 
-		$time_end = Pneukarnik_Slot_Engine::minutes_to_hhmm( Pneukarnik_Slot_Engine::hhmm_to_minutes( $input['time'] ) + $service->duration );
+		$time_end = Pneukarnik_Slot_Engine::minutes_to_hhmm( Pneukarnik_Slot_Engine::hhmm_to_minutes( $input['time'] ) + $duration );
 		$result   = Pneukarnik_DB::with_day_lock(
 			$input['date'],
-			static fn(): array => self::insert_if_free( $input, $service, $time_end, $source )
+			static fn(): array => self::insert_if_free( $input, $services, $time_end, $source )
 		);
 		if ( null === $result ) {
 			return self::error( 'booking.busy', 503 );
@@ -79,6 +84,30 @@ class Pneukarnik_Booking {
 			'ok'                 => true,
 			'booking'            => $booking,
 			'confirmation_token' => $result['confirmation_token'],
+		];
+	}
+
+	/**
+	 * Služby Rezervace v zadaném pořadí a součet jejich Délek, nebo důvod první Služby,
+	 * kterou rezervovat nejde.
+	 *
+	 * @param list<int> $service_ids
+	 * @return array{ok:true,services:list<Pneukarnik_Service>,duration:int}|array{ok:false,code:string,status:int}
+	 */
+	public static function resolve_services( array $service_ids ): array {
+		$services = [];
+		foreach ( $service_ids as $id ) {
+			$service = Pneukarnik_Service::find( $id );
+			$refusal = self::service_refusal( $service );
+			if ( null !== $refusal || null === $service ) {
+				return $refusal ?? self::error( 'booking.service_not_found', 404 );
+			}
+			$services[] = $service;
+		}
+		return [
+			'ok'       => true,
+			'services' => $services,
+			'duration' => array_sum( array_map( static fn( Pneukarnik_Service $s ): int => $s->duration, $services ) ),
 		];
 	}
 
@@ -126,6 +155,37 @@ class Pneukarnik_Booking {
 	}
 
 	/**
+	 * Doplní řádkům Rezervací z DB klíč service_name: názvy jejich Služeb oddělené čárkou
+	 * (pro výpisy: seznam v administraci, PDF, iCal).
+	 *
+	 * @param list<array<string,mixed>> $rows Řádky tabulky Rezervací.
+	 * @return list<array<string,mixed>>
+	 */
+	public static function with_service_names( array $rows ): array {
+		if ( ! $rows ) {
+			return $rows;
+		}
+		global $wpdb;
+		$ids          = array_map( static fn( array $row ): int => (int) $row['id'], $rows );
+		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		// $placeholders jsou jen %d, hodnoty jdou přes prepare().
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+		$names = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT booking_id, GROUP_CONCAT(service_name ORDER BY position SEPARATOR ', ') AS names FROM %i WHERE booking_id IN ({$placeholders}) GROUP BY booking_id",
+				Pneukarnik_DB::booking_services_table(),
+				...$ids
+			),
+			OBJECT_K
+		);
+		// phpcs:enable
+		return array_map(
+			static fn( array $row ): array => [ 'service_name' => $names[ $row['id'] ]->names ?? '' ] + $row,
+			$rows
+		);
+	}
+
+	/**
 	 * @return array<string,mixed>|null
 	 */
 	public static function get_by_id( int $id ): ?array {
@@ -138,13 +198,14 @@ class Pneukarnik_Booking {
 	}
 
 	/**
-	 * @param array{service_id:int,date:string,time:string,name:string,company:string,phone:string,email:string,plate:string,vehicle:string,note:string,consent_gdpr:bool} $input
+	 * @param array{service_ids:list<int>,date:string,time:string,name:string,company:string,phone:string,email:string,plate:string,vehicle:string,note:string,consent_gdpr:bool} $input
+	 * @param list<Pneukarnik_Service> $services
 	 * @return array{ok:true,id:int,cancel_token:string,confirmation_token:string}|array{ok:false,code:string,status:int}
 	 */
-	private static function insert_if_free( array $input, Pneukarnik_Service $service, string $time_end, string $source ): array {
+	private static function insert_if_free( array $input, array $services, string $time_end, string $source ): array {
 		Pneukarnik_DB::begin();
 		try {
-			return self::insert_in_transaction( $input, $service, $time_end, $source );
+			return self::insert_in_transaction( $input, $services, $time_end, $source );
 		} catch ( \Throwable $e ) {
 			Pneukarnik_DB::rollback();
 			throw $e;
@@ -154,10 +215,11 @@ class Pneukarnik_Booking {
 	/**
 	 * Část insert_if_free uvnitř otevřené transakce. Vždy ji ukončí (commit nebo rollback).
 	 *
-	 * @param array{service_id:int,date:string,time:string,name:string,company:string,phone:string,email:string,plate:string,vehicle:string,note:string,consent_gdpr:bool} $input
+	 * @param array{service_ids:list<int>,date:string,time:string,name:string,company:string,phone:string,email:string,plate:string,vehicle:string,note:string,consent_gdpr:bool} $input
+	 * @param list<Pneukarnik_Service> $services
 	 * @return array{ok:true,id:int,cancel_token:string,confirmation_token:string}|array{ok:false,code:string,status:int}
 	 */
-	private static function insert_in_transaction( array $input, Pneukarnik_Service $service, string $time_end, string $source ): array {
+	private static function insert_in_transaction( array $input, array $services, string $time_end, string $source ): array {
 		global $wpdb;
 
 		if ( Pneukarnik_Slot_Engine::overlaps_confirmed( $input['date'], $input['time'], $time_end ) ) {
@@ -174,7 +236,6 @@ class Pneukarnik_Booking {
 		$inserted = $wpdb->insert(
 			Pneukarnik_DB::bookings_table(),
 			[
-				'service_id'              => $service->id,
 				'customer_name'           => $input['name'],
 				'customer_company'        => '' !== $input['company'] ? $input['company'] : null,
 				'customer_plate'          => $input['plate'],
@@ -199,6 +260,26 @@ class Pneukarnik_Booking {
 			return self::error( 'booking.internal_error', 500 );
 		}
 		$id = (int) $wpdb->insert_id;
+
+		foreach ( $services as $position => $service ) {
+			$price    = $service->price_by_vehicle ? null : $service->price;
+			$inserted = $wpdb->insert(
+				Pneukarnik_DB::booking_services_table(),
+				[
+					'booking_id'   => $id,
+					'position'     => $position,
+					'service_id'   => $service->id,
+					'service_name' => $service->title,
+					'duration'     => $service->duration,
+					'price'        => $price,
+					'price_from'   => null !== $price && $service->price_from ? 1 : 0,
+				]
+			);
+			if ( ! $inserted ) {
+				Pneukarnik_DB::rollback();
+				return self::error( 'booking.internal_error', 500 );
+			}
+		}
 		Pneukarnik_DB::commit();
 
 		return [
@@ -214,7 +295,7 @@ class Pneukarnik_Booking {
 	 * required, invalid, too_long.
 	 *
 	 * @param array<mixed> $data
-	 * @return array{0:array{service_id:int,date:string,time:string,name:string,company:string,phone:string,email:string,plate:string,vehicle:string,note:string,consent_gdpr:bool},1:array<string,string>}
+	 * @return array{0:array{service_ids:list<int>,date:string,time:string,name:string,company:string,phone:string,email:string,plate:string,vehicle:string,note:string,consent_gdpr:bool},1:array<string,string>}
 	 */
 	private static function validate_fields( array $data, bool $consent_required ): array {
 		$errors = [];
@@ -248,8 +329,11 @@ class Pneukarnik_Booking {
 			}
 		};
 
-		$service_id = $text( 'service_id' );
-		$check( 'service_id', $service_id, true, static fn( string $v ): bool => ctype_digit( $v ) );
+		$service_ids = self::validate_service_ids( $data['service_ids'] ?? null );
+		if ( is_string( $service_ids ) ) {
+			$errors['service_ids'] = $service_ids;
+			$service_ids           = [];
+		}
 
 		$date = $text( 'date' );
 		$check(
@@ -290,7 +374,7 @@ class Pneukarnik_Booking {
 
 		return [
 			[
-				'service_id'   => (int) $service_id,
+				'service_ids'  => $service_ids,
 				'date'         => $date,
 				'time'         => $time,
 				'name'         => $name,
@@ -304,6 +388,31 @@ class Pneukarnik_Booking {
 			],
 			$errors,
 		];
+	}
+
+	/**
+	 * Seznam id Služeb, nebo kód chyby pole: required, invalid, too_many, duplicate.
+	 *
+	 * @return list<int>|string
+	 */
+	private static function validate_service_ids( mixed $value ): array|string {
+		if ( null === $value || [] === $value ) {
+			return 'required';
+		}
+		if ( ! is_array( $value ) || ! array_is_list( $value ) ) {
+			return 'invalid';
+		}
+		if ( count( $value ) > self::MAX_SERVICES ) {
+			return 'too_many';
+		}
+		$ids = [];
+		foreach ( $value as $id ) {
+			if ( ! is_int( $id ) && ! ( is_string( $id ) && ctype_digit( $id ) ) ) {
+				return 'invalid';
+			}
+			$ids[] = (int) $id;
+		}
+		return count( array_unique( $ids ) ) === count( $ids ) ? $ids : 'duplicate';
 	}
 
 	/**
@@ -322,11 +431,11 @@ class Pneukarnik_Booking {
 	 * @return array<string,mixed>
 	 */
 	private static function hydrate( array $row ): array {
-		$service_name = get_the_title( (int) $row['service_id'] );
+		$services = self::services_of( (int) $row['id'] );
 		return [
 			'id'               => (int) $row['id'],
-			'service_id'       => (int) $row['service_id'],
-			'service_name'     => $service_name ?: '',
+			'services'         => $services,
+			'service_name'     => implode( ', ', array_column( $services, 'name' ) ),
 			'customer_name'    => $row['customer_name'],
 			'customer_company' => $row['customer_company'],
 			'customer_plate'   => $row['customer_plate'],
@@ -343,5 +452,32 @@ class Pneukarnik_Booking {
 			'cancelled_at'     => $row['cancelled_at'] ?? null,
 			'cancel_reason'    => $row['cancel_reason'] ?? null,
 		];
+	}
+
+	/**
+	 * Služby Rezervace v pořadí, jak je Zákazník vybral, s Délkou a cenou z okamžiku vytvoření.
+	 *
+	 * @return list<array{service_id:int,name:string,duration:int,price:int|null,price_from:bool}>
+	 */
+	private static function services_of( int $booking_id ): array {
+		global $wpdb;
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT service_id, service_name, duration, price, price_from FROM %i WHERE booking_id = %d ORDER BY position',
+				Pneukarnik_DB::booking_services_table(),
+				$booking_id
+			),
+			ARRAY_A
+		);
+		return array_map(
+			static fn( array $row ): array => [
+				'service_id' => (int) $row['service_id'],
+				'name'       => $row['service_name'],
+				'duration'   => (int) $row['duration'],
+				'price'      => null === $row['price'] ? null : (int) $row['price'],
+				'price_from' => (bool) $row['price_from'],
+			],
+			$rows ?: []
+		);
 	}
 }

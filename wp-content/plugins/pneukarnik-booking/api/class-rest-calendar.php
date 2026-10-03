@@ -49,21 +49,18 @@ class Pneukarnik_Rest_Calendar {
 
 		$bookings = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT b.*, p.post_title AS service_name
-				 FROM %i b
-				 LEFT JOIN %i p ON p.ID = b.service_id
-				 WHERE b.booking_date >= %s
-				   AND b.status = 'CONFIRMED'
-				 ORDER BY b.booking_date ASC, b.time_start ASC",
+				"SELECT * FROM %i
+				 WHERE booking_date >= %s
+				   AND status = 'CONFIRMED'
+				 ORDER BY booking_date ASC, time_start ASC",
 				$table,
-				$wpdb->posts,
 				$today
 			),
 			ARRAY_A
 		);
 
 		$address = get_option( 'pneukarnik_address', 'Jan Kárník Autoservis' );
-		$ical    = self::build_ical( $bookings ?: [], $address );
+		$ical    = self::build_ical( Pneukarnik_Booking::with_service_names( $bookings ?: [] ), $address );
 
 		// Marker aby serve_ical věděl, že jde o ical response
 		$response = new WP_REST_Response( $ical, 200 );
@@ -123,7 +120,7 @@ class Pneukarnik_Rest_Calendar {
 			$dtstart = Pneukarnik_Clock::at( $b['booking_date'] . ' ' . $b['time_start'] )->setTimezone( $utc )->format( 'Ymd\THis\Z' );
 			$dtend   = Pneukarnik_Clock::at( $b['booking_date'] . ' ' . $b['time_end'] )->setTimezone( $utc )->format( 'Ymd\THis\Z' );
 
-			$service  = $b['service_name'] ?? 'Rezervace';
+			$service  = '' !== $b['service_name'] ? $b['service_name'] : 'Rezervace';
 			$customer = $b['customer_name'];
 			$plate    = $b['customer_plate'];
 			$phone    = $b['customer_phone'];

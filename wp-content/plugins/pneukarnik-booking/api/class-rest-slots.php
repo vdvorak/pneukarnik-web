@@ -6,8 +6,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * GET /wp-json/pneukarnik/v1/slots?service_id=&date=YYYY-MM-DD
- * Volné Termíny Služby pro den.
+ * GET /wp-json/pneukarnik/v1/slots?service_ids[]=&service_ids[]=&date=YYYY-MM-DD
+ * Volné Termíny dne pro Rezervaci jedné nebo víc Služeb (úsek = součet Délek).
  */
 class Pneukarnik_Rest_Slots {
 
@@ -20,12 +20,15 @@ class Pneukarnik_Rest_Slots {
 				'callback'            => [ $this, 'list_slots' ],
 				'permission_callback' => '__return_true',
 				'args'                => [
-					'service_id' => [
-						'required'          => true,
-						'type'              => 'integer',
-						'sanitize_callback' => 'absint',
+					'service_ids' => [
+						'required'    => true,
+						'type'        => 'array',
+						'items'       => [ 'type' => 'integer' ],
+						'minItems'    => 1,
+						'maxItems'    => Pneukarnik_Booking::MAX_SERVICES,
+						'uniqueItems' => true,
 					],
-					'date'       => [
+					'date'        => [
 						'required'          => true,
 						'type'              => 'string',
 						'validate_callback' => static fn( $v ): bool => is_string( $v ) && (bool) preg_match( '/^(\d{4})-(\d{2})-(\d{2})$/', $v, $m ) && checkdate( (int) $m[2], (int) $m[3], (int) $m[1] ),
@@ -36,31 +39,27 @@ class Pneukarnik_Rest_Slots {
 	}
 
 	public function list_slots( WP_REST_Request $request ): WP_REST_Response {
-		$service_id = (int) $request->get_param( 'service_id' );
-		$date       = (string) $request->get_param( 'date' );
-		$service    = Pneukarnik_Service::find( $service_id );
+		/** @var list<int> $service_ids */
+		$service_ids = $request->get_param( 'service_ids' );
+		$date        = (string) $request->get_param( 'date' );
 
-		$refusal = Pneukarnik_Booking::service_refusal( $service );
-		if ( null !== $refusal || null === $service ) {
-			$refusal ??= [
-				'code'   => 'booking.service_not_found',
-				'status' => 404,
-			];
+		$resolved = Pneukarnik_Booking::resolve_services( $service_ids );
+		if ( ! $resolved['ok'] ) {
 			return new WP_REST_Response(
 				[
-					'code'    => $refusal['code'],
-					'message' => $refusal['code'],
-					'data'    => [ 'status' => $refusal['status'] ],
+					'code'    => $resolved['code'],
+					'message' => $resolved['code'],
+					'data'    => [ 'status' => $resolved['status'] ],
 				],
-				$refusal['status']
+				$resolved['status']
 			);
 		}
 
 		$response = new WP_REST_Response(
 			[
-				'date'       => $date,
-				'service_id' => $service_id,
-				'slots'      => Pneukarnik_Slot_Engine::free_termins( $service->duration, $date ),
+				'date'        => $date,
+				'service_ids' => $service_ids,
+				'slots'       => Pneukarnik_Slot_Engine::free_termins( $resolved['duration'], $date ),
 			],
 			200
 		);

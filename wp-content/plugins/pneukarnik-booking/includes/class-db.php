@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Pneukarnik_DB {
 
 	private const DB_VERSION_OPTION = 'pneukarnik_db_version';
-	private const DB_VERSION        = '1.4';
+	private const DB_VERSION        = '1.5';
 
 	/** Testy běží uvnitř transakce WP test suite, transakce pluginu pak používají savepoint. */
 	private static bool $savepoints = false;
@@ -50,8 +50,34 @@ class Pneukarnik_DB {
 			}
 		}
 
+		// 1.4 → 1.5: Rezervace má 1..n Služeb ve vlastní tabulce. Cena dřívějších Rezervací není známá.
+		if ( $installed && version_compare( (string) $installed, '1.5', '<' ) ) {
+			self::move_service_to_booking_services();
+		}
+
 		update_option( self::DB_VERSION_OPTION, self::DB_VERSION );
 		pneukarnik_ensure_capabilities();
+	}
+
+	private static function move_service_to_booking_services(): void {
+		global $wpdb;
+		$bookings = self::bookings_table();
+		if ( ! $wpdb->get_var( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $bookings, 'service_id' ) ) ) {
+			return;
+		}
+		$wpdb->query(
+			$wpdb->prepare(
+				"INSERT INTO %i (booking_id, position, service_id, service_name, duration, price, price_from)
+				 SELECT b.id, 0, b.service_id, COALESCE(p.post_title, ''), TIME_TO_SEC(TIMEDIFF(b.time_end, b.time_start)) DIV 60, NULL, 0
+				 FROM %i b LEFT JOIN %i p ON p.ID = b.service_id
+				 WHERE NOT EXISTS (SELECT 1 FROM %i s WHERE s.booking_id = b.id)",
+				self::booking_services_table(),
+				$bookings,
+				$wpdb->posts,
+				self::booking_services_table()
+			)
+		);
+		$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i DROP COLUMN service_id', $bookings ) );
 	}
 
 	public static function use_savepoints( bool $enabled ): void {
@@ -113,7 +139,6 @@ class Pneukarnik_DB {
 
 		$bookings = "CREATE TABLE {$wpdb->prefix}pneukarnik_bookings (
 			id                      BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-			service_id              BIGINT UNSIGNED NOT NULL,
 			customer_name           VARCHAR(255) NOT NULL,
 			customer_company        VARCHAR(255) DEFAULT NULL,
 			customer_plate          VARCHAR(20)  NOT NULL,
@@ -152,14 +177,36 @@ class Pneukarnik_DB {
 			UNIQUE KEY uq_date (date)
 		) ENGINE=InnoDB $charset_collate;";
 
+		// Služby Rezervace v pořadí, jak je Zákazník vybral. Název, Délka a cena platí k okamžiku vytvoření.
+		// price NULL = cena dle vozu (nebo neznámá u Rezervací z doby před 1.5).
+		$booking_services = "CREATE TABLE {$wpdb->prefix}pneukarnik_booking_services (
+			id           BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT,
+			booking_id   BIGINT UNSIGNED  NOT NULL,
+			position     TINYINT UNSIGNED NOT NULL,
+			service_id   BIGINT UNSIGNED  NOT NULL,
+			service_name VARCHAR(255)     NOT NULL,
+			duration     SMALLINT UNSIGNED NOT NULL,
+			price        INT UNSIGNED     DEFAULT NULL,
+			price_from   TINYINT(1)       NOT NULL DEFAULT 0,
+			PRIMARY KEY  (id),
+			UNIQUE KEY uq_booking_position (booking_id, position),
+			KEY idx_service (service_id)
+		) ENGINE=InnoDB $charset_collate;";
+
 		dbDelta( $bookings );
 		dbDelta( $closed_dates );
+		dbDelta( $booking_services );
 	}
 
 	// Vrátí plný název tabulky rezervací
 	public static function bookings_table(): string {
 		global $wpdb;
 		return $wpdb->prefix . 'pneukarnik_bookings';
+	}
+
+	public static function booking_services_table(): string {
+		global $wpdb;
+		return $wpdb->prefix . 'pneukarnik_booking_services';
 	}
 
 	// Vrátí plný název tabulky uzavřených termínů

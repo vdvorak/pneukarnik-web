@@ -31,4 +31,25 @@ class CalendarFeedTest extends Pneukarnik_REST_Test_Case {
 		$unfolded = str_replace( "\r\n ", '', $ical );
 		$this->assertStringContainsString( 'Poznámka: Pozor\nEND:VEVENT\nBEGIN:VEVENT\nSUMMARY:Podvrh\; a\, b\\\\c', $unfolded );
 	}
+
+	public function test_event_names_all_services_of_the_booking(): void {
+		Pneukarnik_Clock::freeze( '2027-02-26 12:00' );
+		$this->set_working_hours_every_day(
+			[
+				[
+					'from' => '08:00',
+					'to'   => '12:00',
+				],
+			]
+		);
+		$this->set_booking_rules( 30 );
+		$services = [ $this->create_service( 60, false, 'Přezutí' ), $this->create_service( 30, false, 'Vyvážení' ) ];
+		$this->assertSame( 201, $this->book( $services, '2027-03-01', '09:00', [ 'name' => 'Jan Novák' ] )->get_status() );
+		update_option( 'pneukarnik_ical_token', 'tajny-token' );
+
+		$ical = str_replace( "\r\n ", '', (string) $this->rest( 'GET', '/calendar', [ 'token' => 'tajny-token' ] )->get_data() );
+
+		$this->assertStringContainsString( "SUMMARY:Přezutí\\, Vyvážení — Jan Novák\r\n", $ical );
+		$this->assertStringContainsString( "DTEND:20270301T093000Z\r\n", $ical );
+	}
 }

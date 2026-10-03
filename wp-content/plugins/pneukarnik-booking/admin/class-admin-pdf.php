@@ -74,7 +74,7 @@ class Pneukarnik_Admin_Pdf {
 
 		foreach ( $bookings as $b ) {
 			$time    = substr( $b['time_start'], 0, 5 );
-			$service = get_the_title( (int) $b['service_id'] );
+			$service = $b['service_name'];
 			$name    = $b['customer_name'];
 			$plate   = $b['customer_plate'];
 			$phone   = $b['customer_phone'];
@@ -106,14 +106,16 @@ class Pneukarnik_Admin_Pdf {
 	private static function get_day_bookings( string $date ): array {
 		global $wpdb;
 		$table = Pneukarnik_DB::bookings_table();
-		return $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM %i WHERE booking_date = %s AND status = 'CONFIRMED' ORDER BY time_start ASC",
-				$table,
-				$date
-			),
-			ARRAY_A
-		) ?: [];
+		return Pneukarnik_Booking::with_service_names(
+			$wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT * FROM %i WHERE booking_date = %s AND status = 'CONFIRMED' ORDER BY time_start ASC",
+					$table,
+					$date
+				),
+				ARRAY_A
+			) ?: []
+		);
 	}
 
 	private static function enc( string $str ): string {

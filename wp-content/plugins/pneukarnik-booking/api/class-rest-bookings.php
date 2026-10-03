@@ -85,7 +85,7 @@ class Pneukarnik_Rest_Bookings {
 				'date'             => $booking['booking_date'],
 				'time_start'       => $booking['time_start'],
 				'time_end'         => $booking['time_end'],
-				'service_name'     => $booking['service_name'],
+				'services'         => array_column( $booking['services'], 'name' ),
 				'confirmation_url' => Pneukarnik_Booking::confirmation_url( $result['confirmation_token'] ),
 			],
 			201

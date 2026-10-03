@@ -133,18 +133,19 @@ class Pneukarnik_Admin_Create {
 			'customer_note'    => sanitize_textarea_field( wp_unslash( $_POST['customer_note'] ?? '' ) ),
 		];
 
-		// Telefonická objednávka: souhlas GDPR se neuděluje přes web. Celé přepracování formuláře je #11.
+		// Telefonická objednávka: souhlas GDPR se neuděluje přes web. Celé přepracování formuláře
+		// (včetně víc Služeb) je #11.
 		$result = Pneukarnik_Booking::create(
 			[
-				'service_id' => $values['service_id'],
-				'date'       => $values['booking_date'],
-				'time'       => $values['time_start'],
-				'name'       => $values['customer_name'],
-				'company'    => (string) $values['customer_company'],
-				'phone'      => $values['customer_phone'],
-				'email'      => $values['customer_email'],
-				'plate'      => $values['customer_plate'],
-				'note'       => $values['customer_note'],
+				'service_ids' => [ $values['service_id'] ],
+				'date'        => $values['booking_date'],
+				'time'        => $values['time_start'],
+				'name'        => $values['customer_name'],
+				'company'     => (string) $values['customer_company'],
+				'phone'       => $values['customer_phone'],
+				'email'       => $values['customer_email'],
+				'plate'       => $values['customer_plate'],
+				'note'        => $values['customer_note'],
 			],
 			Pneukarnik_Booking::SOURCE_ADMIN
 		);

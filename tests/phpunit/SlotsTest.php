@@ -113,14 +113,7 @@ class SlotsTest extends Pneukarnik_REST_Test_Case {
 	public function test_impossible_date_is_rejected(): void {
 		$service = $this->create_service( 60 );
 
-		$response = $this->rest(
-			'GET',
-			'/slots',
-			[
-				'service_id' => $service,
-				'date'       => '2027-13-01',
-			]
-		);
+		$response = $this->slots( $service, '2027-13-01' );
 
 		$this->assertSame( 400, $response->get_status() );
 	}
@@ -129,14 +122,7 @@ class SlotsTest extends Pneukarnik_REST_Test_Case {
 		$service = $this->create_service( 60 );
 		update_post_meta( $service, '_service_bookable', '' );
 
-		$response = $this->rest(
-			'GET',
-			'/slots',
-			[
-				'service_id' => $service,
-				'date'       => self::MONDAY,
-			]
-		);
+		$response = $this->slots( $service, self::MONDAY );
 
 		$this->assertSame( 422, $response->get_status() );
 		$this->assertSame( 'booking.service_not_bookable', $response->get_data()['code'] );

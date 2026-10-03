@@ -1,18 +1,23 @@
 // @ts-check
 /**
- * Rezervační formulář: načte volné Termíny pro Službu a den a odešle Rezervaci na REST API pluginu.
+ * Rezervační formulář: načte volné Termíny pro vybrané Služby a den a odešle Rezervaci na REST API pluginu.
  * Pravidla (mřížka, obsazenost, validace) jsou na serveru, tady se jen zobrazují jejich výsledky.
  */
 
 /**
- * @typedef {{ enabled: boolean, disabled_message: string, services: {id: number, slug: string, name: string}[], selected: number, min_date: string, max_date: string, api: string, nonce: string, phone: string, privacy_url: string }} Config
+ * @typedef {{ enabled: boolean, disabled_message: string, services: {id: number, slug: string, name: string}[], max_services: number, selected: number, min_date: string, max_date: string, api: string, nonce: string, phone: string, privacy_url: string }} Config
  * @typedef {{ time_start: string, time_end: string }} Termin
  * @typedef {{ code: string, data?: { status: number, errors?: Record<string, string> } }} ApiError
  */
 
 /** @type {Record<string, Record<string, string>>} */
 const FIELD_MESSAGES = {
-	service_id: { required: 'Vyberte službu.', invalid: 'Vyberte službu.' },
+	service_ids: {
+		required: 'Vyberte službu.',
+		invalid: 'Vyberte službu.',
+		duplicate: 'Každou službu vyberte jen jednou.',
+		too_many: 'Vyberte méně služeb, ostatní napište do poznámky.',
+	},
 	date: { required: 'Vyberte den.', invalid: 'Vyberte den.' },
 	time: { required: 'Vyberte termín.', invalid: 'Vyberte termín.' },
 	name: { required: 'Vyplňte jméno nebo firmu.', too_long: 'Jméno je příliš dlouhé.' },
@@ -62,12 +67,47 @@ function init() {
 	/** @type {Config} */
 	const config = JSON.parse(configElement.textContent ?? '{}');
 	const messages = errorMessages(config.phone);
-	const service = /** @type {HTMLSelectElement} */ (form.elements.namedItem('service_id'));
+	const sluzby = /** @type {HTMLElement} */ (document.getElementById('rez-sluzby'));
+	const sablona = /** @type {HTMLTemplateElement} */ (document.getElementById('rez-sluzba-sablona'));
+	const pridat = /** @type {HTMLButtonElement} */ (document.getElementById('rez-pridat-sluzbu'));
 	const date = /** @type {HTMLInputElement} */ (form.elements.namedItem('date'));
 	const terminy = /** @type {HTMLElement} */ (document.getElementById('terminy'));
 	const zprava = /** @type {HTMLElement} */ (document.getElementById('rezervace-zprava'));
 	const submit = /** @type {HTMLButtonElement} */ (form.querySelector('button[type="submit"]'));
+	const maxServices = Math.min(config.max_services, config.services.length);
 	let request = 0;
+	let rows = 1;
+
+	const serviceSelects = () => /** @type {HTMLSelectElement[]} */ ([...sluzby.querySelectorAll('select')]);
+	const serviceIds = () => serviceSelects().map((select) => select.value).filter(Boolean);
+
+	/** Službu vybranou v jednom řádku nejde vybrat v jiném. Přidat jde, dokud zbývá Služba. */
+	function syncServices() {
+		const selects = serviceSelects();
+		for (const select of selects) {
+			const others = new Set(selects.filter((other) => other !== select).map((other) => other.value));
+			for (const option of select.options) {
+				option.disabled = option.value !== '' && others.has(option.value);
+			}
+		}
+		pridat.hidden = selects.length >= maxServices;
+	}
+
+	function addService() {
+		const row = /** @type {HTMLElement} */ (sablona.content.firstElementChild?.cloneNode(true));
+		const select = /** @type {HTMLSelectElement} */ (row.querySelector('select'));
+		select.id = `rez-sluzba-${++rows}`;
+		row.querySelector('label')?.setAttribute('for', select.id);
+		row.querySelector('.sluzby__odebrat')?.addEventListener('click', () => {
+			row.remove();
+			syncServices();
+			pridat.focus();
+			loadTerminy();
+		});
+		sluzby.append(row);
+		syncServices();
+		select.focus();
+	}
 
 	/** @param {string} text */
 	const showTerminyText = (text) => {
@@ -76,14 +116,16 @@ function init() {
 
 	async function loadTerminy() {
 		const current = ++request;
-		if (!service.value || !date.value) {
+		const ids = serviceIds();
+		if (ids.length === 0 || !date.value) {
 			showTerminyText('Vyberte službu a den.');
 			return;
 		}
 		showTerminyText('Načítám volné termíny…');
 		try {
-			const url = `${config.api}/slots?service_id=${encodeURIComponent(service.value)}&date=${encodeURIComponent(date.value)}`;
-			const response = await fetch(url, { headers: { Accept: 'application/json' } });
+			const query = new URLSearchParams(ids.map((id) => ['service_ids[]', id]));
+			query.set('date', date.value);
+			const response = await fetch(`${config.api}/slots?${query}`, { headers: { Accept: 'application/json' } });
 			if (current !== request) return;
 			if (!response.ok) {
 				/** @type {ApiError} */
@@ -136,7 +178,7 @@ function init() {
 		clearErrors();
 		const values = new FormData(form);
 		const body = {
-			service_id: service.value,
+			service_ids: serviceIds(),
 			date: date.value,
 			time: values.get('time') ?? '',
 			name: values.get('name'),
@@ -178,8 +220,13 @@ function init() {
 		}
 	}
 
-	service.addEventListener('change', loadTerminy);
+	sluzby.addEventListener('change', () => {
+		syncServices();
+		loadTerminy();
+	});
+	pridat.addEventListener('click', addService);
 	date.addEventListener('change', loadTerminy);
+	syncServices();
 	form.addEventListener('submit', send);
 	loadTerminy();
 }

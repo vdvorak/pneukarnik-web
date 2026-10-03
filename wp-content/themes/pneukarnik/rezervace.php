@@ -1,6 +1,6 @@
 <?php
 /**
- * Rezervace termínu: výběr Služby, dne a Termínu, kontaktní údaje.
+ * Rezervace termínu: výběr jedné nebo víc Služeb, dne a Termínu, kontaktní údaje.
  * Data a pravidla dodává plugin (REST), tady je jen formulář.
  *
  * @package Pneukarnik
@@ -32,15 +32,36 @@ get_header();
 		</noscript>
 
 		<form id="rezervace-form" class="rezervace__form" novalidate>
+			<?php
+			$pneukarnik_service_options = static function ( int $selected ) use ( $pneukarnik_config ): void {
+				?>
+				<option value=""><?php esc_html_e( '— vyberte službu —', 'pneukarnik' ); ?></option>
+				<?php foreach ( $pneukarnik_config['services'] as $pneukarnik_service ) : ?>
+					<option value="<?php echo (int) $pneukarnik_service['id']; ?>" <?php selected( $selected, $pneukarnik_service['id'] ); ?>><?php echo esc_html( $pneukarnik_service['name'] ); ?></option>
+				<?php endforeach; ?>
+				<?php
+			};
+	?>
+			<div class="sluzby" id="rez-sluzby">
+				<p class="pole sluzby__radek">
+					<label for="rez-sluzba-1"><?php esc_html_e( 'Služba', 'pneukarnik' ); ?></label>
+					<select id="rez-sluzba-1" name="service_ids" required aria-describedby="chyba-service_ids">
+						<?php $pneukarnik_service_options( $pneukarnik_config['selected'] ); ?>
+					</select>
+				</p>
+			</div>
+			<template id="rez-sluzba-sablona">
+				<p class="pole sluzby__radek">
+					<label><?php esc_html_e( 'Další služba', 'pneukarnik' ); ?></label>
+					<select name="service_ids" aria-describedby="chyba-service_ids">
+						<?php $pneukarnik_service_options( 0 ); ?>
+					</select>
+					<button type="button" class="sluzby__odebrat"><?php esc_html_e( 'Odebrat', 'pneukarnik' ); ?></button>
+				</p>
+			</template>
 			<p class="pole">
-				<label for="rez-sluzba"><?php esc_html_e( 'Služba', 'pneukarnik' ); ?></label>
-				<select id="rez-sluzba" name="service_id" required aria-describedby="chyba-service_id">
-					<option value=""><?php esc_html_e( '— vyberte službu —', 'pneukarnik' ); ?></option>
-					<?php foreach ( $pneukarnik_config['services'] as $pneukarnik_service ) : ?>
-						<option value="<?php echo (int) $pneukarnik_service['id']; ?>" <?php selected( $pneukarnik_config['selected'], $pneukarnik_service['id'] ); ?>><?php echo esc_html( $pneukarnik_service['name'] ); ?></option>
-					<?php endforeach; ?>
-				</select>
-				<span class="pole__chyba" id="chyba-service_id"></span>
+				<button type="button" id="rez-pridat-sluzbu" class="sluzby__pridat" hidden><?php esc_html_e( '+ přidat další službu', 'pneukarnik' ); ?></button>
+				<span class="pole__chyba" id="chyba-service_ids"></span>
 			</p>
 
 			<p class="pole">
@@ -76,7 +97,7 @@ get_header();
 				<p class="pole">
 					<label for="rez-note"><?php esc_html_e( 'Poznámka (nepovinné)', 'pneukarnik' ); ?></label>
 					<textarea id="rez-note" name="note" rows="3" aria-describedby="napoveda-note chyba-note"></textarea>
-					<span class="pole__napoveda" id="napoveda-note"><?php esc_html_e( 'Další přání, třeba víc prací najednou, napište sem.', 'pneukarnik' ); ?></span>
+					<span class="pole__napoveda" id="napoveda-note"><?php esc_html_e( 'Další přání, která mezi službami nenajdete, napište sem.', 'pneukarnik' ); ?></span>
 					<span class="pole__chyba" id="chyba-note"></span>
 				</p>
 			</fieldset>

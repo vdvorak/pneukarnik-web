@@ -16,8 +16,10 @@ get_header();
 	<dl class="rezervace-potvrzeni__udaje">
 		<dt><?php esc_html_e( 'Termín', 'pneukarnik' ); ?></dt>
 		<dd><?php echo esc_html( wp_date( 'l j. n. Y \v G:i', $pneukarnik_start->getTimestamp(), Pneukarnik_Clock::timezone() ) ); ?></dd>
-		<dt><?php esc_html_e( 'Služba', 'pneukarnik' ); ?></dt>
-		<dd><?php echo esc_html( $pneukarnik_booking['service_name'] ); ?></dd>
+		<dt><?php echo esc_html( count( $pneukarnik_booking['services'] ) > 1 ? __( 'Služby', 'pneukarnik' ) : __( 'Služba', 'pneukarnik' ) ); ?></dt>
+		<?php foreach ( $pneukarnik_booking['services'] as $pneukarnik_service ) : ?>
+			<dd><?php echo esc_html( $pneukarnik_service['name'] ); ?></dd>
+		<?php endforeach; ?>
 		<dt><?php esc_html_e( 'SPZ', 'pneukarnik' ); ?></dt>
 		<dd><?php echo esc_html( $pneukarnik_booking['customer_plate'] ); ?></dd>
 	</dl>

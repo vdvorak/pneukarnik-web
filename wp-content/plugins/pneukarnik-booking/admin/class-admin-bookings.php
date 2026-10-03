@@ -166,7 +166,7 @@ class Pneukarnik_Admin_Bookings {
 								<td><?php echo esc_html( $b['customer_plate'] ); ?></td>
 								<td><?php echo esc_html( $b['customer_email'] ); ?></td>
 								<td><?php echo esc_html( $b['customer_phone'] ); ?></td>
-								<td><?php echo esc_html( get_the_title( (int) $b['service_id'] ) ); ?></td>
+								<td><?php echo esc_html( $b['service_name'] ); ?></td>
 								<td>
 									<?php if ( $b['status'] === 'CONFIRMED' ) : ?>
 										<span style="color:green"><?php esc_html_e( 'Potvrzena', 'pneukarnik-booking' ); ?></span>
@@ -323,7 +323,7 @@ class Pneukarnik_Admin_Bookings {
 
 		return [
 			'total' => $total,
-			'rows'  => $rows ?: [],
+			'rows'  => Pneukarnik_Booking::with_service_names( $rows ?: [] ),
 		];
 	}
 
