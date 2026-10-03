@@ -83,6 +83,7 @@ final class Pneukarnik_Notifications {
 			->button( __( 'Zrušit rezervaci', 'pneukarnik-booking' ), Pneukarnik_Cancellation::url( $cancel_token ) )
 			/* translators: %s: telefon Provozovatele */
 			->paragraph( '' !== $phone ? sprintf( __( 'Potřebujete něco změnit? Zavolejte nám na %s.', 'pneukarnik-booking' ), $phone ) : '' )
+			->link( __( 'Objednat znovu', 'pneukarnik-booking' ), Pneukarnik_Prefill::url( (int) $booking['id'] ) )
 			->paragraph( self::text( 'signature' ) );
 	}
 
@@ -99,7 +100,7 @@ final class Pneukarnik_Notifications {
 			/* translators: %s: důvod Zrušení od Provozovatele */
 			->paragraph( '' !== $reason ? sprintf( __( 'Důvod: %s', 'pneukarnik-booking' ), $reason ) : '' )
 			->details( self::visit( $booking ) )
-			->button( __( 'Objednat nový termín', 'pneukarnik-booking' ), home_url( '/rezervace/' ) )
+			->button( __( 'Objednat znovu', 'pneukarnik-booking' ), Pneukarnik_Prefill::url( (int) $booking['id'] ) )
 			->paragraph( self::text( 'signature' ) );
 	}
 

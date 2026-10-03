@@ -60,6 +60,15 @@ final class Pneukarnik_Cancellation {
 	}
 
 	/**
+	 * Odkaz „Objednat znovu“ pro Rezervaci z odkazu na Zrušení, pro neplatný odkaz prázdný formulář.
+	 * Do REST odpovědi nepatří: vydá kontaktní údaje.
+	 */
+	public static function prefill_url( mixed $token ): string {
+		[ $booking ] = self::resolve( $token );
+		return null === $booking ? home_url( '/rezervace/' ) : Pneukarnik_Prefill::url( (int) $booking['id'] );
+	}
+
+	/**
 	 * Zrušení odkazem z e‑mailu.
 	 *
 	 * @return array{ok:true,code:string,booking:array<string,mixed>}|array{ok:false,code:string,status:int}

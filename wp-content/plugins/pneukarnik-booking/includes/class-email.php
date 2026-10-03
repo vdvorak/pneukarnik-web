@@ -64,6 +64,16 @@ final class Pneukarnik_Email {
 		return $this;
 	}
 
+	/** Méně výrazný odkaz než tlačítko. */
+	public function link( string $label, string $url ): self {
+		$this->blocks[] = [
+			'type' => 'link',
+			'text' => $label,
+			'url'  => $url,
+		];
+		return $this;
+	}
+
 	public function button( string $label, string $url ): self {
 		$this->blocks[] = [
 			'type' => 'button',
@@ -86,6 +96,7 @@ final class Pneukarnik_Email {
 				'details'   => self::html_details( $block['rows'] ?? [] ),
 				'items'     => '<p style="margin:0 0 4px"><strong>' . esc_html( $block['text'] ?? '' ) . '</strong></p><ul style="margin:0 0 16px;padding-left:20px">'
 					. implode( '', array_map( static fn( string $item ): string => '<li>' . esc_html( $item ) . '</li>', $block['items'] ?? [] ) ) . '</ul>',
+				'link'      => '<p style="margin:0 0 16px"><a href="' . esc_url( $block['url'] ?? '' ) . '">' . esc_html( $block['text'] ?? '' ) . '</a></p>',
 				'button'    => '<p style="margin:24px 0"><a href="' . esc_url( $block['url'] ?? '' ) . '" style="background:#1a1a1a;color:#ffffff;padding:10px 20px;text-decoration:none;border-radius:4px;display:inline-block">'
 					. esc_html( $block['text'] ?? '' ) . '</a></p>',
 				default     => '',
@@ -111,7 +122,7 @@ final class Pneukarnik_Email {
 					)
 				),
 				'items'                => ( $block['text'] ?? '' ) . ":\n" . implode( "\n", array_map( static fn( string $item ): string => '- ' . $item, $block['items'] ?? [] ) ),
-				'button'               => ( $block['text'] ?? '' ) . ': ' . ( $block['url'] ?? '' ),
+				'button', 'link'       => ( $block['text'] ?? '' ) . ': ' . ( $block['url'] ?? '' ),
 				default                => '',
 			};
 		}

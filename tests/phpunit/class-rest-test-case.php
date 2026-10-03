@@ -229,6 +229,20 @@ abstract class Pneukarnik_REST_Test_Case extends WP_UnitTestCase {
 		return $m[1];
 	}
 
+	/**
+	 * Token z odkazu „Objednat znovu“ v e‑mailu.
+	 *
+	 * @param array{html:string} $mail
+	 */
+	protected function prefill_token_from( array $mail ): string {
+		$this->assertSame( 1, preg_match( '~/rezervace/\?znovu=([0-9]+\.[0-9a-f]{64})~', $mail['html'], $m ), 'Odkaz „Objednat znovu“ v e‑mailu' );
+		return $m[1];
+	}
+
+	protected function prefill( mixed $token ): WP_REST_Response {
+		return $this->rest( 'GET', '/prefill', [ 'token' => $token ] );
+	}
+
 	protected function cancellation( string $token ): WP_REST_Response {
 		return $this->rest( 'GET', '/cancellation', [ 'token' => $token ] );
 	}

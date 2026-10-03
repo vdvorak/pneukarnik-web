@@ -135,6 +135,16 @@ get_header();
 				</p>
 			</fieldset>
 
+			<p class="pole pole--zaskrtavaci">
+				<label>
+					<input type="checkbox" name="remember" value="1" id="rez-zapamatovat" aria-describedby="napoveda-zapamatovat">
+					<?php esc_html_e( 'Zapamatovat údaje na tomto zařízení', 'pneukarnik' ); ?>
+				</label>
+				<span class="pole__napoveda" id="napoveda-zapamatovat"><?php esc_html_e( 'Jméno, telefon, e‑mail, SPZ a vozidlo se uloží jen v tomto prohlížeči, příště je nebudete vyplňovat.', 'pneukarnik' ); ?></span>
+				<button type="button" id="rez-zapomenout" hidden><?php esc_html_e( 'Smazat uložené údaje', 'pneukarnik' ); ?></button>
+				<span class="pole__napoveda" id="rez-zapomenuto" aria-live="polite"></span>
+			</p>
+
 			<p class="pole pole--souhlas">
 				<label>
 					<input type="checkbox" name="consent_gdpr" value="1" aria-describedby="chyba-consent_gdpr">

@@ -129,7 +129,7 @@ final class Pneukarnik_Booking_Pages {
 	 * Data pro stránku Zrušení podle odkazu v adrese. code: allowed, too_late, already_cancelled,
 	 * cancelled (hned po Zrušení) nebo invalid_token (pak bez Rezervace).
 	 *
-	 * @return array{token:string,code:string,booking:array{date:string,time_start:string,time_end:string,services:list<string>,plate:string,status:string}|null,cancel_until:string,phone:string}
+	 * @return array{token:string,code:string,booking:array{date:string,time_start:string,time_end:string,services:list<string>,plate:string,status:string}|null,cancel_until:string,prefill_url:string,phone:string}
 	 */
 	public static function cancellation(): array {
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- jen čtení podle tajného tokenu.
@@ -146,6 +146,7 @@ final class Pneukarnik_Booking_Pages {
 			'code'         => $code,
 			'booking'      => $preview['booking'] ?? null,
 			'cancel_until' => $preview['cancel_until'] ?? '',
+			'prefill_url'  => Pneukarnik_Cancellation::prefill_url( $token ),
 			'phone'        => pneukarnik_phone(),
 		];
 	}

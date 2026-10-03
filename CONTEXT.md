@@ -76,6 +76,10 @@ _Avoid_: novinka, aktualita, příspěvek
 Trvalá informační stránka, která odpovídá na častou otázku Zákazníků (např. kdy přezout, jak přečíst rozměr pneumatiky). Na rozdíl od Oznámení nemá platnost.
 _Avoid_: článek, blog, rada, poradna
 
+**Objednat znovu**:
+Odkaz v e‑mailu k Rezervaci (potvrzení, Zrušení), který otevře rezervační formulář s kontaktními údaji z této Rezervace. Náhrada zákaznického účtu (ADR 0002), spolu s volitelným zapamatováním údajů v prohlížeči.
+_Avoid_: rebook, opakovaná objednávka
+
 **Připomínka přezutí**:
 Sezónní e‑mail Zákazníkovi, který k němu dal samostatný souhlas, s odkazem na předvyplněnou rezervaci. Odesílá se před každou Sezónou.
 _Avoid_: newsletter, marketingový e‑mail

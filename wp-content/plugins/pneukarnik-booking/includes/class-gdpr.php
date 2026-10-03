@@ -236,6 +236,15 @@ class Pneukarnik_GDPR {
 	// ------------------------------------------------------------------
 
 	/**
+	 * Jestli už má Rezervace osobní údaje nahrazené (e‑mail končí .invalid).
+	 *
+	 * @param array{customer_email:string} $booking
+	 */
+	public static function is_anonymised( array $booking ): bool {
+		return str_ends_with( $booking['customer_email'], '.invalid' );
+	}
+
+	/**
 	 * Anonymise PII in old completed/cancelled bookings.
 	 * Triggered by WP-Cron daily hook.
 	 */

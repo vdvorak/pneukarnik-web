@@ -243,4 +243,66 @@ test('Zákazník zruší Rezervaci odkazem z e‑mailu a Termín se uvolní', as
 
 	await page.goto(link);
 	await expect(page.getByRole('alert')).toHaveText('Tato rezervace už je zrušená.');
+
+	// Změna Termínu = Zrušení + nová Rezervace s předvyplněnými údaji.
+	await page.getByRole('link', { name: 'Objednat znovu' }).click();
+	await expect(page.getByLabel('Jméno nebo firma')).toHaveValue('E2E Rušitel');
+	await expect(page.getByLabel('E‑mail')).toHaveValue(email);
+});
+
+test('Údaje se zapamatují jen se zaškrtnutím a jdou smazat', async ({ page }) => {
+	const date = upcomingWeekday(11);
+	const book = async (time: string, remember: boolean) => {
+		await page.goto('/rezervace/');
+		await page.getByLabel('Služba', { exact: true }).selectOption(String(serviceId));
+		await pickDay(page, date);
+		await page.getByLabel(time).check();
+		await page.getByLabel('Jméno nebo firma').fill(customer.name);
+		await page.getByLabel('Telefon').fill(customer.phone);
+		await page.getByLabel('E‑mail').fill(customer.email);
+		await page.getByLabel('SPZ').fill(customer.plate);
+		await page.getByLabel('Značka a model (nepovinné)').fill('Škoda Fabia');
+		await page.getByLabel('Zapamatovat údaje na tomto zařízení').setChecked(remember);
+		await page.getByLabel(/Souhlasím se zpracováním/).check();
+		await page.getByRole('button', { name: 'Rezervovat' }).click();
+		await expect(page).toHaveURL(/\/rezervace\/potvrzeni\//);
+	};
+
+	await book('8:00–9:00', false);
+	await page.goto('/rezervace/');
+	await expect(page.getByLabel('Jméno nebo firma')).toHaveValue('');
+	expect(await page.evaluate(() => window.localStorage.length)).toBe(0);
+
+	await book('9:00–10:00', true);
+	await page.goto('/rezervace/');
+	await expect(page.getByLabel('Jméno nebo firma')).toHaveValue(customer.name);
+	await expect(page.getByLabel('E‑mail')).toHaveValue(customer.email);
+	await expect(page.getByLabel('Značka a model (nepovinné)')).toHaveValue('Škoda Fabia');
+	await expect(page.getByLabel('Zapamatovat údaje na tomto zařízení')).toBeChecked();
+
+	await page.getByRole('button', { name: 'Smazat uložené údaje' }).click();
+	await expect(page.getByLabel('Jméno nebo firma')).toHaveValue('');
+	await page.reload();
+	await expect(page.getByLabel('Jméno nebo firma')).toHaveValue('');
+	await expect(page.getByLabel('Zapamatovat údaje na tomto zařízení')).not.toBeChecked();
+});
+
+test('Odkaz „Objednat znovu“ z e‑mailu předvyplní kontaktní údaje', async ({ page, request }) => {
+	const email = `e2e-znovu-${Date.now()}@example.test`;
+	const booking = await request.post('/wp-json/pneukarnik/v1/bookings', {
+		data: { service_ids: [serviceId], date: upcomingWeekday(12), time: '08:00', ...customer, name: 'E2E Stálý zákazník', email, vehicle: 'Škoda Octavia', note: 'Tajná poznámka', consent_gdpr: true },
+	});
+	expect(booking.status()).toBe(201);
+
+	const mail = await waitForMail(request, email, /^Potvrzení rezervace/);
+	const link = mail.html.match(/href="([^"]*\/rezervace\/\?znovu=[^"]+)"/)?.[1] ?? '';
+	expect(link).not.toBe('');
+
+	await page.goto(link.replaceAll('&amp;', '&'));
+	await expect(page.getByLabel('Jméno nebo firma')).toHaveValue('E2E Stálý zákazník');
+	await expect(page.getByLabel('E‑mail')).toHaveValue(email);
+	await expect(page.getByLabel('SPZ')).toHaveValue('1AB2345');
+	await expect(page.getByLabel('Značka a model (nepovinné)')).toHaveValue('Škoda Octavia');
+	await expect(page.getByLabel('Poznámka (nepovinné)')).toHaveValue('');
+	expect(page.url()).not.toContain('znovu');
 });

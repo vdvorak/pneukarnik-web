@@ -55,7 +55,7 @@ get_header();
 		<?php if ( $pneukarnik_offer_call ) : ?>
 			<p><a href="<?php echo esc_url( pneukarnik_tel_href( $pneukarnik_phone ) ); ?>"><?php echo esc_html( sprintf( /* translators: %s: telefon */ __( 'Zavolat %s', 'pneukarnik' ), $pneukarnik_phone ) ); ?></a></p>
 		<?php endif; ?>
-		<p><a href="<?php echo esc_url( home_url( '/rezervace/' ) ); ?>"><?php esc_html_e( 'Objednat nový termín', 'pneukarnik' ); ?></a></p>
+		<p><a href="<?php echo esc_url( $pneukarnik_cancellation['prefill_url'] ); ?>"><?php esc_html_e( 'Objednat znovu', 'pneukarnik' ); ?></a></p>
 	<?php endif; ?>
 </main>
 <?php

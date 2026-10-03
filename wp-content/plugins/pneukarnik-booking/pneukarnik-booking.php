@@ -45,6 +45,8 @@ spl_autoload_register(
 			'Pneukarnik_Rest_Available_Days'  => 'api/class-rest-available-days.php',
 			'Pneukarnik_Rest_Bookings'        => 'api/class-rest-bookings.php',
 			'Pneukarnik_Rest_Cancel'          => 'api/class-rest-cancel.php',
+			'Pneukarnik_Rest_Prefill'         => 'api/class-rest-prefill.php',
+			'Pneukarnik_Prefill'              => 'includes/class-prefill.php',
 			'Pneukarnik_Rest_Calendar'        => 'api/class-rest-calendar.php',
 			'Pneukarnik_Admin_Settings'       => 'admin/class-admin-settings.php',
 			'Pneukarnik_Admin_Bookings'       => 'admin/class-admin-bookings.php',
@@ -124,6 +126,7 @@ function pneukarnik_register_rest_routes(): void {
 	( new Pneukarnik_Rest_Available_Days() )->register_routes();
 	( new Pneukarnik_Rest_Bookings() )->register_routes();
 	( new Pneukarnik_Rest_Cancel() )->register_routes();
+	( new Pneukarnik_Rest_Prefill() )->register_routes();
 	( new Pneukarnik_Rest_Calendar() )->register_routes();
 }
 

@@ -54,6 +54,33 @@ function errorMessages(phone) {
 	};
 }
 
+/** Kontaktní údaje, které jde zapamatovat v prohlížeči nebo předvyplnit z „Objednat znovu“. */
+const CONTACT_FIELDS = /** @type {const} */ (['name', 'phone', 'email', 'plate', 'vehicle']);
+const STORAGE_KEY = 'pneukarnik.udaje';
+
+/**
+ * Údaje zapamatované v tomto prohlížeči. Úložiště může být zakázané, pak nic.
+ * @returns {Record<string, string> | null}
+ */
+function storedContact() {
+	try {
+		const raw = window.localStorage.getItem(STORAGE_KEY);
+		return raw ? JSON.parse(raw) : null;
+	} catch {
+		return null;
+	}
+}
+
+/** @param {Record<string, string> | null} contact null = smazat */
+function storeContact(contact) {
+	try {
+		if (contact) window.localStorage.setItem(STORAGE_KEY, JSON.stringify(contact));
+		else window.localStorage.removeItem(STORAGE_KEY);
+	} catch {
+		// Bez úložiště se jen nic nezapamatuje.
+	}
+}
+
 /** @param {string} hhmm */
 const humanTime = (hhmm) => hhmm.replace(/^0/, '');
 
@@ -126,6 +153,9 @@ function init() {
 	const uskladnena = /** @type {HTMLElement} */ (document.getElementById('rez-uskladnena'));
 	const leasing = /** @type {HTMLInputElement} */ (document.getElementById('rez-leasing'));
 	const leasingSpolecnost = /** @type {HTMLElement} */ (document.getElementById('rez-leasing-spolecnost'));
+	const zapamatovat = /** @type {HTMLInputElement} */ (document.getElementById('rez-zapamatovat'));
+	const zapomenout = /** @type {HTMLButtonElement} */ (document.getElementById('rez-zapomenout'));
+	const zapomenuto = /** @type {HTMLElement} */ (document.getElementById('rez-zapomenuto'));
 	const askStoredWheels = new Set(config.services.filter((service) => service.ask_stored_wheels).map((service) => String(service.id)));
 	const maxServices = Math.min(config.max_services, config.services.length);
 	let request = 0;
@@ -137,6 +167,44 @@ function init() {
 
 	const serviceSelects = () => /** @type {HTMLSelectElement[]} */ ([...sluzby.querySelectorAll('select')]);
 	const serviceIds = () => serviceSelects().map((select) => select.value).filter(Boolean);
+
+	/** @param {Record<string, unknown>} contact */
+	function fillContact(contact) {
+		for (const field of CONTACT_FIELDS) {
+			const input = /** @type {HTMLInputElement} */ (form.elements.namedItem(field));
+			if (typeof contact[field] === 'string') input.value = contact[field];
+		}
+	}
+
+	/** Údaje z formuláře k zapamatování. */
+	function currentContact() {
+		const values = new FormData(form);
+		return Object.fromEntries(CONTACT_FIELDS.map((field) => [field, String(values.get(field) ?? '')]));
+	}
+
+	function forgetContact() {
+		storeContact(null);
+		fillContact(Object.fromEntries(CONTACT_FIELDS.map((field) => [field, ''])));
+		zapamatovat.checked = false;
+		zapomenout.hidden = true;
+		setText(zapomenuto, 'Uložené údaje jsme z tohoto prohlížeče smazali.');
+	}
+
+	/** „Objednat znovu“: odkaz z e‑mailu předvyplní kontaktní údaje dané Rezervace. */
+	async function prefillFromLink() {
+		const url = new URL(window.location.href);
+		const token = url.searchParams.get('znovu');
+		if (!token) return;
+		// Token z adresy hned zmizí, aby nezůstal v historii ani v odkazech dál.
+		url.searchParams.delete('znovu');
+		window.history.replaceState(null, '', url);
+		try {
+			const response = await fetch(`${config.api}/prefill?${new URLSearchParams({ token })}`, { headers: { Accept: 'application/json' } });
+			if (response.ok) fillContact(await response.json());
+		} catch {
+			// Formulář jde vyplnit i ručně.
+		}
+	}
 
 	/** @param {ApiError} error */
 	const explain = (error) => (error.data?.season && seasonText(error.code, error.data.season, config.phone)) ?? messages[error.code];
@@ -348,6 +416,7 @@ function init() {
 			});
 			const data = await response.json();
 			if (response.status === 201) {
+				storeContact(zapamatovat.checked ? currentContact() : null);
 				leaving = true; // Tlačítko zůstane vypnuté, aby druhé kliknutí neposlalo Rezervaci znovu.
 				window.location.assign(data.confirmation_url);
 				return;
@@ -394,6 +463,14 @@ function init() {
 	});
 	predchozi.addEventListener('click', () => moveMonth(-1));
 	dalsi.addEventListener('click', () => moveMonth(1));
+	const remembered = storedContact();
+	if (remembered) {
+		fillContact(remembered);
+		zapamatovat.checked = true;
+		zapomenout.hidden = false;
+	}
+	zapomenout.addEventListener('click', forgetContact);
+	prefillFromLink();
 	syncServices();
 	syncStoredWheels();
 	syncLeasing();
