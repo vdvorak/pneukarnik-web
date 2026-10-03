@@ -13,6 +13,8 @@ get_header();
 <main id="obsah" class="site-main rezervace">
 	<h1><?php esc_html_e( 'Rezervace termínu', 'pneukarnik' ); ?></h1>
 
+	<?php pneukarnik_booking_notices(); ?>
+
 	<?php if ( ! $pneukarnik_config['enabled'] ) : ?>
 		<p class="rezervace__vypnuto"><?php echo esc_html( $pneukarnik_config['disabled_message'] ); ?></p>
 		<?php if ( '' !== $pneukarnik_config['phone'] ) : ?>

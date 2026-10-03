@@ -92,6 +92,29 @@ export async function publishPromotion(page: Page, a: PromotionFields): Promise<
 	await expect(page.getByText('Akce není zveřejněná')).toHaveCount(0);
 }
 
+export type NoticeFields = {
+	title: string;
+	text: string;
+	/** YYYY-MM-DD */
+	from: string;
+	/** YYYY-MM-DD */
+	to: string;
+	atBooking?: boolean;
+};
+
+/** Vyplní formulář Oznámení v administraci a klikne na Publikovat. */
+export async function publishNotice(page: Page, n: NoticeFields): Promise<void> {
+	await page.goto('/wp-admin/post-new.php?post_type=pneukarnik_notice');
+	await page.getByLabel('Text *').fill(n.text);
+	await page.getByLabel('Platí od *').fill(n.from);
+	await page.getByLabel('Platí do *').fill(n.to);
+	if (n.atBooking) await page.getByLabel(/Zobrazit i u rezervace/).check();
+	// Název až nakonec, viz publishPromotion().
+	await page.fill('#title', n.title);
+	await Promise.all([page.waitForURL(/\/post\.php\?post=\d+&action=edit/), page.click('#publish')]);
+	await expect(page.getByText('Oznámení není zveřejněné')).toHaveCount(0);
+}
+
 /** Den posunutý o `days` od dneška jako YYYY-MM-DD v místním čase. */
 export function dayFromToday(days: number): string {
 	const day = new Date();

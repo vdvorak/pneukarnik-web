@@ -15,6 +15,11 @@
 </head>
 <body <?php body_class(); ?>>
 <?php wp_body_open(); ?>
+<?php
+if ( class_exists( 'Pneukarnik_Notice' ) ) {
+	pneukarnik_top_notice();
+}
+?>
 <header class="site-header">
 	<a class="site-title" href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php bloginfo( 'name' ); ?></a>
 	<nav class="site-nav" aria-label="<?php esc_attr_e( 'Hlavní menu', 'pneukarnik' ); ?>">

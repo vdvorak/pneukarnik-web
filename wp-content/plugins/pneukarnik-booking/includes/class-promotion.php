@@ -9,8 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Akce: časově omezená nabídka ke Službě s akční cenou a platností od–do (viz CONTEXT.md).
  * Čtecí model nad CPT pneukarnik_promotion, šablona webu čte Akce jen přes tuto třídu.
  *
- * Akce platí od začátku dne „od“ do konce dne „do“ v Europe/Prague podle Pneukarnik_Clock.
- * Mimo platnost, bez zveřejnění nebo u nezveřejněné Služby se nikde nezobrazí.
+ * Platnost viz Pneukarnik_Validity. Mimo platnost, bez zveřejnění nebo u nezveřejněné Služby se nikde nezobrazí.
  */
 final class Pneukarnik_Promotion {
 
@@ -46,8 +45,8 @@ final class Pneukarnik_Promotion {
 			service_id: (int) $meta( '_promotion_service_id' ),
 			price: $price > 0 ? $price : null,
 			description: $meta( '_promotion_description' ),
-			valid_from: self::date( $meta( '_promotion_valid_from' ) ),
-			valid_to: self::date( $meta( '_promotion_valid_to' ) ),
+			valid_from: Pneukarnik_Validity::date( $meta( '_promotion_valid_from' ) ),
+			valid_to: Pneukarnik_Validity::date( $meta( '_promotion_valid_to' ) ),
 		);
 	}
 
@@ -58,26 +57,12 @@ final class Pneukarnik_Promotion {
 	 * @return array<int, self> ID Služby => Akce
 	 */
 	public static function current(): array {
-		$today      = Pneukarnik_Clock::today()->format( 'Y-m-d' );
 		$posts      = get_posts(
 			[
 				'post_type'      => self::POST_TYPE,
 				'post_status'    => 'publish',
 				'posts_per_page' => -1,
-				'meta_query'     => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Akcí je pár.
-					[
-						'key'     => '_promotion_valid_from',
-						'value'   => $today,
-						'compare' => '<=',
-						'type'    => 'DATE',
-					],
-					[
-						'key'     => '_promotion_valid_to',
-						'value'   => $today,
-						'compare' => '>=',
-						'type'    => 'DATE',
-					],
-				],
+				'meta_query'     => Pneukarnik_Validity::current_meta_query( '_promotion_valid_from', '_promotion_valid_to' ), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Akcí je pár.
 			]
 		);
 		$promotions = array_map( [ self::class, 'from_post' ], $posts );
@@ -125,23 +110,6 @@ final class Pneukarnik_Promotion {
 		if ( null === $this->price ) {
 			$missing[] = __( 'akční cena', 'pneukarnik-booking' );
 		}
-		if ( '' === $this->valid_from ) {
-			$missing[] = __( 'platnost od', 'pneukarnik-booking' );
-		}
-		if ( '' === $this->valid_to ) {
-			$missing[] = __( 'platnost do', 'pneukarnik-booking' );
-		}
-		if ( '' !== $this->valid_from && '' !== $this->valid_to && $this->valid_to < $this->valid_from ) {
-			$missing[] = __( 'platnost do nejdřív v den začátku', 'pneukarnik-booking' );
-		}
-		return $missing;
-	}
-
-	/**
-	 * Den jako YYYY-MM-DD, prázdný řetězec pro neplatné datum.
-	 */
-	public static function date( string $value ): string {
-		$date = \DateTimeImmutable::createFromFormat( '!Y-m-d', $value );
-		return $date && $date->format( 'Y-m-d' ) === $value ? $value : '';
+		return array_merge( $missing, Pneukarnik_Validity::missing( $this->valid_from, $this->valid_to ) );
 	}
 }

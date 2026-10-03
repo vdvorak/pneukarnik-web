@@ -97,7 +97,7 @@ class Pneukarnik_Admin_Promotion_Meta {
 		update_post_meta( $post_id, '_promotion_price', $price > 0 ? $price : '' );
 		update_post_meta( $post_id, '_promotion_description', sanitize_textarea_field( wp_unslash( $_POST['_promotion_description'] ?? '' ) ) );
 		foreach ( [ '_promotion_valid_from', '_promotion_valid_to' ] as $field ) {
-			update_post_meta( $post_id, $field, Pneukarnik_Promotion::date( sanitize_text_field( wp_unslash( $_POST[ $field ] ?? '' ) ) ) );
+			update_post_meta( $post_id, $field, Pneukarnik_Validity::date( sanitize_text_field( wp_unslash( $_POST[ $field ] ?? '' ) ) ) );
 		}
 	}
 
@@ -130,22 +130,7 @@ class Pneukarnik_Admin_Promotion_Meta {
 				echo esc_html( null === $promotion->price ? '—' : number_format( $promotion->price, 0, ',', "\u{00A0}" ) . "\u{00A0}Kč" );
 				break;
 			case 'pnk_valid':
-				if ( '' === $promotion->valid_from || '' === $promotion->valid_to ) {
-					echo '—';
-					break;
-				}
-				$today = Pneukarnik_Clock::today()->format( 'Y-m-d' );
-				$state = match ( true ) {
-					$today < $promotion->valid_from => __( 'naplánovaná', 'pneukarnik-booking' ),
-					$today > $promotion->valid_to   => __( 'skončila', 'pneukarnik-booking' ),
-					default                         => __( 'platí', 'pneukarnik-booking' ),
-				};
-				printf(
-					'%s – %s<br><small>%s</small>',
-					esc_html( Pneukarnik_Clock::at( $promotion->valid_from )->format( 'j. n. Y' ) ),
-					esc_html( Pneukarnik_Clock::at( $promotion->valid_to )->format( 'j. n. Y' ) ),
-					esc_html( $state )
-				);
+				Pneukarnik_Validity::render_admin_cell( $promotion->valid_from, $promotion->valid_to );
 				break;
 		}
 	}
