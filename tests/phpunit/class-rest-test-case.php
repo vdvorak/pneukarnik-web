@@ -179,6 +179,65 @@ abstract class Pneukarnik_REST_Test_Case extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Odeslané e‑maily od zavolání capture_mails(), jak je předal WordPress PHPMaileru.
+	 *
+	 * @var list<array{to:list<string>,subject:string,html:string,text:string,from_name:string,reply_to:list<string>}>
+	 */
+	protected array $mails = [];
+
+	/**
+	 * Začne zachytávat e‑maily (phpmailer_init vidí i textovou alternativu, pre_wp_mail ne).
+	 * Odeslání zastaví testovací PHPMailer WordPressu.
+	 */
+	protected function capture_mails(): void {
+		add_action(
+			'phpmailer_init',
+			function ( PHPMailer\PHPMailer\PHPMailer $mailer ): void {
+				// phpcs:disable WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- vlastnosti PHPMaileru.
+				$this->mails[] = [
+					'to'        => array_column( $mailer->getToAddresses(), 0 ),
+					'subject'   => $mailer->Subject,
+					'html'      => 'text/html' === $mailer->ContentType ? $mailer->Body : '',
+					'text'      => 'text/html' === $mailer->ContentType ? $mailer->AltBody : $mailer->Body,
+					'from_name' => $mailer->FromName,
+					'reply_to'  => array_column( $mailer->getReplyToAddresses(), 0 ),
+				];
+				// phpcs:enable
+			},
+			PHP_INT_MAX
+		);
+	}
+
+	/**
+	 * Jediný zachycený e‑mail pro adresu.
+	 *
+	 * @return array{to:list<string>,subject:string,html:string,text:string,from_name:string,reply_to:list<string>}
+	 */
+	protected function mail_to( string $address ): array {
+		$mails = array_values( array_filter( $this->mails, static fn( array $mail ): bool => in_array( $address, $mail['to'], true ) ) );
+		$this->assertCount( 1, $mails, "E‑maily pro {$address}: " . wp_json_encode( array_column( $this->mails, 'subject' ) ) );
+		return $mails[0];
+	}
+
+	/**
+	 * Token Zrušení z odkazu v potvrzovacím e‑mailu.
+	 *
+	 * @param array{html:string} $mail
+	 */
+	protected function cancel_token_from( array $mail ): string {
+		$this->assertSame( 1, preg_match( '~/rezervace/zruseni/\?r=([0-9a-f]{64})~', $mail['html'], $m ), 'Odkaz pro Zrušení v e‑mailu' );
+		return $m[1];
+	}
+
+	protected function cancellation( string $token ): WP_REST_Response {
+		return $this->rest( 'GET', '/cancellation', [ 'token' => $token ] );
+	}
+
+	protected function cancel( string $token ): WP_REST_Response {
+		return $this->rest( 'POST', '/cancellation', [ 'token' => $token ] );
+	}
+
+	/**
 	 * Vytvořená Rezervace, jak ji vidí stránka potvrzení.
 	 *
 	 * @return array<string, mixed>

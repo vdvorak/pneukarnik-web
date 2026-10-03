@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // phpcs:disable WordPress.Security.NonceVerification.Recommended
 
 /**
- * WP Admin settings page — Pracovní doba, pravidla Termínů, sezóna, zrušení, kontakty, iCal.
+ * WP Admin settings page — Pracovní doba, pravidla Termínů, Lhůta zrušení, Sezóny, e‑maily, kontakty, iCal.
  */
 class Pneukarnik_Admin_Settings {
 
@@ -32,7 +32,7 @@ class Pneukarnik_Admin_Settings {
 		$grid_step            = Pneukarnik_Working_Hours::get_grid_step();
 		$lead_minutes         = Pneukarnik_Working_Hours::get_lead_minutes();
 		$horizon_days         = Pneukarnik_Working_Hours::get_horizon_days();
-		$cancellation_days    = Pneukarnik_Working_Hours::get_cancellation_days();
+		$cancellation_hours   = Pneukarnik_Working_Hours::get_cancellation_hours();
 		$phone                = get_option( 'pneukarnik_phone', '' );
 		$email                = get_option( 'pneukarnik_email', '' );
 		$address              = get_option( 'pneukarnik_address', '' );
@@ -148,8 +148,11 @@ class Pneukarnik_Admin_Settings {
 						<td><input id="pnk-horizon" type="number" name="horizon_days" value="<?php echo esc_attr( (string) $horizon_days ); ?>" min="1" max="365"></td>
 					</tr>
 					<tr>
-						<th><?php esc_html_e( 'Min. dní pro zrušení', 'pneukarnik-booking' ); ?></th>
-						<td><input type="number" name="cancellation_days" value="<?php echo esc_attr( (string) $cancellation_days ); ?>" min="0" max="30"></td>
+						<th><label for="pnk-cancellation-hours"><?php esc_html_e( 'Lhůta zrušení (hodiny)', 'pneukarnik-booking' ); ?></label></th>
+						<td>
+							<input id="pnk-cancellation-hours" type="number" name="cancellation_hours" value="<?php echo esc_attr( (string) $cancellation_hours ); ?>" min="0" max="720">
+							<p class="description"><?php esc_html_e( 'Zákazník může Rezervaci zrušit odkazem z e‑mailu nejpozději tolik hodin před Termínem. Potom mu web nabídne telefon.', 'pneukarnik-booking' ); ?></p>
+						</td>
 					</tr>
 				</table>
 
@@ -174,6 +177,24 @@ class Pneukarnik_Admin_Settings {
 									</label>
 								<?php endforeach; ?>
 							</td>
+						</tr>
+					<?php endforeach; ?>
+				</table>
+
+				<h2><?php esc_html_e( 'E‑maily', 'pneukarnik-booking' ); ?></h2>
+				<table class="form-table">
+					<tr>
+						<th><?php esc_html_e( 'Upozornění Provozovateli', 'pneukarnik-booking' ); ?></th>
+						<td>
+							<label style="display:block"><input type="checkbox" name="notify_created" value="1" <?php checked( '1' === (string) get_option( Pneukarnik_Notifications::OPTION_NOTIFY_CREATED, '1' ) ); ?>> <?php esc_html_e( 'E‑mail o každé nové online Rezervaci', 'pneukarnik-booking' ); ?></label>
+							<label style="display:block"><input type="checkbox" name="notify_cancelled" value="1" <?php checked( '1' === (string) get_option( Pneukarnik_Notifications::OPTION_NOTIFY_CANCELLED, '1' ) ); ?>> <?php esc_html_e( 'E‑mail o každé Rezervaci, kterou Zákazník zrušil', 'pneukarnik-booking' ); ?></label>
+							<p class="description"><?php esc_html_e( 'Chodí na kontaktní e‑mail níže (bez něj na e‑mail správce webu).', 'pneukarnik-booking' ); ?></p>
+						</td>
+					</tr>
+					<?php foreach ( Pneukarnik_Notifications::texts() as $key => [ $label ] ) : ?>
+						<tr>
+							<th><label for="pnk-email-<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></label></th>
+							<td><textarea id="pnk-email-<?php echo esc_attr( $key ); ?>" name="email_text[<?php echo esc_attr( $key ); ?>]" rows="3" class="large-text"><?php echo esc_textarea( Pneukarnik_Notifications::text( $key ) ); ?></textarea></td>
 						</tr>
 					<?php endforeach; ?>
 				</table>
@@ -286,7 +307,15 @@ class Pneukarnik_Admin_Settings {
 		update_option( 'pneukarnik_grid_step', max( 5, min( 240, (int) ( $_POST['grid_step'] ?? 30 ) ) ) );
 		update_option( 'pneukarnik_lead_minutes', max( 0, min( 1440, (int) ( $_POST['lead_minutes'] ?? 60 ) ) ) );
 		update_option( 'pneukarnik_horizon_days', max( 1, min( 365, (int) ( $_POST['horizon_days'] ?? 60 ) ) ) );
-		update_option( 'pneukarnik_cancellation_days', (int) ( $_POST['cancellation_days'] ?? 1 ) );
+		update_option( 'pneukarnik_cancellation_hours', max( 0, min( 720, (int) ( $_POST['cancellation_hours'] ?? 24 ) ) ) );
+
+		// E‑maily
+		update_option( Pneukarnik_Notifications::OPTION_NOTIFY_CREATED, empty( $_POST['notify_created'] ) ? '0' : '1' );
+		update_option( Pneukarnik_Notifications::OPTION_NOTIFY_CANCELLED, empty( $_POST['notify_cancelled'] ) ? '0' : '1' );
+		$email_texts = (array) wp_unslash( $_POST['email_text'] ?? [] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitizuje se po položkách.
+		foreach ( array_keys( Pneukarnik_Notifications::texts() ) as $key ) {
+			update_option( 'pneukarnik_email_' . $key, sanitize_textarea_field( (string) ( $email_texts[ $key ] ?? '' ) ) );
+		}
 		update_option( 'pneukarnik_phone', sanitize_text_field( wp_unslash( $_POST['pneukarnik_phone'] ?? '' ) ) );
 		update_option( 'pneukarnik_email', sanitize_email( wp_unslash( $_POST['pneukarnik_email'] ?? '' ) ) );
 		update_option( 'pneukarnik_address', sanitize_text_field( wp_unslash( $_POST['pneukarnik_address'] ?? '' ) ) );

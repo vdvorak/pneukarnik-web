@@ -291,32 +291,29 @@ class Pneukarnik_Booking {
 		$cancel_token       = bin2hex( random_bytes( 32 ) );
 		$confirmation_token = bin2hex( random_bytes( 32 ) );
 		$now                = Pneukarnik_Clock::now();
-		$in_30_days         = $now->modify( '+30 days' );
-		$termin_day         = Pneukarnik_Clock::at( $input['date'] );
 
 		$inserted = $wpdb->insert(
 			Pneukarnik_DB::bookings_table(),
 			[
-				'customer_name'           => $input['name'],
-				'customer_company'        => '' !== $input['company'] ? $input['company'] : null,
-				'customer_plate'          => $input['plate'],
-				'customer_email'          => strtolower( $input['email'] ),
-				'customer_phone'          => $input['phone'],
-				'customer_note'           => '' !== $input['note'] ? $input['note'] : null,
-				'vehicle'                 => '' !== $input['vehicle'] ? $input['vehicle'] : null,
-				'leasing'                 => $input['leasing'] ? 1 : 0,
-				'leasing_company'         => $input['leasing'] ? $input['leasing_company'] : null,
-				'stored_wheels'           => $input['stored_wheels'] && self::asks_stored_wheels( $services ) ? 1 : 0,
-				'booking_date'            => $input['date'],
-				'time_start'              => $input['time'],
-				'time_end'                => $time_end,
-				'status'                  => 'CONFIRMED',
-				'cancel_token_hash'       => hash( 'sha256', $cancel_token ),
-				'cancel_token_expires_at' => $termin_day < $in_30_days ? $termin_day->format( 'Y-m-d 23:59:59' ) : $in_30_days->format( 'Y-m-d H:i:s' ),
-				'confirm_token_hash'      => hash( 'sha256', $confirmation_token ),
-				'consent_gdpr_at'         => $input['consent_gdpr'] ? $now->format( 'Y-m-d H:i:s' ) : null,
-				'source'                  => $source,
-				'created_at'              => $now->format( 'Y-m-d H:i:s' ),
+				'customer_name'      => $input['name'],
+				'customer_company'   => '' !== $input['company'] ? $input['company'] : null,
+				'customer_plate'     => $input['plate'],
+				'customer_email'     => strtolower( $input['email'] ),
+				'customer_phone'     => $input['phone'],
+				'customer_note'      => '' !== $input['note'] ? $input['note'] : null,
+				'vehicle'            => '' !== $input['vehicle'] ? $input['vehicle'] : null,
+				'leasing'            => $input['leasing'] ? 1 : 0,
+				'leasing_company'    => $input['leasing'] ? $input['leasing_company'] : null,
+				'stored_wheels'      => $input['stored_wheels'] && self::asks_stored_wheels( $services ) ? 1 : 0,
+				'booking_date'       => $input['date'],
+				'time_start'         => $input['time'],
+				'time_end'           => $time_end,
+				'status'             => 'CONFIRMED',
+				'cancel_token_hash'  => hash( 'sha256', $cancel_token ),
+				'confirm_token_hash' => hash( 'sha256', $confirmation_token ),
+				'consent_gdpr_at'    => $input['consent_gdpr'] ? $now->format( 'Y-m-d H:i:s' ) : null,
+				'source'             => $source,
+				'created_at'         => $now->format( 'Y-m-d H:i:s' ),
 			]
 		);
 		if ( ! $inserted ) {

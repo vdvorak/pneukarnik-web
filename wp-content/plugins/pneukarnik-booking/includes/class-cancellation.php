@@ -6,142 +6,187 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Booking cancellation.
- * Two paths:
- *  - Admin: no token required, no cancellation_days limit.
- *  - Customer: requires valid plain token (compared against SHA-256 hash in DB) + N-day check.
+ * Zrušení Rezervace (viz CONTEXT.md).
+ *
+ * Zákazník: odkazem z e‑mailu s tokenem (v DB jen jeho hash). Odkaz platí do Termínu a zrušit
+ * jde nejpozději ve Lhůtě zrušení před Termínem. Zrušit jde jen jednou, opakovaný odkaz pak
+ * hlásí „už zrušeno“. Provozovatel: kdykoli, bez Lhůty.
+ * Zrušená Rezervace hned přestane zabírat dílnu (Termíny počítají jen potvrzené).
  */
-class Pneukarnik_Cancellation {
+final class Pneukarnik_Cancellation {
+
+	public const ALLOWED           = 'cancellation.allowed';
+	public const CANCELLED         = 'cancellation.cancelled';
+	public const TOO_LATE          = 'cancellation.too_late';
+	public const ALREADY_CANCELLED = 'cancellation.already_cancelled';
+	public const INVALID_TOKEN     = 'cancellation.invalid_token';
+
+	/** HTTP status odmítnutého Zrušení podle kódu. */
+	private const STATUS = [
+		self::TOO_LATE          => 422,
+		self::ALREADY_CANCELLED => 409,
+		self::INVALID_TOKEN     => 404,
+	];
+
+	public static function url( string $token ): string {
+		return add_query_arg( 'r', $token, home_url( '/rezervace/zruseni/' ) );
+	}
 
 	/**
-	 * Cancel by admin (no token, no day limit).
-	 * @return array{ok:true,booking:array}|array{ok:false,code:string,status:int}|WP_Error
+	 * Poslední okamžik, kdy Zákazník může Rezervaci zrušit: Termín minus Lhůta zrušení.
+	 *
+	 * @param array{booking_date:string,time_start:string} $booking
 	 */
-	public static function cancel_by_admin( int $booking_id, ?string $reason ): array|WP_Error {
+	public static function deadline( array $booking ): DateTimeImmutable {
+		return self::termin( $booking )->modify( '-' . Pneukarnik_Working_Hours::get_cancellation_hours() . ' hours' );
+	}
+
+	/**
+	 * Co odkaz udělá, bez změny, pro stránku Zrušení: allowed, too_late nebo already_cancelled,
+	 * Rezervace bez osobních údajů a do kdy jde zrušit. Null pro neplatný odkaz.
+	 *
+	 * @return array{code:string,booking:array{date:string,time_start:string,time_end:string,services:list<string>,plate:string,status:string},cancel_until:string}|null
+	 */
+	public static function preview( mixed $token ): ?array {
+		[ $booking, $code ] = self::resolve( $token );
+		if ( null === $booking ) {
+			return null;
+		}
+		return [
+			'code'         => $code,
+			'booking'      => self::public_view( $booking ),
+			'cancel_until' => self::deadline( $booking )->format( 'Y-m-d H:i' ),
+		];
+	}
+
+	/**
+	 * Zrušení odkazem z e‑mailu.
+	 *
+	 * @return array{ok:true,code:string,booking:array<string,mixed>}|array{ok:false,code:string,status:int}
+	 */
+	public static function cancel_by_token( mixed $token ): array {
+		[ $booking, $code ] = self::resolve( $token );
+		if ( null === $booking || self::ALLOWED !== $code ) {
+			return self::refusal( $code );
+		}
+		return self::cancel( $booking, null, true );
+	}
+
+	/**
+	 * Zrušení Provozovatelem: kdykoli, s volitelným důvodem.
+	 *
+	 * @return array{ok:true,code:string,booking:array<string,mixed>}|array{ok:false,code:string,status:int}
+	 */
+	public static function cancel_by_provozovatel( int $booking_id, ?string $reason ): array {
 		$booking = Pneukarnik_Booking::get_by_id( $booking_id );
-		if ( ! $booking ) {
+		if ( null === $booking ) {
 			return [
 				'ok'     => false,
 				'code'   => 'cancellation.not_found',
 				'status' => 404,
 			];
 		}
-		if ( $booking['status'] === 'CANCELLED' ) {
-			return [
-				'ok'     => false,
-				'code'   => 'cancellation.already_cancelled',
-				'status' => 409,
-			];
-		}
-
-		return self::execute_cancel( $booking_id, $reason );
+		return self::cancel( $booking, $reason, false );
 	}
 
 	/**
-	 * Cancel by customer token.
-	 * @return array{ok:true,booking:array}|array{ok:false,code:string,status:int}|WP_Error
+	 * @param array<string,mixed> $booking
+	 * @return array{ok:true,code:string,booking:array<string,mixed>}|array{ok:false,code:string,status:int}
 	 */
-	public static function cancel_by_token( int $booking_id, string $email, string $plain_token ): array|WP_Error {
+	private static function cancel( array $booking, ?string $reason, bool $by_customer ): array {
 		global $wpdb;
-		$table = Pneukarnik_DB::bookings_table();
-
-		$row = $wpdb->get_row(
+		// Jen potvrzenou: ze dvou souběžných Zrušení projde jedno.
+		$updated = $wpdb->query(
 			$wpdb->prepare(
-				'SELECT * FROM %i WHERE id = %d',
-				$table,
-				$booking_id
-			),
-			ARRAY_A
+				"UPDATE %i SET status = 'CANCELLED', cancelled_at = %s, cancel_reason = %s WHERE id = %d AND status = 'CONFIRMED'",
+				Pneukarnik_DB::bookings_table(),
+				Pneukarnik_Clock::now()->format( 'Y-m-d H:i:s' ),
+				$reason,
+				$booking['id']
+			)
 		);
-
-		if ( ! $row ) {
-			return [
-				'ok'     => false,
-				'code'   => 'cancellation.not_found',
-				'status' => 404,
-			];
+		if ( 1 !== $updated ) {
+			return self::refusal( self::ALREADY_CANCELLED );
 		}
 
-		if ( $row['status'] === 'CANCELLED' ) {
-			return [
-				'ok'     => false,
-				'code'   => 'cancellation.already_cancelled',
-				'status' => 409,
-			];
-		}
-
-		// Validate email
-		if ( strtolower( $email ) !== strtolower( $row['customer_email'] ) ) {
-			return [
-				'ok'     => false,
-				'code'   => 'cancellation.invalid_token',
-				'status' => 403,
-			];
-		}
-
-		// Validate token hash
-		$token_hash = hash( 'sha256', $plain_token );
-		if ( ! hash_equals( $row['cancel_token_hash'] ?? '', $token_hash ) ) {
-			return [
-				'ok'     => false,
-				'code'   => 'cancellation.invalid_token',
-				'status' => 403,
-			];
-		}
-
-		// Token expiry
-		if ( $row['cancel_token_expires_at'] && Pneukarnik_Clock::at( $row['cancel_token_expires_at'] ) < Pneukarnik_Clock::now() ) {
-			return [
-				'ok'     => false,
-				'code'   => 'cancellation.invalid_token',
-				'status' => 403,
-			];
-		}
-
-		// N-day check
-		$cancellation_days = Pneukarnik_Working_Hours::get_cancellation_days();
-		$booking_date      = Pneukarnik_Clock::at( $row['booking_date'] );
-		$today             = Pneukarnik_Clock::today();
-		$diff              = (int) $today->diff( $booking_date )->days;
-
-		if ( $diff < $cancellation_days ) {
-			return [
-				'ok'     => false,
-				'code'   => 'cancellation.too_late',
-				'status' => 422,
-			];
-		}
-
-		return self::execute_cancel( $booking_id, null );
-	}
-
-	private static function execute_cancel( int $booking_id, ?string $reason ): array|WP_Error {
-		global $wpdb;
-		$table = Pneukarnik_DB::bookings_table();
-
-		$updated = $wpdb->update(
-			$table,
-			[
-				'status'            => 'CANCELLED',
-				'cancelled_at'      => Pneukarnik_Clock::now()->format( 'Y-m-d H:i:s' ),
-				'cancel_reason'     => $reason,
-				'cancel_token_hash' => null, // Invalidate token after use
-			],
-			[ 'id' => $booking_id ]
-		);
-
-		if ( false === $updated ) {
-			return new WP_Error( 'cancellation.db_error', 'Chyba při aktualizaci rezervace.', [ 'status' => 500 ] );
-		}
-
-		$booking = Pneukarnik_Booking::get_by_id( $booking_id );
-
-		// Send cancellation confirmation email
-		Pneukarnik_Notifications::on_booking_cancelled( $booking );
-
+		$cancelled = Pneukarnik_Booking::get_by_id( (int) $booking['id'] ) ?? $booking;
+		Pneukarnik_Notifications::on_booking_cancelled( $cancelled, $by_customer );
 		return [
 			'ok'      => true,
-			'booking' => $booking,
+			'code'    => self::CANCELLED,
+			'booking' => $cancelled,
+		];
+	}
+
+	/**
+	 * Rezervace bez osobních údajů: jen to, podle čeho ji Zákazník pozná.
+	 *
+	 * @param array<string,mixed> $booking
+	 * @return array{date:string,time_start:string,time_end:string,services:list<string>,plate:string,status:string}
+	 */
+	public static function public_view( array $booking ): array {
+		return [
+			'date'       => $booking['booking_date'],
+			'time_start' => $booking['time_start'],
+			'time_end'   => $booking['time_end'],
+			'services'   => array_column( $booking['services'], 'name' ),
+			'plate'      => $booking['customer_plate'],
+			'status'     => $booking['status'],
+		];
+	}
+
+	/**
+	 * Rezervace z odkazu a co odkaz udělá. Odkaz platí do Termínu, i když už zrušil.
+	 *
+	 * @return array{0:array<string,mixed>|null,1:string} Rezervace (null pro neplatný odkaz) a kód.
+	 */
+	private static function resolve( mixed $token ): array {
+		$booking = self::find( $token );
+		$now     = Pneukarnik_Clock::now();
+		if ( null === $booking || $now > self::termin( $booking ) ) {
+			return [ null, self::INVALID_TOKEN ];
+		}
+		if ( 'CANCELLED' === $booking['status'] ) {
+			return [ $booking, self::ALREADY_CANCELLED ];
+		}
+		return [ $booking, $now > self::deadline( $booking ) ? self::TOO_LATE : self::ALLOWED ];
+	}
+
+	/**
+	 * Rezervace podle tokenu z odkazu, nebo null.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private static function find( mixed $token ): ?array {
+		if ( ! is_string( $token ) || ! preg_match( '/^[0-9a-f]{64}$/', $token ) ) {
+			return null;
+		}
+		global $wpdb;
+		$id = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT id FROM %i WHERE cancel_token_hash = %s',
+				Pneukarnik_DB::bookings_table(),
+				hash( 'sha256', $token )
+			)
+		);
+		return null === $id ? null : Pneukarnik_Booking::get_by_id( (int) $id );
+	}
+
+	/**
+	 * @param array{booking_date:string,time_start:string} $booking
+	 */
+	private static function termin( array $booking ): DateTimeImmutable {
+		return Pneukarnik_Clock::at( $booking['booking_date'] . ' ' . substr( $booking['time_start'], 0, 5 ) );
+	}
+
+	/**
+	 * @return array{ok:false,code:string,status:int}
+	 */
+	private static function refusal( string $code ): array {
+		return [
+			'ok'     => false,
+			'code'   => $code,
+			'status' => self::STATUS[ $code ] ?? 422,
 		];
 	}
 }

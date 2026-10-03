@@ -248,11 +248,9 @@ class Pneukarnik_Admin_Bookings {
 		}
 
 		$reason = isset( $_POST['cancel_reason'] ) ? sanitize_text_field( wp_unslash( $_POST['cancel_reason'] ) ) : null;
-		$result = Pneukarnik_Cancellation::cancel_by_admin( $booking_id, $reason ?: null );
+		$result = Pneukarnik_Cancellation::cancel_by_provozovatel( $booking_id, $reason ?: null );
 
-		if ( is_wp_error( $result ) ) {
-			wp_safe_redirect( add_query_arg( 'cancel_error', rawurlencode( $result->get_error_code() ), admin_url( 'admin.php?page=pneukarnik-booking' ) ) );
-		} elseif ( $result['ok'] ) {
+		if ( $result['ok'] ) {
 			wp_safe_redirect( add_query_arg( 'cancelled', '1', admin_url( 'admin.php?page=pneukarnik-booking' ) ) );
 		} else {
 			wp_safe_redirect( add_query_arg( 'cancel_error', rawurlencode( $result['code'] ), admin_url( 'admin.php?page=pneukarnik-booking' ) ) );

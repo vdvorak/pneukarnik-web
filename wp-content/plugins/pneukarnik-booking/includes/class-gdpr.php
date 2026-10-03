@@ -205,15 +205,14 @@ class Pneukarnik_GDPR {
 			$updated = $wpdb->update(
 				$table,
 				[
-					'customer_name'           => __( '[anonymizováno]', 'pneukarnik-booking' ),
-					'customer_company'        => null,
-					'customer_plate'          => __( '[anonymizováno]', 'pneukarnik-booking' ),
-					'customer_email'          => 'anonymized@deleted.invalid',
-					'customer_phone'          => '',
-					'customer_note'           => null,
+					'customer_name'     => __( '[anonymizováno]', 'pneukarnik-booking' ),
+					'customer_company'  => null,
+					'customer_plate'    => __( '[anonymizováno]', 'pneukarnik-booking' ),
+					'customer_email'    => 'anonymized@deleted.invalid',
+					'customer_phone'    => '',
+					'customer_note'     => null,
 					// Invalidate cancel token so it can no longer be used.
-					'cancel_token_hash'       => null,
-					'cancel_token_expires_at' => null,
+					'cancel_token_hash' => null,
 				],
 				[ 'id' => (int) $row['id'] ]
 			);
@@ -270,14 +269,13 @@ class Pneukarnik_GDPR {
 			$wpdb->update(
 				$table,
 				[
-					'customer_name'           => __( '[anonymizováno]', 'pneukarnik-booking' ),
-					'customer_company'        => null,
-					'customer_plate'          => __( '[anonymizováno]', 'pneukarnik-booking' ),
-					'customer_email'          => 'anonymized@deleted.invalid',
-					'customer_phone'          => '',
-					'customer_note'           => null,
-					'cancel_token_hash'       => null,
-					'cancel_token_expires_at' => null,
+					'customer_name'     => __( '[anonymizováno]', 'pneukarnik-booking' ),
+					'customer_company'  => null,
+					'customer_plate'    => __( '[anonymizováno]', 'pneukarnik-booking' ),
+					'customer_email'    => 'anonymized@deleted.invalid',
+					'customer_phone'    => '',
+					'customer_note'     => null,
+					'cancel_token_hash' => null,
 				],
 				[ 'id' => (int) $id ]
 			);

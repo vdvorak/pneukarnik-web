@@ -37,8 +37,8 @@ spl_autoload_register(
 			'Pneukarnik_Booking'              => 'includes/class-booking.php',
 			'Pneukarnik_Booking_Pages'        => 'includes/class-booking-pages.php',
 			'Pneukarnik_Cancellation'         => 'includes/class-cancellation.php',
-			'Pneukarnik_Template'             => 'includes/class-template.php',
 			'Pneukarnik_Notifications'        => 'includes/class-notifications.php',
+			'Pneukarnik_Email'                => 'includes/class-email.php',
 			'Pneukarnik_GDPR'                 => 'includes/class-gdpr.php',
 			'Pneukarnik_Rest_Services'        => 'api/class-rest-services.php',
 			'Pneukarnik_Rest_Slots'           => 'api/class-rest-slots.php',
@@ -182,6 +182,18 @@ function pneukarnik_phone(): string {
 function pneukarnik_format_date( string $ymd ): string {
 	$dt = \DateTimeImmutable::createFromFormat( 'Y-m-d', $ymd );
 	return $dt ? $dt->format( 'd.m.Y' ) : $ymd;
+}
+
+/**
+ * Den s názvem dne v týdnu nezávisle na jazyku WordPressu, např. „středa 3. 3. 2027“,
+ * ve 4. pádě po „na“ „středu 3. 3. 2027“.
+ */
+function pneukarnik_format_day( string $ymd, bool $accusative = false ): string {
+	$days = $accusative
+		? [ 'neděli', 'pondělí', 'úterý', 'středu', 'čtvrtek', 'pátek', 'sobotu' ]
+		: [ 'neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota' ];
+	$day  = Pneukarnik_Clock::at( $ymd );
+	return $days[ (int) $day->format( 'w' ) ] . ' ' . $day->format( 'j. n. Y' );
 }
 
 function pneukarnik_parse_date_cz( string $input ): string {

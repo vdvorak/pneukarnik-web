@@ -26,6 +26,7 @@ make up      # spustí WordPress se šablonou a pluginem
 
 - Web: http://localhost:8080
 - Administrace: http://localhost:8080/wp-admin (`admin` / `admin`)
+- Pošta: http://localhost:8025 (Mailpit). Všechny e‑maily lokálního webu končí tady, nikam ven neodejdou. Jiný port: `MAILPIT_PORT=8026`.
 - Jiný port: `make up WP_PORT=8081` (stejný port pak předávej i testům)
 
 Šablona a plugin jsou do kontejneru připojené přímo z repa, změny se projeví hned.
@@ -62,5 +63,4 @@ Playwright běží na hostiteli, prohlížeč Chromium si při prvním spuštěn
 - **Hlavní vstup je REST API pluginu.** Testy dědí z `Pneukarnik_REST_Test_Case` a volají `$this->rest( 'GET', '/slots', [...] )`. Netestují interní třídy, aby refaktoring vnitřku nic neshodil.
 - **Čas** se nastavuje přes `Pneukarnik_Clock::freeze( '2027-03-01 08:30' )`. Řetězec je místní čas v Europe/Prague. Nikdy nespoléhej na skutečné datum. Po každém testu se hodiny vrací automaticky.
 - **Prohlížeč** jen na kouřové testy: vykreslení stránek, jedna celá rezervace, přesměrování. Obsah vytvořený testy má v názvu prefix `E2E ` a po běhu ho smaže `tests/e2e/global-teardown.ts`.
-
-E‑maily lokálně neodcházejí (v kontejneru není poštovní server). V testech se zachytávají přes filtr `pre_wp_mail`.
+- **E‑maily** v PHPUnit zachytí `$this->capture_mails()` (háček `phpmailer_init`, vidí HTML i textovou alternativu) a přečte `$this->mail_to( $adresa )`. Playwright je čte z Mailpitu (`tests/e2e/support/mailpit.ts`).

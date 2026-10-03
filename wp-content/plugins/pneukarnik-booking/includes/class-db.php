@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Pneukarnik_DB {
 
 	private const DB_VERSION_OPTION = 'pneukarnik_db_version';
-	private const DB_VERSION        = '1.7';
+	private const DB_VERSION        = '1.8';
 
 	/** Testy běží uvnitř transakce WP test suite, transakce pluginu pak používají savepoint. */
 	private static bool $savepoints = false;
@@ -66,6 +66,20 @@ class Pneukarnik_DB {
 			delete_option( 'pneukarnik_season_from' );
 			delete_option( 'pneukarnik_season_to' );
 			delete_option( 'pneukarnik_season_forced' );
+		}
+
+		// 1.7 → 1.8: odkaz pro Zrušení platí do Termínu (počítá se z něj), Lhůta zrušení je v hodinách.
+		if ( $installed && version_compare( (string) $installed, '1.8', '<' ) ) {
+			global $wpdb;
+			$table = self::bookings_table();
+			if ( $wpdb->get_var( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, 'cancel_token_expires_at' ) ) ) {
+				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i DROP COLUMN cancel_token_expires_at', $table ) );
+			}
+			$days = get_option( 'pneukarnik_cancellation_days' );
+			if ( false !== $days ) {
+				add_option( 'pneukarnik_cancellation_hours', 24 * max( 0, (int) $days ) );
+				delete_option( 'pneukarnik_cancellation_days' );
+			}
 		}
 
 		update_option( self::DB_VERSION_OPTION, self::DB_VERSION );
@@ -184,7 +198,6 @@ class Pneukarnik_DB {
 			time_end                TIME         NOT NULL,
 			status                  ENUM('CONFIRMED','CANCELLED') NOT NULL DEFAULT 'CONFIRMED',
 			cancel_token_hash       VARCHAR(64)  DEFAULT NULL,
-			cancel_token_expires_at DATETIME     DEFAULT NULL,
 			cancelled_at            DATETIME     DEFAULT NULL,
 			cancel_reason           VARCHAR(255) DEFAULT NULL,
 			confirm_token_hash      CHAR(64)     DEFAULT NULL,
@@ -196,6 +209,7 @@ class Pneukarnik_DB {
 			KEY idx_email (customer_email),
 			KEY idx_date (booking_date),
 			KEY idx_confirm_token (confirm_token_hash),
+			KEY idx_cancel_token (cancel_token_hash),
 			KEY idx_status (status)
 		) ENGINE=InnoDB $charset_collate;";
 

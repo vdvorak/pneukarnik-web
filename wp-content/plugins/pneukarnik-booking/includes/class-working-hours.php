@@ -103,8 +103,9 @@ class Pneukarnik_Working_Hours {
 		return max( 0, (int) get_option( 'pneukarnik_horizon_days', 60 ) );
 	}
 
-	public static function get_cancellation_days(): int {
-		return (int) get_option( 'pneukarnik_cancellation_days', 1 );
+	/** Lhůta zrušení: kolik hodin před Termínem nejpozději může Zákazník Rezervaci zrušit. */
+	public static function get_cancellation_hours(): int {
+		return max( 0, (int) get_option( 'pneukarnik_cancellation_hours', 24 ) );
 	}
 
 	private static function is_valid_time( string $time ): bool {

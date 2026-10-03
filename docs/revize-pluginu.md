@@ -72,11 +72,11 @@ Seřazené podle ticketu, který je vyřeší. Nic z toho dnes neběží v provo
 
 ### Zrušení a e‑maily (#8, #10)
 
-15. **Lhůta zrušení ve dnech.** `cancellation_days` porovnává kalendářní dny, zadání chce hodiny před Termínem (default 24 h).
-16. **Platnost tokenu je max. 30 dní od vytvoření.** Rezervaci vzdálenější než 30 dní proto nejde zrušit odkazem.
-17. **Odkaz v e‑mailu nedává smysl s novými URL.** Vede na `/zrusit-rezervaci?id&token`, který v nových URL neexistuje. Navíc endpoint chce i e‑mail, takže se ho stránka musí doptat.
+15. **Lhůta zrušení ve dnech.** `cancellation_days` porovnává kalendářní dny, zadání chce hodiny před Termínem (default 24 h). **Vyřešeno v #8:** Lhůta zrušení v hodinách (`pneukarnik_cancellation_hours`, default 24), počítá se od začátku Termínu. Testy přes přelom měsíce i roku.
+16. **Platnost tokenu je max. 30 dní od vytvoření.** Rezervaci vzdálenější než 30 dní proto nejde zrušit odkazem. **Vyřešeno v #8:** odkaz platí do začátku Termínu, sloupec `cancel_token_expires_at` odstraněn (DB 1.8).
+17. **Odkaz v e‑mailu nedává smysl s novými URL.** Vede na `/zrusit-rezervaci?id&token`, který v nových URL neexistuje. Navíc endpoint chce i e‑mail, takže se ho stránka musí doptat. **Vyřešeno v #8:** odkaz `/rezervace/zruseni/?r={token}`, REST `GET`/`POST /cancellation` jen s tokenem. Starý `/cancel` odstraněn, `/bookings/{id}/cancel` jen pro Provozovatele.
 18. **Zrušení Provozovatelem přes REST** pouští jen `manage_options`, ne capability „spravovat rezervace“.
-19. **E‑mail Provozovateli chodí vždy**, zadání ho chce zapínatelný. Odesílatel „Jan Kárník Autoservis“ je v kódu natvrdo.
+19. **E‑mail Provozovateli chodí vždy**, zadání ho chce zapínatelný. Odesílatel „Jan Kárník Autoservis“ je v kódu natvrdo. **Vyřešeno v #8:** upozornění na novou a na zrušenou online Rezervaci jde zvlášť vypnout, odesílatel je název webu, odpověď jde Provozovateli (Reply-To). E‑maily jsou HTML s textovou alternativou, úvod, podpis a „co si vzít s sebou“ se upravují v Nastavení.
 20. **Rate limiting** počítá jen úspěšné Rezervace (zkoušení neomezí). Bere `REMOTE_ADDR`, takže za proxy sdílí limit všichni. Zrušení limit nemá.
 21. **Poznámka zákazníka** jde přes `sanitize_text_field`, které smaže konce řádků. **Vyřešeno v #4:** `sanitize_textarea_field`.
 

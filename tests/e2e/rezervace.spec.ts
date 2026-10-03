@@ -1,5 +1,6 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
 import { addClosedDay, E2E_PREFIX, login, pickDay, publishService, saveAutumnSeason, saveBookingSettings, uniqueTitle, upcomingWeekday } from './support/admin';
+import { waitForMail } from './support/mailpit';
 
 // Dílna je jedna, testy si tedy nesmí brát Termíny navzájem.
 test.describe.configure({ mode: 'serial' });
@@ -215,4 +216,31 @@ test('V Sezóně jde online jen sezónní Služba a leasing až od leasingového
 	} finally {
 		await saveAutumnSeason(page, null);
 	}
+});
+
+test('Zákazník zruší Rezervaci odkazem z e‑mailu a Termín se uvolní', async ({ page, request }) => {
+	const date = upcomingWeekday(10);
+	const email = `e2e-zruseni-${Date.now()}@example.test`;
+	const booking = await request.post('/wp-json/pneukarnik/v1/bookings', {
+		data: { service_ids: [serviceId], date, time: '11:00', ...customer, name: 'E2E Rušitel', email, consent_gdpr: true },
+	});
+	expect(booking.status()).toBe(201);
+
+	const mail = await waitForMail(request, email, /^Potvrzení rezervace/);
+	const link = mail.html.match(/href="([^"]*\/rezervace\/zruseni\/\?r=[0-9a-f]{64})"/)?.[1] ?? '';
+	expect(link).not.toBe('');
+	expect(mail.text).toContain(link);
+
+	await page.goto(link);
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Zrušení rezervace');
+	await expect(page.locator('dd').filter({ hasText: serviceTitle })).toBeVisible();
+	await page.getByRole('button', { name: 'Zrušit rezervaci' }).click();
+	await expect(page.getByRole('alert')).toContainText('Rezervace je zrušená');
+
+	const slots = await (await request.get('/wp-json/pneukarnik/v1/slots', { params: { 'service_ids[]': serviceId, date } })).json();
+	expect(slots.slots.map((slot: { time_start: string }) => slot.time_start)).toContain('11:00');
+	await waitForMail(request, email, /je zrušená$/);
+
+	await page.goto(link);
+	await expect(page.getByRole('alert')).toHaveText('Tato rezervace už je zrušená.');
 });
