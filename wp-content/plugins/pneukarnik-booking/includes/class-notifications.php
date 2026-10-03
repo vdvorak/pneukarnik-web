@@ -75,7 +75,7 @@ final class Pneukarnik_Notifications {
 			->paragraph( self::text( 'intro' ) )
 			->details(
 				self::visit( $booking ) + [
-					__( 'Adresa', 'pneukarnik-booking' ) => trim( (string) get_option( 'pneukarnik_address', '' ) ),
+					__( 'Adresa', 'pneukarnik-booking' ) => Pneukarnik_Contact::address(),
 				]
 			)
 			->items( __( 'Co si vzít s sebou', 'pneukarnik-booking' ), self::bring( $booking ) )
@@ -84,7 +84,8 @@ final class Pneukarnik_Notifications {
 			/* translators: %s: telefon Provozovatele */
 			->paragraph( '' !== $phone ? sprintf( __( 'Potřebujete něco změnit? Zavolejte nám na %s.', 'pneukarnik-booking' ), $phone ) : '' )
 			->link( __( 'Objednat znovu', 'pneukarnik-booking' ), Pneukarnik_Prefill::url( (int) $booking['id'] ) )
-			->paragraph( self::text( 'signature' ) );
+			->paragraph( self::text( 'signature' ) )
+			->paragraph( self::contact() );
 	}
 
 	/**
@@ -101,7 +102,8 @@ final class Pneukarnik_Notifications {
 			->paragraph( '' !== $reason ? sprintf( __( 'Důvod: %s', 'pneukarnik-booking' ), $reason ) : '' )
 			->details( self::visit( $booking ) )
 			->button( __( 'Objednat znovu', 'pneukarnik-booking' ), Pneukarnik_Prefill::url( (int) $booking['id'] ) )
-			->paragraph( self::text( 'signature' ) );
+			->paragraph( self::text( 'signature' ) )
+			->paragraph( self::contact() );
 	}
 
 	/**
@@ -204,9 +206,30 @@ final class Pneukarnik_Notifications {
 		return (int) $hours . ':' . $minutes;
 	}
 
+	/**
+	 * Kontakt na Provozovatele pod podpisem e‑mailu Zákazníkovi, z Nastavení.
+	 */
+	private static function contact(): string {
+		$phone = Pneukarnik_Contact::phone();
+		$email = Pneukarnik_Contact::email();
+		return implode(
+			"\n",
+			array_filter(
+				[
+					Pneukarnik_Contact::company(),
+					Pneukarnik_Contact::address(),
+					/* translators: %s: telefon Provozovatele */
+					'' !== $phone ? sprintf( __( 'Tel.: %s', 'pneukarnik-booking' ), $phone ) : '',
+					/* translators: %s: e‑mail Provozovatele */
+					'' !== $email ? sprintf( __( 'E‑mail: %s', 'pneukarnik-booking' ), $email ) : '',
+				]
+			)
+		);
+	}
+
 	private static function provozovatel_email(): string {
-		$email = trim( (string) get_option( 'pneukarnik_email', '' ) );
-		return is_email( $email ) ? $email : (string) get_option( 'admin_email' );
+		$email = Pneukarnik_Contact::email();
+		return '' !== $email ? $email : (string) get_option( 'admin_email' );
 	}
 
 	private static function enabled( string $option ): bool {

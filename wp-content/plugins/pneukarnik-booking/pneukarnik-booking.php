@@ -33,6 +33,7 @@ spl_autoload_register(
 			'Pneukarnik_Promotion_Type'       => 'includes/class-promotion-type.php',
 			'Pneukarnik_Publish_Guard'        => 'includes/class-publish-guard.php',
 			'Pneukarnik_Validity'             => 'includes/class-validity.php',
+			'Pneukarnik_Contact'              => 'includes/class-contact.php',
 			'Pneukarnik_Notice'               => 'includes/class-notice.php',
 			'Pneukarnik_Notice_Type'          => 'includes/class-notice-type.php',
 			'Pneukarnik_Working_Hours'        => 'includes/class-working-hours.php',
@@ -204,7 +205,17 @@ function pneukarnik_register_admin_menus(): void {
  * Telefon Provozovatele z Nastavení, jak se má zobrazit (např. „+420 775 565 326“).
  */
 function pneukarnik_phone(): string {
-	return trim( (string) get_option( 'pneukarnik_phone', '' ) );
+	return Pneukarnik_Contact::phone();
+}
+
+/**
+ * Důvody „proč k nám“ pro Úvod z Nastavení, jeden na řádek.
+ *
+ * @return list<string>
+ */
+function pneukarnik_why_us(): array {
+	$lines = array_map( 'trim', explode( "\n", (string) get_option( 'pneukarnik_why_us', '' ) ) );
+	return array_values( array_filter( $lines, static fn( string $line ): bool => '' !== $line ) );
 }
 
 function pneukarnik_format_date( string $ymd ): string {

@@ -78,11 +78,7 @@ class Pneukarnik_Slot_Engine {
 	 * @return list<array{from:string,to:string}>|null null = zavřeno
 	 */
 	public static function resolve_effective_hours( string $date ): ?array {
-		$exception = Pneukarnik_Day_Exceptions::for_date( $date );
-		if ( null !== $exception ) {
-			return $exception['hours'];
-		}
-		return Pneukarnik_Working_Hours::get_for_date( Pneukarnik_Clock::at( $date ) );
+		return Pneukarnik_Working_Hours::effective( $date )['hours'];
 	}
 
 	/**

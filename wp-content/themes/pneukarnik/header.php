@@ -1,6 +1,6 @@
 <?php
 /**
- * Hlavička stránky.
+ * Hlavička stránky: Oznámení, Pohotovost (když je zapnutá), telefon a Rezervovat na každé stránce.
  *
  * @package Pneukarnik
  */
@@ -15,19 +15,15 @@
 </head>
 <body <?php body_class(); ?>>
 <?php wp_body_open(); ?>
-<?php
-if ( class_exists( 'Pneukarnik_Notice' ) ) {
-	pneukarnik_top_notice();
-}
-?>
+<?php pneukarnik_top_notice(); ?>
 <header class="site-header">
+	<?php pneukarnik_emergency(); ?>
 	<a class="site-title" href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php bloginfo( 'name' ); ?></a>
+	<?php pneukarnik_contact_cta( 'site-header__kontakt' ); ?>
 	<nav class="site-nav" aria-label="<?php esc_attr_e( 'Hlavní menu', 'pneukarnik' ); ?>">
-		<?php if ( class_exists( 'Pneukarnik_Service' ) ) : ?>
-			<?php foreach ( Pneukarnik_Service::categories() as $pneukarnik_category => $pneukarnik_label ) : ?>
-				<a href="<?php echo esc_url( Pneukarnik_Service::category_url( $pneukarnik_category ) ); ?>"><?php echo esc_html( $pneukarnik_label ); ?></a>
-			<?php endforeach; ?>
-		<?php endif; ?>
+		<?php foreach ( Pneukarnik_Service::categories() as $pneukarnik_category => $pneukarnik_label ) : ?>
+			<a href="<?php echo esc_url( Pneukarnik_Service::category_url( $pneukarnik_category ) ); ?>"><?php echo esc_html( $pneukarnik_label ); ?></a>
+		<?php endforeach; ?>
 		<a href="<?php echo esc_url( home_url( '/rezervace/' ) ); ?>"><?php esc_html_e( 'Rezervace', 'pneukarnik' ); ?></a>
 	</nav>
 </header>

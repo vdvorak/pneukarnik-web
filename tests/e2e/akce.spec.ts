@@ -9,6 +9,7 @@ test.beforeEach(async ({ page }) => {
 const card = (page: Page, title: string) => page.locator('.karta-sluzby').filter({ hasText: title });
 
 test('Platná Akce má štítek na kartě a blok s cenou a platností v detailu', async ({ page }) => {
+	test.slow(); // Služba a Akce přes administraci, při souběhu všech testů trvá déle.
 	const service = uniqueTitle('Dekarbonizace');
 	await publishService(page, { title: service, category: 'Autoservis', perex: 'Čištění motoru.', price: 1500, duration: 60 });
 	const title = uniqueTitle('Zaváděcí cena');
@@ -36,6 +37,7 @@ test('Platná Akce má štítek na kartě a blok s cenou a platností v detailu'
 });
 
 test('Akce mimo platnost se nezobrazí ani na kartě, ani v detailu', async ({ page }) => {
+	test.slow(); // Služba a Akce přes administraci, při souběhu všech testů trvá déle.
 	const service = uniqueTitle('Geometrie');
 	await publishService(page, { title: service, category: 'Pneuservis', perex: 'Seřízení geometrie.', price: 800, duration: 60 });
 	await publishPromotion(page, { title: uniqueTitle('Skončila'), service, price: 500, from: dayFromToday(-10), to: dayFromToday(-1) });

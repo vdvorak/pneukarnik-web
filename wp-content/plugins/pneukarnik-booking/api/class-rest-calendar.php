@@ -73,7 +73,7 @@ class Pneukarnik_Rest_Calendar {
 		$now_utc = Pneukarnik_Clock::now()->setTimezone( $utc )->format( 'Ymd\THis\Z' );
 		$site    = get_bloginfo( 'name' );
 		$host    = (string) wp_parse_url( home_url(), PHP_URL_HOST );
-		$address = trim( (string) get_option( 'pneukarnik_address', '' ) );
+		$address = Pneukarnik_Contact::address();
 
 		$lines = [
 			'BEGIN:VCALENDAR',

@@ -151,6 +151,27 @@ class BookingEmailsTest extends Pneukarnik_REST_Test_Case {
 		$this->assertSame( [ [ self::CUSTOMER ] ], array_column( $this->mails, 'to' ) );
 	}
 
+	public function test_customer_emails_end_with_current_contact_from_settings(): void {
+		update_option( 'pneukarnik_company', 'Pneuservis Kárník s.r.o.' );
+		update_option( 'pneukarnik_phone', '+420 600 111 222' );
+		update_option( 'pneukarnik_email', 'nova@example.test' );
+		update_option( 'pneukarnik_address', 'Nová 1, 669 02 Znojmo' );
+		$this->book( $this->tyres, self::MONDAY, '09:00' );
+		$confirmation = $this->mail_to( self::CUSTOMER );
+		$this->mails  = [];
+
+		$this->cancel( $this->cancel_token_from( $confirmation ) );
+
+		foreach ( [ $confirmation, $this->mail_to( self::CUSTOMER ) ] as $mail ) {
+			foreach ( [ $mail['html'], $mail['text'] ] as $body ) {
+				foreach ( [ 'Pneuservis Kárník s.r.o.', 'Nová 1, 669 02 Znojmo', '+420 600 111 222', 'nova@example.test' ] as $contact ) {
+					$this->assertStringContainsString( $contact, $body, $mail['subject'] );
+				}
+			}
+			$this->assertSame( [ 'nova@example.test' ], $mail['reply_to'] );
+		}
+	}
+
 	public function test_customer_and_provozovatel_get_email_after_cancellation_by_link(): void {
 		$this->book( $this->tyres, self::MONDAY, '09:00' );
 		$token       = $this->cancel_token_from( $this->mail_to( self::CUSTOMER ) );

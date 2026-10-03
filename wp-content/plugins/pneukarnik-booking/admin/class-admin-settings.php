@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // phpcs:disable WordPress.Security.NonceVerification.Recommended
 
 /**
- * WP Admin settings page — Pracovní doba, pravidla Termínů, Lhůta zrušení, Sezóny, e‑maily, kontakty, iCal.
+ * WP Admin settings page — Pracovní doba, pravidla Termínů, Lhůta zrušení, Sezóny, e‑maily, kontakty, Pohotovost, Úvod, iCal.
  */
 class Pneukarnik_Admin_Settings {
 
@@ -33,10 +33,7 @@ class Pneukarnik_Admin_Settings {
 		$lead_minutes         = Pneukarnik_Working_Hours::get_lead_minutes();
 		$horizon_days         = Pneukarnik_Working_Hours::get_horizon_days();
 		$cancellation_hours   = Pneukarnik_Working_Hours::get_cancellation_hours();
-		$phone                = get_option( 'pneukarnik_phone', '' );
-		$email                = get_option( 'pneukarnik_email', '' );
-		$address              = get_option( 'pneukarnik_address', '' );
-		$maps_embed_url       = get_option( 'pneukarnik_maps_embed_url', '' );
+		$maps_embed_url       = (string) get_option( Pneukarnik_Contact::OPTION_MAPS_EMBED_URL, '' );
 		$social_raw           = get_option( 'pneukarnik_social_links', '[]' );
 		$booking_enabled      = Pneukarnik_Booking::online_enabled();
 		$booking_disabled_msg = Pneukarnik_Booking::online_disabled_message();
@@ -207,24 +204,67 @@ class Pneukarnik_Admin_Settings {
 				</table>
 
 				<h2><?php esc_html_e( 'Kontakt', 'pneukarnik-booking' ); ?></h2>
+				<p class="description"><?php esc_html_e( 'Jedno místo pro celý web: hlavička, patička, Kontakt, e‑maily Zákazníkům i iCal.', 'pneukarnik-booking' ); ?></p>
 				<table class="form-table">
 					<tr>
-						<th><?php esc_html_e( 'Telefon', 'pneukarnik-booking' ); ?></th>
-						<td><input type="text" name="pneukarnik_phone" value="<?php echo esc_attr( $phone ); ?>"></td>
+						<th><label for="pnk-company"><?php esc_html_e( 'Název firmy', 'pneukarnik-booking' ); ?></label></th>
+						<td><input id="pnk-company" type="text" name="pneukarnik_company" value="<?php echo esc_attr( Pneukarnik_Contact::company() ); ?>" class="regular-text"></td>
 					</tr>
 					<tr>
-						<th><?php esc_html_e( 'Kontaktní email', 'pneukarnik-booking' ); ?></th>
-						<td><input type="email" name="pneukarnik_email" value="<?php echo esc_attr( $email ); ?>"></td>
+						<th><label for="pnk-phone"><?php esc_html_e( 'Telefon', 'pneukarnik-booking' ); ?></label></th>
+						<td><input id="pnk-phone" type="text" name="pneukarnik_phone" value="<?php echo esc_attr( Pneukarnik_Contact::phone() ); ?>"></td>
 					</tr>
 					<tr>
-						<th><?php esc_html_e( 'Adresa', 'pneukarnik-booking' ); ?></th>
-						<td><input type="text" name="pneukarnik_address" value="<?php echo esc_attr( $address ); ?>" class="regular-text" placeholder="Např. Testovací 1, Mladá Boleslav"></td>
+						<th><label for="pnk-email"><?php esc_html_e( 'Kontaktní e‑mail', 'pneukarnik-booking' ); ?></label></th>
+						<td><input id="pnk-email" type="email" name="pneukarnik_email" value="<?php echo esc_attr( Pneukarnik_Contact::email() ); ?>"></td>
 					</tr>
 					<tr>
-						<th><?php esc_html_e( 'Google Maps embed URL', 'pneukarnik-booking' ); ?></th>
+						<th><label for="pnk-address"><?php esc_html_e( 'Adresa', 'pneukarnik-booking' ); ?></label></th>
+						<td><input id="pnk-address" type="text" name="pneukarnik_address" value="<?php echo esc_attr( Pneukarnik_Contact::address() ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Ulice 1, 669 02 Znojmo', 'pneukarnik-booking' ); ?>"></td>
+					</tr>
+					<tr>
+						<th><label for="pnk-ico"><?php esc_html_e( 'IČ', 'pneukarnik-booking' ); ?></label></th>
+						<td><input id="pnk-ico" type="text" name="pneukarnik_ico" value="<?php echo esc_attr( Pneukarnik_Contact::ico() ); ?>"></td>
+					</tr>
+					<tr>
+						<th><label for="pnk-dic"><?php esc_html_e( 'DIČ', 'pneukarnik-booking' ); ?></label></th>
+						<td><input id="pnk-dic" type="text" name="pneukarnik_dic" value="<?php echo esc_attr( Pneukarnik_Contact::dic() ); ?>"></td>
+					</tr>
+					<tr>
+						<th><label for="pnk-maps"><?php esc_html_e( 'Google Maps embed URL', 'pneukarnik-booking' ); ?></label></th>
 						<td>
-							<input type="url" name="pneukarnik_maps_embed_url" value="<?php echo esc_attr( $maps_embed_url ); ?>" class="large-text">
-							<p class="description"><?php esc_html_e( 'URL z Google Maps → Sdílet → Vložit mapu → atribut src iframe.', 'pneukarnik-booking' ); ?></p>
+							<input id="pnk-maps" type="url" name="pneukarnik_maps_embed_url" value="<?php echo esc_attr( $maps_embed_url ); ?>" class="large-text">
+							<p class="description"><?php esc_html_e( 'URL z Google Maps → Sdílet → Vložit mapu → atribut src iframe. Prázdné = mapa podle adresy. Mapa se na webu načte až po kliknutí Zákazníka.', 'pneukarnik-booking' ); ?></p>
+						</td>
+					</tr>
+				</table>
+
+				<h2><?php esc_html_e( 'Pohotovost', 'pneukarnik-booking' ); ?></h2>
+				<table class="form-table">
+					<tr>
+						<th><?php esc_html_e( 'Nabízet Pohotovost', 'pneukarnik-booking' ); ?></th>
+						<td>
+							<label><input type="checkbox" name="emergency_enabled" value="1" <?php checked( '1' === (string) get_option( Pneukarnik_Contact::OPTION_EMERGENCY_ENABLED ) ); ?>> <?php esc_html_e( 'Zobrazit Pohotovost výrazně v hlavičce webu', 'pneukarnik-booking' ); ?></label>
+							<p class="description"><?php esc_html_e( 'Bez zapnutí a telefonu se Pohotovost nikde nezobrazí.', 'pneukarnik-booking' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="pnk-emergency-phone"><?php esc_html_e( 'Telefon Pohotovosti', 'pneukarnik-booking' ); ?></label></th>
+						<td><input id="pnk-emergency-phone" type="text" name="emergency_phone" value="<?php echo esc_attr( (string) get_option( Pneukarnik_Contact::OPTION_EMERGENCY_PHONE, '' ) ); ?>"></td>
+					</tr>
+					<tr>
+						<th><label for="pnk-emergency-text"><?php esc_html_e( 'Popis Pohotovosti', 'pneukarnik-booking' ); ?></label></th>
+						<td><input id="pnk-emergency-text" type="text" name="emergency_text" value="<?php echo esc_attr( (string) get_option( Pneukarnik_Contact::OPTION_EMERGENCY_TEXT, '' ) ); ?>" class="large-text" placeholder="<?php esc_attr_e( 'Nonstop pomoc při defektu na cestě', 'pneukarnik-booking' ); ?>"></td>
+					</tr>
+				</table>
+
+				<h2><?php esc_html_e( 'Úvod', 'pneukarnik-booking' ); ?></h2>
+				<table class="form-table">
+					<tr>
+						<th><label for="pnk-why-us"><?php esc_html_e( 'Proč k nám', 'pneukarnik-booking' ); ?></label></th>
+						<td>
+							<textarea id="pnk-why-us" name="why_us" rows="4" class="large-text"><?php echo esc_textarea( (string) get_option( 'pneukarnik_why_us', '' ) ); ?></textarea>
+							<p class="description"><?php esc_html_e( 'Jeden důvod na řádek (rok založení, BestDrive, vybavení…). Prázdné = sekce se na Úvodu nezobrazí.', 'pneukarnik-booking' ); ?></p>
 						</td>
 					</tr>
 				</table>
@@ -323,10 +363,16 @@ class Pneukarnik_Admin_Settings {
 		foreach ( array_keys( Pneukarnik_Notifications::texts() ) as $key ) {
 			update_option( 'pneukarnik_email_' . $key, sanitize_textarea_field( (string) ( $email_texts[ $key ] ?? '' ) ) );
 		}
-		update_option( 'pneukarnik_phone', sanitize_text_field( wp_unslash( $_POST['pneukarnik_phone'] ?? '' ) ) );
-		update_option( 'pneukarnik_email', sanitize_email( wp_unslash( $_POST['pneukarnik_email'] ?? '' ) ) );
-		update_option( 'pneukarnik_address', sanitize_text_field( wp_unslash( $_POST['pneukarnik_address'] ?? '' ) ) );
-		update_option( 'pneukarnik_maps_embed_url', esc_url_raw( wp_unslash( $_POST['pneukarnik_maps_embed_url'] ?? '' ) ) );
+		// Kontakt a Pohotovost
+		foreach ( [ 'company', 'phone', 'address', 'ico', 'dic' ] as $field ) {
+			update_option( 'pneukarnik_' . $field, sanitize_text_field( wp_unslash( $_POST[ 'pneukarnik_' . $field ] ?? '' ) ) );
+		}
+		update_option( Pneukarnik_Contact::OPTION_EMAIL, sanitize_email( wp_unslash( $_POST['pneukarnik_email'] ?? '' ) ) );
+		update_option( Pneukarnik_Contact::OPTION_MAPS_EMBED_URL, esc_url_raw( wp_unslash( $_POST['pneukarnik_maps_embed_url'] ?? '' ) ) );
+		update_option( Pneukarnik_Contact::OPTION_EMERGENCY_ENABLED, empty( $_POST['emergency_enabled'] ) ? '0' : '1' );
+		update_option( Pneukarnik_Contact::OPTION_EMERGENCY_PHONE, sanitize_text_field( wp_unslash( $_POST['emergency_phone'] ?? '' ) ) );
+		update_option( Pneukarnik_Contact::OPTION_EMERGENCY_TEXT, sanitize_text_field( wp_unslash( $_POST['emergency_text'] ?? '' ) ) );
+		update_option( 'pneukarnik_why_us', sanitize_textarea_field( wp_unslash( $_POST['why_us'] ?? '' ) ) );
 
 		// Sezóny
 		$posted  = (array) wp_unslash( $_POST['season'] ?? [] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- hodnoty projdou parse_day_month().

@@ -118,6 +118,20 @@ final class Pneukarnik_Service {
 	}
 
 	/**
+	 * Zveřejněné nejžádanější Služby (pro Úvod) v pořadí nastaveném Provozovatelem.
+	 *
+	 * @return list<self>
+	 */
+	public static function featured(): array {
+		return self::query(
+			[
+				'meta_key'   => '_service_featured', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'meta_value' => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+			]
+		);
+	}
+
+	/**
 	 * Zveřejněné související Služby v pořadí, jak je Provozovatel vybral.
 	 *
 	 * @return list<self>

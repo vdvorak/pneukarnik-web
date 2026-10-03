@@ -41,6 +41,36 @@ class Pneukarnik_Working_Hours {
 	}
 
 	/**
+	 * Efektivní Pracovní doba dne: Výjimka nebo svátek (zavřeno / vlastní bloky) s poznámkou,
+	 * jinak Pracovní doba dne v týdnu. Podle ní se počítají Termíny i zobrazuje otevírací doba.
+	 *
+	 * @param string $date YYYY-MM-DD
+	 * @return array{hours:list<array{from:string,to:string}>|null,note:string} hours null = zavřeno
+	 */
+	public static function effective( string $date ): array {
+		$exception = Pneukarnik_Day_Exceptions::for_date( $date );
+		return $exception ?? [
+			'hours' => self::get_for_date( Pneukarnik_Clock::at( $date ) ),
+			'note'  => '',
+		];
+	}
+
+	/**
+	 * Efektivní Pracovní doba na $days dní od dneška (dnešek první).
+	 *
+	 * @return list<array{date:string,hours:list<array{from:string,to:string}>|null,note:string}>
+	 */
+	public static function upcoming( int $days ): array {
+		$upcoming = [];
+		$day      = Pneukarnik_Clock::today();
+		for ( $i = 0; $i < $days; $i++ ) {
+			$date       = $day->modify( "+{$i} days" )->format( 'Y-m-d' );
+			$upcoming[] = [ 'date' => $date ] + self::effective( $date );
+		}
+		return $upcoming;
+	}
+
+	/**
 	 * Uloží Pracovní dobu: pro každý den 0–2 bloky „od–do“, které se nepřekrývají.
 	 *
 	 * @param array<string, list<array<string, string>>|null> $hours Neověřený vstup z administrace.

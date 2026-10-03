@@ -37,8 +37,10 @@ fi
 wp theme activate pneukarnik --quiet
 wp plugin activate pneukarnik-booking --quiet
 
-# Kontakty Provozovatele (dají se přepsat v Nastavení pluginu).
+# Kontakty Provozovatele pro lokální web (dají se přepsat v Nastavení pluginu).
 wp option add pneukarnik_phone '+420 775 565 326' --quiet 2>/dev/null || true
+wp option add pneukarnik_email 'servis@example.test' --quiet 2>/dev/null || true
+wp option add pneukarnik_address 'Dobšická 10, 669 02 Znojmo' --quiet 2>/dev/null || true
 
 wp rewrite flush --quiet
 

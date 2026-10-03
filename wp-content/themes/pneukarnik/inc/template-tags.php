@@ -117,10 +117,133 @@ function pneukarnik_tel_href( string $phone ): string {
 }
 
 /**
+ * Karta Služby v přehledu (rozcestník, Úvod): název s odkazem, perex, cena, štítek platné Akce.
+ *
+ * @param string $heading Úroveň nadpisu karty podle okolí (h2 v rozcestníku, h3 v sekci Úvodu).
+ */
+function pneukarnik_service_card( Pneukarnik_Service $service, bool $has_promotion, string $heading = 'h2' ): void {
+	$heading = tag_escape( $heading );
+	?>
+	<li class="karta-sluzby">
+		<?php if ( $has_promotion ) : ?>
+			<p class="stitek-akce"><?php esc_html_e( 'Akce', 'pneukarnik' ); ?></p>
+		<?php endif; ?>
+		<<?php echo $heading; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- tag_escape výše. ?>><a href="<?php echo esc_url( $service->url() ); ?>"><?php echo esc_html( $service->title ); ?></a></<?php echo $heading; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
+		<p><?php echo esc_html( $service->perex ); ?></p>
+		<p class="karta-sluzby__cena"><?php echo esc_html( pneukarnik_price_label( $service ) ); ?></p>
+	</li>
+	<?php
+}
+
+/**
+ * Telefon a Rezervovat, aby byly hned vidět (hlavička na každé stránce, hero na Úvodu).
+ */
+function pneukarnik_contact_cta( string $css_class ): void {
+	$phone = Pneukarnik_Contact::phone();
+	?>
+	<p class="<?php echo esc_attr( $css_class ); ?>">
+		<?php if ( '' !== $phone ) : ?>
+			<a class="kontakt-cta__telefon" href="<?php echo esc_url( pneukarnik_tel_href( $phone ) ); ?>"><?php echo esc_html( $phone ); ?></a>
+		<?php endif; ?>
+		<a class="kontakt-cta__rezervovat" href="<?php echo esc_url( home_url( '/rezervace/' ) ); ?>"><?php esc_html_e( 'Rezervovat', 'pneukarnik' ); ?></a>
+	</p>
+	<?php
+}
+
+/**
+ * Pohotovost výrazně v hlavičce, jen když ji Provozovatel zapnul.
+ */
+function pneukarnik_emergency(): void {
+	$emergency = Pneukarnik_Contact::emergency();
+	if ( ! $emergency ) {
+		return;
+	}
+	?>
+	<p class="pohotovost">
+		<strong><?php esc_html_e( 'Pohotovost', 'pneukarnik' ); ?></strong>
+		<a href="<?php echo esc_url( pneukarnik_tel_href( $emergency['phone'] ) ); ?>"><?php echo esc_html( $emergency['phone'] ); ?></a>
+		<?php if ( '' !== $emergency['text'] ) : ?>
+			<span><?php echo esc_html( $emergency['text'] ); ?></span>
+		<?php endif; ?>
+	</p>
+	<?php
+}
+
+/**
+ * Bloky Pracovní doby pro lidi: „8:00–12:00, 13:00–17:00“, null = „Zavřeno“.
+ *
+ * @param list<array{from:string,to:string}>|null $hours
+ */
+function pneukarnik_hours_label( ?array $hours ): string {
+	if ( ! $hours ) {
+		return __( 'Zavřeno', 'pneukarnik' );
+	}
+	$time = static fn( string $hhmm ): string => (int) substr( $hhmm, 0, 2 ) . substr( $hhmm, 2 ); // 08:00 → 8:00
+	return implode( ', ', array_map( static fn( array $block ): string => $time( $block['from'] ) . '–' . $time( $block['to'] ), $hours ) );
+}
+
+/**
+ * Otevírací doba na 7 dní od dneška včetně Výjimek a svátků (stejná pravidla jako Termíny).
+ */
+function pneukarnik_upcoming_hours(): void {
+	$weekdays = [ 'neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota' ];
+	$relative = [ __( 'Dnes', 'pneukarnik' ), __( 'Zítra', 'pneukarnik' ) ];
+	?>
+	<table class="oteviraci-doba">
+		<?php foreach ( Pneukarnik_Working_Hours::upcoming( 7 ) as $i => $day ) : ?>
+			<?php $date = Pneukarnik_Clock::at( $day['date'] ); ?>
+			<tr class="<?php echo 0 === $i ? 'oteviraci-doba__dnes' : ''; ?>">
+				<th scope="row"><?php echo esc_html( $relative[ $i ] ?? $weekdays[ (int) $date->format( 'w' ) ] ); ?> <small><?php echo esc_html( $date->format( 'j. n.' ) ); ?></small></th>
+				<td>
+					<?php echo esc_html( pneukarnik_hours_label( $day['hours'] ) ); ?>
+					<?php if ( '' !== $day['note'] ) : ?>
+						<small>(<?php echo esc_html( $day['note'] ); ?>)</small>
+					<?php endif; ?>
+				</td>
+			</tr>
+		<?php endforeach; ?>
+	</table>
+	<?php
+}
+
+/**
+ * Mapa, která nic nenačte od Googlu, dokud na ni Zákazník neklikne. Bez adresy se nevykreslí.
+ */
+function pneukarnik_map(): void {
+	$embed = Pneukarnik_Contact::map_embed_url();
+	if ( '' === $embed ) {
+		return;
+	}
+	wp_enqueue_script(
+		'pneukarnik-mapa',
+		get_theme_file_uri( 'assets/js/mapa.js' ),
+		[],
+		(string) wp_get_theme()->get( 'Version' ),
+		[
+			'strategy'  => 'defer',
+			'in_footer' => true,
+		]
+	);
+	$address = Pneukarnik_Contact::address();
+	?>
+	<div class="mapa" data-mapa="<?php echo esc_url( $embed ); ?>">
+		<button type="button" class="mapa__nacist" hidden><?php esc_html_e( 'Zobrazit mapu', 'pneukarnik' ); ?></button>
+		<p class="mapa__info"><?php esc_html_e( 'Mapa se načte z Google Maps až po kliknutí.', 'pneukarnik' ); ?></p>
+	</div>
+	<?php if ( '' !== $address ) : ?>
+		<p class="mapa__adresa">
+			<?php echo esc_html( $address ); ?>
+			· <a href="<?php echo esc_url( Pneukarnik_Contact::map_link() ); ?>" rel="noopener" target="_blank"><?php esc_html_e( 'Otevřít v Google Maps', 'pneukarnik' ); ?></a>
+		</p>
+	<?php endif; ?>
+	<?php
+}
+
+/**
  * Výzva k akci u Služby: Rezervovat (jen u online rezervovatelných) a Zavolat.
  */
 function pneukarnik_service_cta( Pneukarnik_Service $service ): void {
-	$phone = function_exists( 'pneukarnik_phone' ) ? pneukarnik_phone() : '';
+	$phone = Pneukarnik_Contact::phone();
 	?>
 	<div class="cta">
 		<?php if ( $service->bookable ) : ?>

@@ -57,7 +57,7 @@ test('Zákazník si z detailu Služby zarezervuje Termín a uvidí potvrzení', 
 
 	await page.goto('/pneuservis/');
 	await page.getByRole('link', { name: serviceTitle }).click();
-	await page.getByRole('link', { name: 'Rezervovat' }).click();
+	await page.getByRole('main').getByRole('link', { name: 'Rezervovat' }).click();
 
 	await expect(page.getByLabel('Služba')).toHaveValue(String(serviceId));
 	await pickDay(page, date);

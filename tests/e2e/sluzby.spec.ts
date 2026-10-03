@@ -53,7 +53,7 @@ test('Služba z administrace je na rozcestníku i v detailu se všemi částmi v
 	await expect(page.getByText('od 600 Kč')).toBeVisible();
 	await expect(page.getByText('osobní auto do 16"')).toBeVisible();
 	await expect(page.getByText('Musím čekat na místě?')).toBeVisible();
-	await expect(page.getByRole('link', { name: 'Rezervovat' })).toHaveAttribute('href', /\/rezervace\//);
+	await expect(page.getByRole('main').getByRole('link', { name: 'Rezervovat' })).toHaveAttribute('href', /\/rezervace\//);
 	await expect(page.getByRole('link', { name: /Zavolat/ })).toHaveAttribute('href', /^tel:\+420/);
 	await page.getByRole('link', { name: related }).click();
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText(related);
@@ -74,7 +74,7 @@ test('Služba jen na telefon s cenou dle vozu ukáže jen vyplněné části a Z
 
 	await expect(page.locator('main h2')).toHaveText(['Cena']);
 	await expect(page.getByText('Cena dle vozu')).toBeVisible();
-	await expect(page.getByRole('link', { name: 'Rezervovat' })).toHaveCount(0);
+	await expect(page.getByRole('main').getByRole('link', { name: 'Rezervovat' })).toHaveCount(0);
 	await expect(page.getByRole('link', { name: /Zavolat/ })).toBeVisible();
 });
 

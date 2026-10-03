@@ -34,6 +34,7 @@ export type ServiceFields = {
 	seasonal?: boolean;
 	askStoredWheels?: boolean;
 	order?: number;
+	featured?: boolean;
 };
 
 /** Vyplní formulář Služby v administraci a klikne na Publikovat. */
@@ -59,6 +60,7 @@ export async function publishService(page: Page, s: ServiceFields): Promise<void
 	if (s.bookable) await page.getByLabel(/Rezervovatelná online/).check();
 	if (s.seasonal) await page.getByLabel(/Sezónní \(v Sezóně/).check();
 	if (s.askStoredWheels) await page.getByLabel(/Ptát se na uskladněná kola/).check();
+	if (s.featured) await page.getByLabel(/Nejžádanější/).check();
 	if (s.order !== undefined) await page.locator('#menu_order').fill(String(s.order));
 	// Po opuštění názvu WordPress automaticky uloží koncept a mezitím zablokuje Publikovat.
 	await expect(page.locator('#edit-slug-box')).not.toBeEmpty();
