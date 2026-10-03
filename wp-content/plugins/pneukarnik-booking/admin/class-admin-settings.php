@@ -28,7 +28,7 @@ class Pneukarnik_Admin_Settings {
 		}
 
 		$hours                = Pneukarnik_Working_Hours::get_all();
-		$season               = Pneukarnik_Season::get_settings();
+		$seasons              = Pneukarnik_Season::get_all();
 		$grid_step            = Pneukarnik_Working_Hours::get_grid_step();
 		$lead_minutes         = Pneukarnik_Working_Hours::get_lead_minutes();
 		$horizon_days         = Pneukarnik_Working_Hours::get_horizon_days();
@@ -59,6 +59,9 @@ class Pneukarnik_Admin_Settings {
 
 			<?php if ( isset( $_GET['hours_error'] ) ) : ?>
 				<div class="notice notice-error"><p><?php esc_html_e( 'Pracovní doba se neuložila: každý blok musí mít začátek před koncem a dva bloky se nesmí překrývat. Ostatní nastavení se uložilo.', 'pneukarnik-booking' ); ?></p></div>
+			<?php endif; ?>
+			<?php if ( isset( $_GET['season_error'] ) ) : ?>
+				<div class="notice notice-error"><p><?php esc_html_e( 'Sezóny se neuložily: zadejte den a měsíc (např. 15. 3.), od i do, od před do, leasingové datum uvnitř Sezóny a Sezóny se nesmí překrývat. Ostatní nastavení se uložilo.', 'pneukarnik-booking' ); ?></p></div>
 			<?php endif; ?>
 			<?php if ( isset( $_GET['saved'] ) ) : ?>
 				<div class="notice notice-success"><p><?php esc_html_e( 'Nastavení uložena.', 'pneukarnik-booking' ); ?></p></div>
@@ -150,20 +153,29 @@ class Pneukarnik_Admin_Settings {
 					</tr>
 				</table>
 
-				<h2><?php esc_html_e( 'Sezóna', 'pneukarnik-booking' ); ?></h2>
+				<h2><?php esc_html_e( 'Sezóny', 'pneukarnik-booking' ); ?></h2>
+				<p class="description"><?php esc_html_e( 'Každý rok stejně. Termín v Sezóně (včetně dnů od a do) jde online rezervovat jen se sezónními Službami. Leasingoví zákazníci dostanou v Sezóně Termíny až od leasingového data. Prázdné od a do = Sezóna se nepoužije.', 'pneukarnik-booking' ); ?></p>
 				<table class="form-table">
-					<tr>
-						<th><?php esc_html_e( 'Od (MM-DD)', 'pneukarnik-booking' ); ?></th>
-						<td><input type="text" name="season_from" value="<?php echo esc_attr( $season['from'] ?? '' ); ?>" placeholder="10-01"></td>
-					</tr>
-					<tr>
-						<th><?php esc_html_e( 'Do (MM-DD)', 'pneukarnik-booking' ); ?></th>
-						<td><input type="text" name="season_to" value="<?php echo esc_attr( $season['to'] ?? '' ); ?>" placeholder="04-30"></td>
-					</tr>
-					<tr>
-						<th><?php esc_html_e( 'Vynutit sezónu', 'pneukarnik-booking' ); ?></th>
-						<td><input type="checkbox" name="season_forced" value="1" <?php checked( $season['forced'] ); ?>></td>
-					</tr>
+					<?php foreach ( Pneukarnik_Season::names() as $key => $label ) : ?>
+						<tr>
+							<th><?php echo esc_html( $label ); ?></th>
+							<td>
+								<?php
+								$fields = [
+									'from'         => __( 'od', 'pneukarnik-booking' ),
+									'to'           => __( 'do', 'pneukarnik-booking' ),
+									'leasing_from' => __( 'leasing od', 'pneukarnik-booking' ),
+								];
+								?>
+								<?php foreach ( $fields as $field => $field_label ) : ?>
+									<label>
+										<?php echo esc_html( $field_label ); ?>
+										<input type="text" name="season[<?php echo esc_attr( $key ); ?>][<?php echo esc_attr( $field ); ?>]" value="<?php echo esc_attr( self::day_month_label( $seasons[ $key ][ $field ] ) ); ?>" placeholder="<?php esc_attr_e( 'D. M.', 'pneukarnik-booking' ); ?>" size="7" aria-label="<?php echo esc_attr( $label . ' ' . $field_label ); ?>">
+									</label>
+								<?php endforeach; ?>
+							</td>
+						</tr>
+					<?php endforeach; ?>
 				</table>
 
 				<h2><?php esc_html_e( 'Kontakt', 'pneukarnik-booking' ); ?></h2>
@@ -280,12 +292,15 @@ class Pneukarnik_Admin_Settings {
 		update_option( 'pneukarnik_address', sanitize_text_field( wp_unslash( $_POST['pneukarnik_address'] ?? '' ) ) );
 		update_option( 'pneukarnik_maps_embed_url', esc_url_raw( wp_unslash( $_POST['pneukarnik_maps_embed_url'] ?? '' ) ) );
 
-		// Season
-		Pneukarnik_Season::save(
-			sanitize_text_field( wp_unslash( $_POST['season_from'] ?? '' ) ),
-			sanitize_text_field( wp_unslash( $_POST['season_to'] ?? '' ) ),
-			! empty( $_POST['season_forced'] )
-		);
+		// Sezóny
+		$posted  = (array) wp_unslash( $_POST['season'] ?? [] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- hodnoty projdou parse_day_month().
+		$seasons = [];
+		foreach ( array_keys( Pneukarnik_Season::names() ) as $key ) {
+			foreach ( [ 'from', 'to', 'leasing_from' ] as $field ) {
+				$seasons[ $key ][ $field ] = self::parse_day_month( (string) ( $posted[ $key ][ $field ] ?? '' ) );
+			}
+		}
+		$seasons_saved = Pneukarnik_Season::save( $seasons );
 
 		// iCal token regeneration
 		if ( ! empty( $_POST['regen_ical_token'] ) ) {
@@ -299,8 +314,37 @@ class Pneukarnik_Admin_Settings {
 			update_option( 'pneukarnik_social_links', wp_json_encode( $social_decoded ) );
 		}
 
-		$result = $hours_saved ? [ 'saved' => '1' ] : [ 'hours_error' => '1' ];
+		$result = [];
+		if ( ! $hours_saved ) {
+			$result['hours_error'] = '1';
+		}
+		if ( ! $seasons_saved ) {
+			$result['season_error'] = '1';
+		}
+		$result = $result ?: [ 'saved' => '1' ];
 		wp_safe_redirect( add_query_arg( $result, admin_url( 'admin.php?page=pneukarnik-settings' ) ) );
 		exit;
+	}
+
+	/**
+	 * „15. 3.“ (i „15.3“) → „03-15“. Prázdné zůstane prázdné, neplatné se vrátí tak, jak je,
+	 * a Pneukarnik_Season::save() ho odmítne.
+	 */
+	private static function parse_day_month( string $value ): string {
+		$value = trim( sanitize_text_field( $value ) );
+		if ( preg_match( '/^(\d{1,2})\s*\.\s*(\d{1,2})\s*\.?$/', $value, $m ) ) {
+			return sprintf( '%02d-%02d', (int) $m[2], (int) $m[1] );
+		}
+		return $value;
+	}
+
+	/**
+	 * „03-15“ → „15. 3.“
+	 */
+	private static function day_month_label( string $month_day ): string {
+		if ( ! preg_match( '/^(\d{2})-(\d{2})$/', $month_day, $m ) ) {
+			return $month_day;
+		}
+		return sprintf( '%d. %d.', (int) $m[2], (int) $m[1] );
 	}
 }

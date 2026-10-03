@@ -6,8 +6,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * GET /wp-json/pneukarnik/v1/slots?service_ids[]=&service_ids[]=&date=YYYY-MM-DD
+ * GET /wp-json/pneukarnik/v1/slots?service_ids[]=&service_ids[]=&date=YYYY-MM-DD&leasing=1
  * Volné Termíny dne pro Rezervaci jedné nebo víc Služeb (úsek = součet Délek).
+ * Den, který Sezóna nebo leasingové datum online nedovolí, vrátí 422 s kódem a Sezónou.
  */
 class Pneukarnik_Rest_Slots {
 
@@ -21,6 +22,7 @@ class Pneukarnik_Rest_Slots {
 				'permission_callback' => '__return_true',
 				'args'                => [
 					'service_ids' => self::service_ids_arg(),
+					'leasing'     => self::leasing_arg(),
 					'date'        => [
 						'required'          => true,
 						'type'              => 'string',
@@ -39,6 +41,10 @@ class Pneukarnik_Rest_Slots {
 		$resolved = Pneukarnik_Booking::resolve_services( $service_ids );
 		if ( ! $resolved['ok'] ) {
 			return self::refusal( $resolved );
+		}
+		$refusal = Pneukarnik_Booking::day_refusal( $resolved['services'], (bool) $request->get_param( 'leasing' ), $date );
+		if ( null !== $refusal ) {
+			return self::refusal( $refusal );
 		}
 
 		$response = new WP_REST_Response(
@@ -70,14 +76,30 @@ class Pneukarnik_Rest_Slots {
 	}
 
 	/**
-	 * @param array{code:string,status:int} $refusal Proč Služby nejde rezervovat online.
+	 * Parametr leasing: Termíny pro Leasingového zákazníka.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public static function leasing_arg(): array {
+		return [
+			'type'    => 'boolean',
+			'default' => false,
+		];
+	}
+
+	/**
+	 * @param array{code:string,status:int,season?:array<string,mixed>} $refusal Proč Služby nejde rezervovat online.
 	 */
 	public static function refusal( array $refusal ): WP_REST_Response {
+		$data = [ 'status' => $refusal['status'] ];
+		if ( isset( $refusal['season'] ) ) {
+			$data['season'] = $refusal['season'];
+		}
 		return new WP_REST_Response(
 			[
 				'code'    => $refusal['code'],
 				'message' => $refusal['code'],
-				'data'    => [ 'status' => $refusal['status'] ],
+				'data'    => $data,
 			],
 			$refusal['status']
 		);

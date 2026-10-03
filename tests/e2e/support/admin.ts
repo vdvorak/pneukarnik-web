@@ -31,6 +31,8 @@ export type ServiceFields = {
 	related?: string[];
 	duration?: number;
 	bookable?: boolean;
+	seasonal?: boolean;
+	askStoredWheels?: boolean;
 	order?: number;
 };
 
@@ -55,6 +57,8 @@ export async function publishService(page: Page, s: ServiceFields): Promise<void
 	for (const title of s.related ?? []) await page.getByLabel(title).check();
 	if (s.duration !== undefined) await page.getByLabel('Délka (minuty) *').fill(String(s.duration));
 	if (s.bookable) await page.getByLabel(/Rezervovatelná online/).check();
+	if (s.seasonal) await page.getByLabel(/Sezónní \(v Sezóně/).check();
+	if (s.askStoredWheels) await page.getByLabel(/Ptát se na uskladněná kola/).check();
 	if (s.order !== undefined) await page.locator('#menu_order').fill(String(s.order));
 	// Po opuštění názvu WordPress automaticky uloží koncept a mezitím zablokuje Publikovat.
 	await expect(page.locator('#edit-slug-box')).not.toBeEmpty();
@@ -83,6 +87,27 @@ export async function saveBookingSettings(page: Page): Promise<void> {
 	await page.getByLabel('Předstih pro dnešek (min)').fill('60');
 	await page.getByLabel('Horizont (dny dopředu)').fill('60');
 	await page.locator('input[name="rate_limit"]').fill('100');
+	await page.getByRole('button', { name: 'Uložit nastavení' }).click();
+	await expect(page.getByText('Nastavení uložena.')).toBeVisible();
+}
+
+/** YYYY-MM-DD → „15. 3.“, jak se Sezóny zadávají v Nastavení. */
+const dayMonth = (date: string) => {
+	const [, month, day] = date.split('-').map(Number);
+	return `${day}. ${month}.`;
+};
+
+/** Podzimní Sezóna v Nastavení (od, do, leasing od jako YYYY-MM-DD), null = žádná Sezóna. */
+export async function saveAutumnSeason(page: Page, season: { from: string; to: string; leasingFrom: string } | null): Promise<void> {
+	await page.goto('/wp-admin/admin.php?page=pneukarnik-settings');
+	for (const name of ['spring', 'autumn']) {
+		for (const field of ['from', 'to', 'leasing_from']) await page.locator(`input[name="season[${name}][${field}]"]`).fill('');
+	}
+	if (season) {
+		await page.getByLabel('Podzimní od').fill(dayMonth(season.from));
+		await page.getByLabel('Podzimní do').fill(dayMonth(season.to));
+		await page.getByLabel('Podzimní leasing od').fill(dayMonth(season.leasingFrom));
+	}
 	await page.getByRole('button', { name: 'Uložit nastavení' }).click();
 	await expect(page.getByText('Nastavení uložena.')).toBeVisible();
 }

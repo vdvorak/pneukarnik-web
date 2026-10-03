@@ -6,9 +6,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * GET /wp-json/pneukarnik/v1/available-days?service_ids[]=&month=YYYY-MM
+ * GET /wp-json/pneukarnik/v1/available-days?service_ids[]=&month=YYYY-MM&leasing=1
  * Dny měsíce, které mají pro Rezervaci daných Služeb alespoň jeden volný Termín.
- * Kalendář rezervačního formuláře podle nich zašedí ostatní dny.
+ * Kalendář rezervačního formuláře podle nich zašedí ostatní dny. restrictions říkají, které
+ * Sezóny (jen sezónní Služby, leasingové datum) v měsíci vyřadily jinak volné dny.
  */
 class Pneukarnik_Rest_Available_Days {
 
@@ -22,6 +23,7 @@ class Pneukarnik_Rest_Available_Days {
 				'permission_callback' => '__return_true',
 				'args'                => [
 					'service_ids' => Pneukarnik_Rest_Slots::service_ids_arg(),
+					'leasing'     => Pneukarnik_Rest_Slots::leasing_arg(),
 					'month'       => [
 						'required'          => true,
 						'type'              => 'string',
@@ -42,11 +44,13 @@ class Pneukarnik_Rest_Available_Days {
 			return Pneukarnik_Rest_Slots::refusal( $resolved );
 		}
 
-		$response = new WP_REST_Response(
+		$available = Pneukarnik_Booking::available_days( $resolved['services'], $resolved['duration'], (bool) $request->get_param( 'leasing' ), $month );
+		$response  = new WP_REST_Response(
 			[
-				'month'       => $month,
-				'service_ids' => $service_ids,
-				'days'        => Pneukarnik_Slot_Engine::days_with_free_termin( $resolved['duration'], $month ),
+				'month'        => $month,
+				'service_ids'  => $service_ids,
+				'days'         => $available['days'],
+				'restrictions' => $available['restrictions'],
 			],
 			200
 		);

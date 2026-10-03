@@ -74,15 +74,45 @@ abstract class Pneukarnik_REST_Test_Case extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Jarní a podzimní Sezóna jako [od, do, leasing od] ve formátu MM-DD, null = Sezóna nenastavená.
+	 *
+	 * @param array{0:string,1:string,2?:string}|null $spring
+	 * @param array{0:string,1:string,2?:string}|null $autumn
+	 */
+	protected function set_seasons( ?array $spring, ?array $autumn = null ): void {
+		$this->assertTrue( Pneukarnik_Season::save( self::seasons( $spring, $autumn ) ) );
+	}
+
+	/**
+	 * Sezóny ve tvaru pro Pneukarnik_Season::save(), parametry viz set_seasons().
+	 *
+	 * @param array{0:string,1:string,2?:string}|null $spring
+	 * @param array{0:string,1:string,2?:string}|null $autumn
+	 * @return array<string, array{from:string,to:string,leasing_from:string}>
+	 */
+	protected static function seasons( ?array $spring, ?array $autumn ): array {
+		$season = static fn( ?array $s ): array => [
+			'from'         => $s[0] ?? '',
+			'to'           => $s[1] ?? '',
+			'leasing_from' => $s[2] ?? '',
+		];
+		return [
+			'spring' => $season( $spring ),
+			'autumn' => $season( $autumn ),
+		];
+	}
+
+	/**
 	 * @param int|list<int> $service_ids Jedna Služba nebo víc Služeb jedné Rezervace.
 	 */
-	protected function slots( int|array $service_ids, string $date ): WP_REST_Response {
+	protected function slots( int|array $service_ids, string $date, bool $leasing = false ): WP_REST_Response {
 		return $this->rest(
 			'GET',
 			'/slots',
 			[
 				'service_ids' => (array) $service_ids,
 				'date'        => $date,
+				'leasing'     => $leasing,
 			]
 		);
 	}
@@ -91,8 +121,8 @@ abstract class Pneukarnik_REST_Test_Case extends WP_UnitTestCase {
 	 * @param int|list<int> $service_ids
 	 * @return list<string> Začátky nabízených volných Termínů (HH:MM).
 	 */
-	protected function free_starts( int|array $service_ids, string $date ): array {
-		$response = $this->slots( $service_ids, $date );
+	protected function free_starts( int|array $service_ids, string $date, bool $leasing = false ): array {
+		$response = $this->slots( $service_ids, $date, $leasing );
 		$this->assertSame( 200, $response->get_status(), (string) wp_json_encode( $response->get_data() ) );
 		return array_map( static fn( array $slot ): string => $slot['time_start'], $response->get_data()['slots'] );
 	}
@@ -102,17 +132,27 @@ abstract class Pneukarnik_REST_Test_Case extends WP_UnitTestCase {
 	 * @param string        $month       YYYY-MM
 	 * @return list<string> Dny měsíce s alespoň jedním volným Termínem (YYYY-MM-DD).
 	 */
-	protected function available_days( int|array $service_ids, string $month ): array {
+	protected function available_days( int|array $service_ids, string $month, bool $leasing = false ): array {
+		return $this->available_days_response( $service_ids, $month, $leasing )['days'];
+	}
+
+	/**
+	 * @param int|list<int> $service_ids
+	 * @param string        $month       YYYY-MM
+	 * @return array<string, mixed> Tělo odpovědi /available-days.
+	 */
+	protected function available_days_response( int|array $service_ids, string $month, bool $leasing = false ): array {
 		$response = $this->rest(
 			'GET',
 			'/available-days',
 			[
 				'service_ids' => (array) $service_ids,
 				'month'       => $month,
+				'leasing'     => $leasing,
 			]
 		);
 		$this->assertSame( 200, $response->get_status(), (string) wp_json_encode( $response->get_data() ) );
-		return $response->get_data()['days'];
+		return $response->get_data();
 	}
 
 	/**
@@ -136,5 +176,18 @@ abstract class Pneukarnik_REST_Test_Case extends WP_UnitTestCase {
 				'consent_gdpr' => true,
 			]
 		);
+	}
+
+	/**
+	 * Vytvořená Rezervace, jak ji vidí stránka potvrzení.
+	 *
+	 * @return array<string, mixed>
+	 */
+	protected function created_booking( WP_REST_Response $response ): array {
+		$this->assertSame( 201, $response->get_status(), (string) wp_json_encode( $response->get_data() ) );
+		parse_str( (string) wp_parse_url( $response->get_data()['confirmation_url'], PHP_URL_QUERY ), $query );
+		$booking = Pneukarnik_Booking::find_by_confirmation_token( (string) $query['r'] );
+		$this->assertNotNull( $booking );
+		return $booking;
 	}
 }

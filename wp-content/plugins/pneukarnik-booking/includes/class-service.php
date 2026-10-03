@@ -42,6 +42,7 @@ final class Pneukarnik_Service {
 		public readonly int $duration,
 		public readonly bool $bookable,
 		public readonly bool $seasonal,
+		public readonly bool $ask_stored_wheels,
 		public readonly bool $featured,
 		public readonly int $order,
 	) {}
@@ -87,6 +88,7 @@ final class Pneukarnik_Service {
 			duration: (int) $meta( '_service_duration' ),
 			bookable: '' !== $meta( '_service_bookable' ),
 			seasonal: '' !== $meta( '_service_is_seasonal' ),
+			ask_stored_wheels: '' !== $meta( '_service_ask_stored_wheels' ),
 			featured: '' !== $meta( '_service_featured' ),
 			order: $post->menu_order,
 		);

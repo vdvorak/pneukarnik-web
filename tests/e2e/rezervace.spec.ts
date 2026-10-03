@@ -1,5 +1,5 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
-import { addClosedDay, E2E_PREFIX, login, pickDay, publishService, saveBookingSettings, uniqueTitle, upcomingWeekday } from './support/admin';
+import { addClosedDay, E2E_PREFIX, login, pickDay, publishService, saveAutumnSeason, saveBookingSettings, uniqueTitle, upcomingWeekday } from './support/admin';
 
 // Dílna je jedna, testy si tedy nesmí brát Termíny navzájem.
 test.describe.configure({ mode: 'serial' });
@@ -159,4 +159,60 @@ test('Den s Výjimkou „zavřeno“ je v kalendáři zašedlý', async ({ page 
 		await expect(page.locator(`[data-date="${open}"]`)).toBeEnabled();
 	}
 	await expect(page.getByText('Zašedlé dny nemají volný termín.')).toBeVisible();
+});
+
+test('V Sezóně jde online jen sezónní Služba a leasing až od leasingového data', async ({ page }) => {
+	const first = upcomingWeekday(8);
+	const leasingFrom = upcomingWeekday(9);
+	const seasonalTitle = uniqueTitle('Sezónní přezutí');
+	/** Přejde v kalendáři na měsíc dne. */
+	const showMonth = async (date: string) => {
+		while (!(await page.locator(`[data-date="${date}"]`).isVisible())) {
+			await page.getByRole('button', { name: 'Další měsíc' }).click();
+		}
+	};
+
+	await login(page);
+	await publishService(page, {
+		title: seasonalTitle,
+		category: 'Pneuservis',
+		perex: 'Sezónní přezutí pro test.',
+		price: 600,
+		duration: 60,
+		bookable: true,
+		seasonal: true,
+		askStoredWheels: true,
+	});
+	await saveAutumnSeason(page, { from: first, to: leasingFrom, leasingFrom });
+	try {
+		await page.goto('/rezervace/');
+		await page.getByLabel('Služba', { exact: true }).selectOption({ label: serviceTitle });
+		await showMonth(first);
+		await expect(page.locator(`[data-date="${first}"]`)).toBeDisabled();
+		await expect(page.getByText(/je sezóna přezouvání a online jde objednat jen přezutí/)).toBeVisible();
+		await expect(page.getByLabel('Kola mám uskladněná u vás')).toBeHidden();
+
+		await page.getByLabel('Služba', { exact: true }).selectOption({ label: seasonalTitle });
+		await expect(page.locator(`[data-date="${first}"]`)).toBeEnabled();
+		await page.getByLabel('Vozidlo je na leasing').check();
+		await expect(page.locator(`[data-date="${first}"]`)).toBeDisabled();
+		await expect(page.getByText(/Vozidla na leasing objednáváme/)).toBeVisible();
+
+		await pickDay(page, leasingFrom);
+		await page.getByLabel('8:00–9:00').check();
+		await page.getByLabel('Kola mám uskladněná u vás').check();
+		await page.getByLabel('Leasingová společnost').fill('E2E Leasing');
+		await page.getByLabel('Jméno nebo firma').fill(customer.name);
+		await page.getByLabel('Telefon').fill(customer.phone);
+		await page.getByLabel('E‑mail').fill(customer.email);
+		await page.getByLabel('SPZ').fill(customer.plate);
+		await page.getByLabel(/Souhlasím se zpracováním/).check();
+		await page.getByRole('button', { name: 'Rezervovat' }).click();
+
+		await expect(page).toHaveURL(/\/rezervace\/potvrzeni\/\?r=[0-9a-f]{64}$/);
+		await expect(page.locator('dd').filter({ hasText: 'E2E Leasing' })).toBeVisible();
+		await expect(page.locator('dd').filter({ hasText: 'uskladněná u nás' })).toBeVisible();
+	} finally {
+		await saveAutumnSeason(page, null);
+	}
 });

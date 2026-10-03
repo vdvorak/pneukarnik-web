@@ -63,6 +63,23 @@ get_header();
 				<button type="button" id="rez-pridat-sluzbu" class="sluzby__pridat" hidden><?php esc_html_e( '+ přidat další službu', 'pneukarnik' ); ?></button>
 				<span class="pole__chyba" id="chyba-service_ids"></span>
 			</p>
+			<p class="pole pole--zaskrtavaci" id="rez-uskladnena" hidden>
+				<label>
+					<input type="checkbox" name="stored_wheels" value="1">
+					<?php esc_html_e( 'Kola mám uskladněná u vás', 'pneukarnik' ); ?>
+				</label>
+			</p>
+			<p class="pole pole--zaskrtavaci">
+				<label>
+					<input type="checkbox" name="leasing" value="1" id="rez-leasing">
+					<?php esc_html_e( 'Vozidlo je na leasing', 'pneukarnik' ); ?>
+				</label>
+			</p>
+			<p class="pole" id="rez-leasing-spolecnost" hidden>
+				<label for="rez-leasing_company"><?php esc_html_e( 'Leasingová společnost', 'pneukarnik' ); ?></label>
+				<input id="rez-leasing_company" type="text" name="leasing_company" autocomplete="off" aria-describedby="chyba-leasing_company">
+				<span class="pole__chyba" id="chyba-leasing_company"></span>
+			</p>
 
 			<fieldset class="kalendar" aria-describedby="kalendar-stav chyba-date">
 				<legend><?php esc_html_e( 'Den', 'pneukarnik' ); ?></legend>

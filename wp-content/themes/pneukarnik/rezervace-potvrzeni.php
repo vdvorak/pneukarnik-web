@@ -22,6 +22,14 @@ get_header();
 		<?php endforeach; ?>
 		<dt><?php esc_html_e( 'SPZ', 'pneukarnik' ); ?></dt>
 		<dd><?php echo esc_html( $pneukarnik_booking['customer_plate'] ); ?></dd>
+		<?php if ( $pneukarnik_booking['leasing'] ) : ?>
+			<dt><?php esc_html_e( 'Leasing', 'pneukarnik' ); ?></dt>
+			<dd><?php echo esc_html( $pneukarnik_booking['leasing_company'] ); ?></dd>
+		<?php endif; ?>
+		<?php if ( $pneukarnik_booking['stored_wheels'] ) : ?>
+			<dt><?php esc_html_e( 'Kola', 'pneukarnik' ); ?></dt>
+			<dd><?php esc_html_e( 'uskladněná u nás', 'pneukarnik' ); ?></dd>
+		<?php endif; ?>
 	</dl>
 	<p><a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'Zpět na úvod', 'pneukarnik' ); ?></a></p>
 </main>

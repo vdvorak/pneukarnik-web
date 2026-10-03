@@ -158,7 +158,6 @@ class Pneukarnik_Admin_Create {
 			'booking.invalid_fields'       => 'Zkontrolujte pole: %s.',
 			'booking.service_not_found'    => 'Služba neexistuje.',
 			'booking.service_not_bookable' => 'Tato služba není rezervovatelná.',
-			'booking.seasonal_only'        => 'V aktivní sezóně jsou dostupné jen sezónní služby.',
 			'booking.slot_unavailable'     => 'Vybraný čas není v nabídce (mimo Pracovní dobu, mřížku nebo horizont).',
 			'booking.slot_taken'           => 'V tomto čase už je jiná Rezervace.',
 		];

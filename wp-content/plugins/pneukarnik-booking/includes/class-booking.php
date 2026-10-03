@@ -8,8 +8,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Vytvoření Rezervace a její načtení.
  *
- * Postup: validace polí → pravidla každé Služby → Termín je v nabídce dne → se zámkem dne
- * a v transakci ověřit, že úsek nic nepřekrývá, a zapsat. Dílna má kapacitu 1.
+ * Postup: validace polí → pravidla každé Služby → pravidla dne (Sezóna, leasing) → Termín je
+ * v nabídce dne → se zámkem dne a v transakci ověřit, že úsek nic nepřekrývá, a zapsat.
+ * Dílna má kapacitu 1.
  * Rezervace má 1..n Služeb a zabírá dílnu po dobu součtu jejich Délek.
  */
 class Pneukarnik_Booking {
@@ -22,23 +23,26 @@ class Pneukarnik_Booking {
 
 	/** Maximální délky textových polí. */
 	private const MAX_LENGTH = [
-		'name'    => 120,
-		'company' => 120,
-		'phone'   => 30,
-		'email'   => 254,
-		'vehicle' => 100,
-		'note'    => 1000,
+		'name'            => 120,
+		'company'         => 120,
+		'leasing_company' => 120,
+		'phone'           => 30,
+		'email'           => 254,
+		'vehicle'         => 100,
+		'note'            => 1000,
 	];
 
 	/**
 	 * Vytvoří Rezervaci.
 	 *
 	 * Vstup: service_ids (seznam 1..n), date (Y-m-d), time (HH:MM), name, phone, email, plate,
-	 * volitelně company, vehicle a note, consent_gdpr (povinný jen z webu).
+	 * volitelně company, vehicle, note, leasing + leasing_company (povinná s leasingem),
+	 * stored_wheels (uloží se, jen když se na ně ptá některá ze Služeb), consent_gdpr (povinný jen z webu).
+	 * Sezóna a leasingové datum platí jen pro online Rezervace.
 	 *
 	 * @param array<mixed> $data Neověřený vstup.
 	 * @return array{ok:true,booking:array<string,mixed>,confirmation_token:string}
-	 *       |array{ok:false,code:string,status:int,errors?:array<string,string>}
+	 *       |array{ok:false,code:string,status:int,errors?:array<string,string>,season?:array<string,mixed>}
 	 */
 	public static function create( array $data, string $source = self::SOURCE_WEB ): array {
 		[ $input, $errors ] = self::validate_fields( $data, self::SOURCE_WEB === $source );
@@ -57,6 +61,13 @@ class Pneukarnik_Booking {
 		}
 		$services = $resolved['services'];
 		$duration = $resolved['duration'];
+
+		if ( self::SOURCE_WEB === $source ) {
+			$refusal = self::day_refusal( $services, $input['leasing'], $input['date'] );
+			if ( null !== $refusal ) {
+				return $refusal;
+			}
+		}
 
 		if ( ! Pneukarnik_Slot_Engine::is_offered( $duration, $input['date'], $input['time'], self::SOURCE_WEB === $source ) ) {
 			return self::error( 'booking.slot_unavailable', 422 );
@@ -123,10 +134,60 @@ class Pneukarnik_Booking {
 		if ( ! $service->bookable ) {
 			return self::error( 'booking.service_not_bookable', 422 );
 		}
-		if ( Pneukarnik_Season::is_active() && ! $service->seasonal ) {
-			return self::error( 'booking.seasonal_only', 422 );
+		return null;
+	}
+
+	/**
+	 * Proč Služby nejde online rezervovat na daný den, nebo null, když jde. V Sezóně jen sezónní
+	 * Služby, Leasingový zákazník až od leasingového data Sezóny. Odmítnutí nese Sezónu,
+	 * aby web mohl vysvětlit proč.
+	 *
+	 * @param list<Pneukarnik_Service> $services
+	 * @return array{ok:false,code:string,status:int,season:array{name:string,from:string,to:string,leasing_from:string|null}}|null
+	 */
+	public static function day_refusal( array $services, bool $leasing, string $date ): ?array {
+		$season = Pneukarnik_Season::for_date( $date );
+		if ( null === $season ) {
+			return null;
+		}
+		foreach ( $services as $service ) {
+			if ( ! $service->seasonal ) {
+				return self::error( 'booking.seasonal_only', 422 ) + [ 'season' => $season ];
+			}
+		}
+		if ( $leasing && ! Pneukarnik_Season::allows_leasing( $date ) ) {
+			return self::error( 'booking.leasing_date', 422 ) + [ 'season' => $season ];
 		}
 		return null;
+	}
+
+	/**
+	 * Dny měsíce s alespoň jedním volným Termínem pro online Rezervaci Služeb a omezení
+	 * (Sezóna, leasing), kvůli kterým jiné takové dny nabídnuté nejsou.
+	 *
+	 * @param list<Pneukarnik_Service> $services
+	 * @param string                   $month YYYY-MM
+	 * @return array{days:list<string>,restrictions:list<array{code:string,season:array{name:string,from:string,to:string,leasing_from:string|null}}>}
+	 */
+	public static function available_days( array $services, int $duration, bool $leasing, string $month ): array {
+		$days         = [];
+		$restrictions = [];
+		foreach ( Pneukarnik_Slot_Engine::days_with_free_termin( $duration, $month ) as $date ) {
+			$refusal = self::day_refusal( $services, $leasing, $date );
+			if ( null === $refusal ) {
+				$days[] = $date;
+				continue;
+			}
+			// Každé omezení jednou: kód a Sezóna.
+			$restrictions[ $refusal['code'] . $refusal['season']['from'] ] = [
+				'code'   => $refusal['code'],
+				'season' => $refusal['season'],
+			];
+		}
+		return [
+			'days'         => $days,
+			'restrictions' => array_values( $restrictions ),
+		];
 	}
 
 	public static function confirmation_url( string $token ): string {
@@ -198,7 +259,7 @@ class Pneukarnik_Booking {
 	}
 
 	/**
-	 * @param array{service_ids:list<int>,date:string,time:string,name:string,company:string,phone:string,email:string,plate:string,vehicle:string,note:string,consent_gdpr:bool} $input
+	 * @param array{service_ids:list<int>,date:string,time:string,name:string,company:string,phone:string,email:string,plate:string,vehicle:string,note:string,leasing:bool,leasing_company:string,stored_wheels:bool,consent_gdpr:bool} $input
 	 * @param list<Pneukarnik_Service> $services
 	 * @return array{ok:true,id:int,cancel_token:string,confirmation_token:string}|array{ok:false,code:string,status:int}
 	 */
@@ -215,7 +276,7 @@ class Pneukarnik_Booking {
 	/**
 	 * Část insert_if_free uvnitř otevřené transakce. Vždy ji ukončí (commit nebo rollback).
 	 *
-	 * @param array{service_ids:list<int>,date:string,time:string,name:string,company:string,phone:string,email:string,plate:string,vehicle:string,note:string,consent_gdpr:bool} $input
+	 * @param array{service_ids:list<int>,date:string,time:string,name:string,company:string,phone:string,email:string,plate:string,vehicle:string,note:string,leasing:bool,leasing_company:string,stored_wheels:bool,consent_gdpr:bool} $input
 	 * @param list<Pneukarnik_Service> $services
 	 * @return array{ok:true,id:int,cancel_token:string,confirmation_token:string}|array{ok:false,code:string,status:int}
 	 */
@@ -243,6 +304,9 @@ class Pneukarnik_Booking {
 				'customer_phone'          => $input['phone'],
 				'customer_note'           => '' !== $input['note'] ? $input['note'] : null,
 				'vehicle'                 => '' !== $input['vehicle'] ? $input['vehicle'] : null,
+				'leasing'                 => $input['leasing'] ? 1 : 0,
+				'leasing_company'         => $input['leasing'] ? $input['leasing_company'] : null,
+				'stored_wheels'           => $input['stored_wheels'] && self::asks_stored_wheels( $services ) ? 1 : 0,
 				'booking_date'            => $input['date'],
 				'time_start'              => $input['time'],
 				'time_end'                => $time_end,
@@ -295,7 +359,7 @@ class Pneukarnik_Booking {
 	 * required, invalid, too_long.
 	 *
 	 * @param array<mixed> $data
-	 * @return array{0:array{service_ids:list<int>,date:string,time:string,name:string,company:string,phone:string,email:string,plate:string,vehicle:string,note:string,consent_gdpr:bool},1:array<string,string>}
+	 * @return array{0:array{service_ids:list<int>,date:string,time:string,name:string,company:string,phone:string,email:string,plate:string,vehicle:string,note:string,leasing:bool,leasing_company:string,stored_wheels:bool,consent_gdpr:bool},1:array<string,string>}
 	 */
 	private static function validate_fields( array $data, bool $consent_required ): array {
 		$errors = [];
@@ -367,27 +431,53 @@ class Pneukarnik_Booking {
 		$note = sanitize_textarea_field( $text( 'note' ) );
 		$check( 'note', $note, false );
 
-		$consent = in_array( $data['consent_gdpr'] ?? null, [ true, 1, '1', 'on', 'true' ], true );
+		$leasing         = self::checked( $data['leasing'] ?? null );
+		$leasing_company = sanitize_text_field( $text( 'leasing_company' ) );
+		$check( 'leasing_company', $leasing ? $leasing_company : '', $leasing );
+
+		$consent = self::checked( $data['consent_gdpr'] ?? null );
 		if ( $consent_required && ! $consent ) {
 			$errors['consent_gdpr'] = 'required';
 		}
 
 		return [
 			[
-				'service_ids'  => $service_ids,
-				'date'         => $date,
-				'time'         => $time,
-				'name'         => $name,
-				'company'      => $company,
-				'phone'        => $phone,
-				'email'        => $email,
-				'plate'        => $plate,
-				'vehicle'      => $vehicle,
-				'note'         => $note,
-				'consent_gdpr' => $consent,
+				'service_ids'     => $service_ids,
+				'date'            => $date,
+				'time'            => $time,
+				'name'            => $name,
+				'company'         => $company,
+				'phone'           => $phone,
+				'email'           => $email,
+				'plate'           => $plate,
+				'vehicle'         => $vehicle,
+				'note'            => $note,
+				'leasing'         => $leasing,
+				'leasing_company' => $leasing_company,
+				'stored_wheels'   => self::checked( $data['stored_wheels'] ?? null ),
+				'consent_gdpr'    => $consent,
 			],
 			$errors,
 		];
+	}
+
+	/**
+	 * Zaškrtnuté políčko z JSON nebo formuláře.
+	 */
+	private static function checked( mixed $value ): bool {
+		return in_array( $value, [ true, 1, '1', 'on', 'true' ], true );
+	}
+
+	/**
+	 * @param list<Pneukarnik_Service> $services
+	 */
+	private static function asks_stored_wheels( array $services ): bool {
+		foreach ( $services as $service ) {
+			if ( $service->ask_stored_wheels ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -443,6 +533,9 @@ class Pneukarnik_Booking {
 			'customer_phone'   => $row['customer_phone'],
 			'customer_note'    => $row['customer_note'],
 			'vehicle'          => $row['vehicle'] ?? null,
+			'leasing'          => (bool) $row['leasing'],
+			'leasing_company'  => $row['leasing_company'],
+			'stored_wheels'    => (bool) $row['stored_wheels'],
 			'booking_date'     => $row['booking_date'],
 			'time_start'       => substr( $row['time_start'], 0, 5 ),
 			'time_end'         => substr( $row['time_end'], 0, 5 ),

@@ -75,6 +75,9 @@ class Pneukarnik_Rest_Bookings {
 			if ( isset( $result['errors'] ) ) {
 				$body['data']['errors'] = $result['errors'];
 			}
+			if ( isset( $result['season'] ) ) {
+				$body['data']['season'] = $result['season'];
+			}
 			return new WP_REST_Response( $body, $result['status'] );
 		}
 

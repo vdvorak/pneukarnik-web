@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Pneukarnik_DB {
 
 	private const DB_VERSION_OPTION = 'pneukarnik_db_version';
-	private const DB_VERSION        = '1.6';
+	private const DB_VERSION        = '1.7';
 
 	/** Testy běží uvnitř transakce WP test suite, transakce pluginu pak používají savepoint. */
 	private static bool $savepoints = false;
@@ -58,6 +58,14 @@ class Pneukarnik_DB {
 		// 1.5 → 1.6: Výjimky s rozsahem a opakováním místo jednotlivých uzavřených dnů.
 		if ( $installed && version_compare( (string) $installed, '1.6', '<' ) ) {
 			self::move_closed_dates_to_day_exceptions();
+		}
+
+		// 1.6 → 1.7: jedna Sezóna podle dnešního data nahrazena jarní a podzimní podle data Termínu.
+		// Starý rozsah znamenal něco jiného, Provozovatel Sezóny nastaví znovu.
+		if ( $installed && version_compare( (string) $installed, '1.7', '<' ) ) {
+			delete_option( 'pneukarnik_season_from' );
+			delete_option( 'pneukarnik_season_to' );
+			delete_option( 'pneukarnik_season_forced' );
 		}
 
 		update_option( self::DB_VERSION_OPTION, self::DB_VERSION );
@@ -168,6 +176,9 @@ class Pneukarnik_DB {
 			customer_phone          VARCHAR(50)  NOT NULL,
 			customer_note           TEXT         DEFAULT NULL,
 			vehicle                 VARCHAR(100) DEFAULT NULL,
+			leasing                 TINYINT(1)   NOT NULL DEFAULT 0,
+			leasing_company         VARCHAR(255) DEFAULT NULL,
+			stored_wheels           TINYINT(1)   NOT NULL DEFAULT 0,
 			booking_date            DATE         NOT NULL,
 			time_start              TIME         NOT NULL,
 			time_end                TIME         NOT NULL,

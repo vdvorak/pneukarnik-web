@@ -2,13 +2,16 @@
 /**
  * Rezervační formulář: kalendář dnů s volným Termínem, volné Termíny pro vybrané Služby a den
  * a odeslání Rezervace na REST API pluginu.
- * Pravidla (mřížka, obsazenost, validace) jsou na serveru, tady se jen zobrazují jejich výsledky.
+ * Pravidla (mřížka, obsazenost, Sezóny, leasing, validace) jsou na serveru, tady se jen zobrazují
+ * jejich výsledky.
  */
 
 /**
- * @typedef {{ enabled: boolean, disabled_message: string, services: {id: number, slug: string, name: string}[], max_services: number, selected: number, min_date: string, max_date: string, api: string, nonce: string, phone: string, privacy_url: string }} Config
+ * @typedef {{ enabled: boolean, disabled_message: string, services: {id: number, slug: string, name: string, ask_stored_wheels: boolean}[], max_services: number, selected: number, min_date: string, max_date: string, api: string, nonce: string, phone: string, privacy_url: string }} Config
  * @typedef {{ time_start: string, time_end: string }} Termin
- * @typedef {{ code: string, data?: { status: number, errors?: Record<string, string> } }} ApiError
+ * @typedef {{ name: 'spring' | 'autumn', from: string, to: string, leasing_from: string | null }} Season
+ * @typedef {{ code: string, data?: { status: number, errors?: Record<string, string>, season?: Season } }} ApiError
+ * @typedef {{ code: string, season: Season }} Restriction
  */
 
 /** @type {Record<string, Record<string, string>>} */
@@ -26,6 +29,7 @@ const FIELD_MESSAGES = {
 	email: { required: 'Vyplňte e‑mail.', invalid: 'Zkontrolujte e‑mail.', too_long: 'E‑mail je příliš dlouhý.' },
 	plate: { required: 'Vyplňte SPZ.', invalid: 'SPZ může obsahovat jen písmena a číslice.' },
 	vehicle: { too_long: 'Text je příliš dlouhý.' },
+	leasing_company: { required: 'Vyplňte leasingovou společnost.', too_long: 'Název je příliš dlouhý.' },
 	note: { too_long: 'Poznámka je příliš dlouhá.' },
 	consent_gdpr: { required: 'Bez souhlasu nemůžeme rezervaci přijmout.' },
 };
@@ -41,6 +45,7 @@ function errorMessages(phone) {
 		'booking.slot_unavailable': 'Vybraný termín už není v nabídce. Vyberte prosím jiný.',
 		'booking.service_not_bookable': `Tuto službu teď online objednat nejde.${call}`,
 		'booking.seasonal_only': `V sezóně přezouvání jde online objednat jen přezutí a související služby.${call}`,
+		'booking.leasing_date': 'Vozidla na leasing v sezóně přezouvání objednáváme až od data, které určují leasingové společnosti.',
 		'booking.service_not_found': 'Vybraná služba už není v nabídce.',
 		'booking.rate_limited': `Odeslali jste příliš mnoho rezervací.${call}`,
 		'booking.disabled': `Online rezervace jsou teď vypnuté.${call}`,
@@ -51,6 +56,29 @@ function errorMessages(phone) {
 
 /** @param {string} hhmm */
 const humanTime = (hhmm) => hhmm.replace(/^0/, '');
+
+const dayMonth = new Intl.DateTimeFormat('cs', { day: 'numeric', month: 'numeric', timeZone: 'UTC' });
+const SEASON_NAMES = { spring: 'jarní', autumn: 'podzimní' };
+
+/**
+ * Proč Sezóna nedovolí online Rezervaci, s daty Sezóny.
+ * @param {string} code
+ * @param {Season} season
+ * @param {string} phone
+ * @returns {string | undefined}
+ */
+function seasonText(code, season, phone) {
+	/** @param {string} ymd */
+	const day = (ymd) => dayMonth.format(utcDate(ymd));
+	if (code === 'booking.seasonal_only') {
+		const call = phone ? ` na ${phone}` : '';
+		return `Od ${day(season.from)} do ${day(season.to)} je sezóna přezouvání a online jde objednat jen přezutí a související služby. Ostatní služby v tu dobu objednáváme telefonicky${call}.`;
+	}
+	if (code === 'booking.leasing_date' && season.leasing_from) {
+		return `Vozidla na leasing objednáváme v ${SEASON_NAMES[season.name]} sezóně až od ${day(season.leasing_from)}, tak to určují leasingové společnosti.`;
+	}
+	return undefined;
+}
 
 const monthTitle = new Intl.DateTimeFormat('cs', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 const dayLabel = new Intl.DateTimeFormat('cs', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
@@ -95,6 +123,10 @@ function init() {
 	const terminy = /** @type {HTMLElement} */ (document.getElementById('terminy'));
 	const zprava = /** @type {HTMLElement} */ (document.getElementById('rezervace-zprava'));
 	const submit = /** @type {HTMLButtonElement} */ (form.querySelector('button[type="submit"]'));
+	const uskladnena = /** @type {HTMLElement} */ (document.getElementById('rez-uskladnena'));
+	const leasing = /** @type {HTMLInputElement} */ (document.getElementById('rez-leasing'));
+	const leasingSpolecnost = /** @type {HTMLElement} */ (document.getElementById('rez-leasing-spolecnost'));
+	const askStoredWheels = new Set(config.services.filter((service) => service.ask_stored_wheels).map((service) => String(service.id)));
 	const maxServices = Math.min(config.max_services, config.services.length);
 	let request = 0;
 	let daysRequest = 0;
@@ -105,6 +137,21 @@ function init() {
 
 	const serviceSelects = () => /** @type {HTMLSelectElement[]} */ ([...sluzby.querySelectorAll('select')]);
 	const serviceIds = () => serviceSelects().map((select) => select.value).filter(Boolean);
+
+	/** @param {ApiError} error */
+	const explain = (error) => (error.data?.season && seasonText(error.code, error.data.season, config.phone)) ?? messages[error.code];
+
+	/** Dotaz na dostupnost: vybrané Služby a typ Zákazníka. */
+	function availabilityQuery() {
+		const query = new URLSearchParams(serviceIds().map((id) => ['service_ids[]', id]));
+		if (leasing.checked) query.set('leasing', '1');
+		return query;
+	}
+
+	/** „Kola mám uskladněná u vás“ jen u Služeb, kde se na to Provozovatel ptá. */
+	function syncStoredWheels() {
+		uskladnena.hidden = !serviceIds().some((id) => askStoredWheels.has(id));
+	}
 
 	/** Službu vybranou v jednom řádku nejde vybrat v jiném. Přidat jde, dokud zbývá Služba. */
 	function syncServices() {
@@ -126,6 +173,7 @@ function init() {
 		row.querySelector('.sluzby__odebrat')?.addEventListener('click', () => {
 			row.remove();
 			syncServices();
+			syncStoredWheels();
 			pridat.focus();
 			loadDays();
 			loadTerminy();
@@ -179,17 +227,20 @@ function init() {
 		setText(stav, 'Načítám volné dny…');
 		renderCalendar();
 		try {
-			const query = new URLSearchParams(ids.map((id) => ['service_ids[]', id]));
+			const query = availabilityQuery();
 			query.set('month', month);
 			const response = await fetch(`${config.api}/available-days?${query}`, { headers: { Accept: 'application/json' } });
 			if (current !== daysRequest) return;
 			const data = await response.json();
 			if (!response.ok) {
-				setText(stav, messages[/** @type {ApiError} */ (data).code] ?? 'Volné dny se nepodařilo načíst.');
+				setText(stav, explain(data) ?? 'Volné dny se nepodařilo načíst.');
 				return;
 			}
-			availableDays = new Set(/** @type {{ days: string[] }} */ (data).days);
-			setText(stav, availableDays.size ? 'Zašedlé dny nemají volný termín.' : 'V tomto měsíci nejsou volné termíny. Zkuste další měsíc.');
+			/** @type {{ days: string[], restrictions: Restriction[] }} */
+			const { days, restrictions } = data;
+			availableDays = new Set(days);
+			const reasons = restrictions.map((restriction) => seasonText(restriction.code, restriction.season, config.phone)).filter(Boolean);
+			setText(stav, [availableDays.size ? 'Zašedlé dny nemají volný termín.' : 'V tomto měsíci nejsou volné termíny. Zkuste další měsíc.', ...reasons].join(' '));
 			renderCalendar();
 		} catch {
 			if (current === daysRequest) setText(stav, messages.network);
@@ -218,14 +269,14 @@ function init() {
 		}
 		showTerminyText('Načítám volné termíny…');
 		try {
-			const query = new URLSearchParams(ids.map((id) => ['service_ids[]', id]));
+			const query = availabilityQuery();
 			query.set('date', date.value);
 			const response = await fetch(`${config.api}/slots?${query}`, { headers: { Accept: 'application/json' } });
 			if (current !== request) return;
 			if (!response.ok) {
 				/** @type {ApiError} */
 				const error = await response.json();
-				showTerminyText(messages[error.code] ?? 'Termíny se nepodařilo načíst.');
+				showTerminyText(explain(error) ?? 'Termíny se nepodařilo načíst.');
 				return;
 			}
 			/** @type {{ slots: Termin[] }} */
@@ -282,6 +333,9 @@ function init() {
 			plate: values.get('plate'),
 			vehicle: values.get('vehicle'),
 			note: values.get('note'),
+			leasing: leasing.checked,
+			leasing_company: leasing.checked ? values.get('leasing_company') : '',
+			stored_wheels: !uskladnena.hidden && values.get('stored_wheels') === '1',
 			consent_gdpr: values.get('consent_gdpr') === '1',
 		};
 		submit.disabled = true;
@@ -303,7 +357,7 @@ function init() {
 			if (error.code === 'booking.invalid_fields' && error.data?.errors) {
 				showFieldErrors(error.data.errors);
 			} else {
-				setText(zprava, messages[error.code] ?? messages.network);
+				setText(zprava, explain(error) ?? messages.network);
 				if (error.code === 'booking.slot_taken' || error.code === 'booking.slot_unavailable') {
 					await Promise.all([loadTerminy(), loadDays()]);
 				}
@@ -317,6 +371,15 @@ function init() {
 
 	sluzby.addEventListener('change', () => {
 		syncServices();
+		syncStoredWheels();
+		loadDays();
+		loadTerminy();
+	});
+	const syncLeasing = () => {
+		leasingSpolecnost.hidden = !leasing.checked;
+	};
+	leasing.addEventListener('change', () => {
+		syncLeasing();
 		loadDays();
 		loadTerminy();
 	});
@@ -332,6 +395,8 @@ function init() {
 	predchozi.addEventListener('click', () => moveMonth(-1));
 	dalsi.addEventListener('click', () => moveMonth(1));
 	syncServices();
+	syncStoredWheels();
+	syncLeasing();
 	loadDays();
 	form.addEventListener('submit', send);
 	loadTerminy();

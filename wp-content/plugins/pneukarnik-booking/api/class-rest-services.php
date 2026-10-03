@@ -46,7 +46,6 @@ class Pneukarnik_Rest_Services {
 	public function list_services( WP_REST_Request $request ): WP_REST_Response {
 		$bookable_filter = $request->get_param( 'bookable' );
 		$seasonal_filter = $request->get_param( 'seasonal_only' );
-		$season_active   = Pneukarnik_Season::is_active();
 
 		// Cache only the unfiltered base list; filters are applied after
 		$all = get_transient( 'pneukarnik_services_v2' );
@@ -57,9 +56,6 @@ class Pneukarnik_Rest_Services {
 
 		$services = [];
 		foreach ( $all as $service ) {
-			if ( $season_active && ! $service['is_seasonal'] ) {
-				continue;
-			}
 			if ( $bookable_filter && ! $service['bookable'] ) {
 				continue;
 			}

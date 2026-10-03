@@ -160,6 +160,7 @@ class Pneukarnik_Admin_Service_Meta {
 				<td>
 					<label style="display:block"><input type="checkbox" name="_service_bookable" value="1" <?php checked( $service->bookable ); ?>> <?php esc_html_e( 'Rezervovatelná online (jinak jen „Zavolat“)', 'pneukarnik-booking' ); ?></label>
 					<label style="display:block"><input type="checkbox" name="_service_is_seasonal" value="1" <?php checked( $service->seasonal ); ?>> <?php esc_html_e( 'Sezónní (v Sezóně jde online rezervovat jen sezónní Služby)', 'pneukarnik-booking' ); ?></label>
+					<label style="display:block"><input type="checkbox" name="_service_ask_stored_wheels" value="1" <?php checked( $service->ask_stored_wheels ); ?>> <?php esc_html_e( 'Ptát se na uskladněná kola („Kola mám uskladněná u vás“)', 'pneukarnik-booking' ); ?></label>
 					<label style="display:block"><input type="checkbox" name="_service_featured" value="1" <?php checked( $service->featured ); ?>> <?php esc_html_e( 'Nejžádanější (zobrazit na Úvodu)', 'pneukarnik-booking' ); ?></label>
 				</td>
 			</tr>
@@ -195,7 +196,7 @@ class Pneukarnik_Admin_Service_Meta {
 		$duration = (int) ( $_POST['_service_duration'] ?? 0 );
 		update_post_meta( $post_id, '_service_price', $price > 0 ? $price : '' );
 		update_post_meta( $post_id, '_service_duration', $duration > 0 && $duration <= self::MAX_DURATION ? $duration : '' );
-		foreach ( [ '_service_price_from', '_service_price_by_vehicle', '_service_bookable', '_service_is_seasonal', '_service_featured' ] as $field ) {
+		foreach ( [ '_service_price_from', '_service_price_by_vehicle', '_service_bookable', '_service_is_seasonal', '_service_ask_stored_wheels', '_service_featured' ] as $field ) {
 			update_post_meta( $post_id, $field, empty( $_POST[ $field ] ) ? '' : '1' );
 		}
 

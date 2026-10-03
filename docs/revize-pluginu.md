@@ -68,7 +68,7 @@ Seřazené podle ticketu, který je vyřeší. Nic z toho dnes neběží v provo
 ### Výjimky a Sezóny (#6, #7)
 
 13. **Výjimky jsou jen jednorázová data.** Chybí „opakovat každý rok“ a státní svátky ČR (včetně Velikonoc). **Vyřešeno v #6:** Výjimka má rozsah od–do a volbu „opakovat každý rok“ (tabulka `pneukarnik_day_exceptions`, DB 1.6, `pneukarnik_closed_dates` převedena a odstraněna). Svátky ČR se počítají v kódu a jde je jednotlivě vypnout.
-14. **Sezóna se počítá podle dnešního data, ne podle data Termínu.** Je jen jedna (rozsah MM‑DD + „vynutit“). Chybí jarní a podzimní a leasingové datum.
+14. **Sezóna se počítá podle dnešního data, ne podle data Termínu.** Je jen jedna (rozsah MM‑DD + „vynutit“). Chybí jarní a podzimní a leasingové datum. **Vyřešeno v #7:** jarní a podzimní Sezóna (od–do a leasingové datum, opakují se každý rok) se určuje podle data Termínu. Pravidla dne (jen sezónní Služby, leasingové datum) platí pro `/slots`, `/available-days` i vytvoření online Rezervace. Stará nastavení Sezóny se při DB 1.7 smažou.
 
 ### Zrušení a e‑maily (#8, #10)
 
