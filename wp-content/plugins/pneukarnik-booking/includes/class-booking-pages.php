@@ -27,7 +27,6 @@ final class Pneukarnik_Booking_Pages {
 		add_action( 'wp', [ self::class, 'reject_unknown_confirmation' ] );
 		add_action( 'template_redirect', [ self::class, 'handle_cancellation' ] );
 		add_filter( 'template_include', [ self::class, 'template' ] );
-		add_filter( 'document_title_parts', [ self::class, 'title' ] );
 		add_filter( 'wp_robots', [ self::class, 'robots' ] );
 	}
 
@@ -83,20 +82,15 @@ final class Pneukarnik_Booking_Pages {
 	}
 
 	/**
-	 * @param array<string,string> $parts
-	 * @return array<string,string>
+	 * Název aktuální stránky rezervace pro <title> (Pneukarnik_Seo), prázdný mimo stránky rezervace.
 	 */
-	public static function title( array $parts ): array {
+	public static function page_title(): string {
 		$titles = [
 			'rezervace' => __( 'Rezervace termínu', 'pneukarnik-booking' ),
 			'potvrzeni' => __( 'Rezervace přijata', 'pneukarnik-booking' ),
 			'zruseni'   => __( 'Zrušení rezervace', 'pneukarnik-booking' ),
 		];
-		$page   = self::current();
-		if ( '' !== $page && ! is_404() ) {
-			$parts['title'] = $titles[ $page ];
-		}
-		return $parts;
+		return $titles[ self::current() ] ?? '';
 	}
 
 	/**

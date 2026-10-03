@@ -45,6 +45,10 @@ final class Pneukarnik_Service {
 		public readonly bool $ask_stored_wheels,
 		public readonly bool $featured,
 		public readonly int $order,
+		/** Titulek pro vyhledávače od Provozovatele, prázdný = vygeneruje se z názvu. */
+		public readonly string $seo_title,
+		/** Popis pro vyhledávače od Provozovatele, prázdný = vygeneruje se z perexu a ceny. */
+		public readonly string $seo_description,
 	) {}
 
 	/**
@@ -91,6 +95,8 @@ final class Pneukarnik_Service {
 			ask_stored_wheels: '' !== $meta( '_service_ask_stored_wheels' ),
 			featured: '' !== $meta( '_service_featured' ),
 			order: $post->menu_order,
+			seo_title: $meta( '_service_seo_title' ),
+			seo_description: $meta( '_service_seo_description' ),
 		);
 	}
 

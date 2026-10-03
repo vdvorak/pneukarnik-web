@@ -23,6 +23,10 @@ final class Pneukarnik_Guide {
 		public readonly string $text,
 		/** Služba, na jejíž rezervaci Průvodce odkazuje, 0 = nevybraná. */
 		public readonly int $service_id,
+		/** Titulek pro vyhledávače od Provozovatele, prázdný = vygeneruje se z názvu. */
+		public readonly string $seo_title,
+		/** Popis pro vyhledávače od Provozovatele, prázdný = perex. */
+		public readonly string $seo_description,
 	) {}
 
 	public static function find( int $id ): ?self {
@@ -38,6 +42,8 @@ final class Pneukarnik_Guide {
 			perex: trim( (string) get_post_meta( $post->ID, '_guide_perex', true ) ),
 			text: $post->post_content,
 			service_id: (int) get_post_meta( $post->ID, '_guide_service_id', true ),
+			seo_title: trim( (string) get_post_meta( $post->ID, '_guide_seo_title', true ) ),
+			seo_description: trim( (string) get_post_meta( $post->ID, '_guide_seo_description', true ) ),
 		);
 	}
 

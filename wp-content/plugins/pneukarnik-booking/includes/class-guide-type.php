@@ -46,8 +46,10 @@ final class Pneukarnik_Guide_Type {
 		);
 
 		$meta = [
-			'_guide_perex'      => 'string',
-			'_guide_service_id' => 'integer',
+			'_guide_perex'           => 'string',
+			'_guide_service_id'      => 'integer',
+			'_guide_seo_title'       => 'string',
+			'_guide_seo_description' => 'string',
 		];
 		foreach ( $meta as $key => $type ) {
 			register_post_meta(

@@ -78,6 +78,8 @@ test('Zákazník si z detailu Služby zarezervuje Termín a uvidí potvrzení', 
 	for (const secret of ['E2E', 'example.test', '603']) {
 		expect(page.url()).not.toContain(secret);
 	}
+	// Celá rezervace proběhne bez cookies, web proto nepotřebuje cookie lištu.
+	expect(await page.context().cookies()).toEqual([]);
 });
 
 test('Zákazník přidá další Službu a Termín trvá součet Délek', async ({ page }) => {

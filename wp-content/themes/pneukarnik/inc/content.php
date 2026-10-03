@@ -105,7 +105,7 @@ function pneukarnik_default_pages(): array {
 				. $heading( 'Jak dlouho údaje uchováváme' )
 				. $paragraph( 'Osobní údaje z Rezervace se automaticky anonymizují 1 rok po Termínu. Zůstane jen to, jakou Službu a kdy jsme dělali.' )
 				. $heading( 'Cookies a měření návštěvnosti' )
-				. $paragraph( 'Web nepoužívá cookies, které by vyžadovaly souhlas. Mapa se načte z Google Maps až po vašem kliknutí. [Měření návštěvnosti upřesní vývojář.]' )
+				. $paragraph( 'Web nepoužívá cookies, které by vyžadovaly souhlas. Mapa se načte z Google Maps až po vašem kliknutí. Návštěvnost měříme nástrojem Matomo v režimu bez cookies, adresy stránek odesíláme bez osobních údajů a odkazů z e‑mailů. [Kde Matomo běží a jak dlouho data uchovává, upřesní vývojář.]' )
 				. $heading( 'Vaše práva' )
 				. $paragraph( 'Máte právo na přístup k údajům, jejich opravu, výmaz, omezení zpracování a odvolání souhlasu. Stížnost můžete podat Úřadu pro ochranu osobních údajů. [Kontakt pro uplatnění práv doplní Provozovatel.]' ),
 		],

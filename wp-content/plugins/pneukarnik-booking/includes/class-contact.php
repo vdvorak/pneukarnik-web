@@ -46,6 +46,28 @@ final class Pneukarnik_Contact {
 		return self::option( self::OPTION_ADDRESS );
 	}
 
+	/**
+	 * Adresa rozložená pro strukturovaná data: „Dobšická 10, 669 02 Znojmo“ → ulice, PSČ a obec.
+	 * Adresa v jiném tvaru zůstane celá jako ulice, PSČ a obec jsou pak prázdné.
+	 *
+	 * @return array{street:string,postal_code:string,city:string}
+	 */
+	public static function postal_address(): array {
+		$address = self::address();
+		if ( preg_match( '/^(.+),\s*(\d{3}\s?\d{2})\s+(.+)$/u', $address, $m ) ) {
+			return [
+				'street'      => trim( $m[1] ),
+				'postal_code' => $m[2],
+				'city'        => trim( $m[3] ),
+			];
+		}
+		return [
+			'street'      => $address,
+			'postal_code' => '',
+			'city'        => '',
+		];
+	}
+
 	public static function ico(): string {
 		return self::option( self::OPTION_ICO );
 	}

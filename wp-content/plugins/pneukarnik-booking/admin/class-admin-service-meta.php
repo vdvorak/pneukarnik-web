@@ -163,6 +163,20 @@ class Pneukarnik_Admin_Service_Meta {
 					<label style="display:block"><input type="checkbox" name="_service_featured" value="1" <?php checked( $service->featured ); ?>> <?php esc_html_e( 'Nejžádanější (zobrazit na Úvodu)', 'pneukarnik-booking' ); ?></label>
 				</td>
 			</tr>
+			<tr>
+				<th><label for="pnk-seo-title"><?php esc_html_e( 'Titulek pro vyhledávače', 'pneukarnik-booking' ); ?></label></th>
+				<td>
+					<input id="pnk-seo-title" type="text" name="_service_seo_title" value="<?php echo esc_attr( $service->seo_title ); ?>" class="large-text">
+					<p class="description"><?php esc_html_e( 'Celý titulek ve výsledcích Googlu. Prázdné = „název Služby – název firmy“.', 'pneukarnik-booking' ); ?></p>
+				</td>
+			</tr>
+			<tr>
+				<th><label for="pnk-seo-description"><?php esc_html_e( 'Popis pro vyhledávače', 'pneukarnik-booking' ); ?></label></th>
+				<td>
+					<textarea id="pnk-seo-description" name="_service_seo_description" rows="2" class="large-text"><?php echo esc_textarea( $service->seo_description ); ?></textarea>
+					<p class="description"><?php esc_html_e( 'Text pod titulkem ve výsledcích Googlu, nejlépe do 160 znaků. Prázdné = perex.', 'pneukarnik-booking' ); ?></p>
+				</td>
+			</tr>
 		</table>
 		<?php
 	}
@@ -187,7 +201,7 @@ class Pneukarnik_Admin_Service_Meta {
 		foreach ( [ '_service_perex', '_service_includes', '_service_process', '_service_bring' ] as $field ) {
 			update_post_meta( $post_id, $field, sanitize_textarea_field( wp_unslash( $_POST[ $field ] ?? '' ) ) );
 		}
-		foreach ( [ '_service_duration_text', '_service_price_note' ] as $field ) {
+		foreach ( [ '_service_duration_text', '_service_price_note', '_service_seo_title', '_service_seo_description' ] as $field ) {
 			update_post_meta( $post_id, $field, sanitize_text_field( wp_unslash( $_POST[ $field ] ?? '' ) ) );
 		}
 		// Neplatná hodnota (≤ 0, Délka přes 8 h) se neuloží a Služba pak nejde zveřejnit.

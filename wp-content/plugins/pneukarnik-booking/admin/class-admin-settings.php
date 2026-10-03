@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // phpcs:disable WordPress.Security.NonceVerification.Recommended
 
 /**
- * WP Admin settings page — Pracovní doba, pravidla Termínů, Lhůta zrušení, Sezóny, e‑maily, kontakty a sociální sítě, Pohotovost, Úvod, Google recenze, iCal.
+ * WP Admin settings page — Pracovní doba, pravidla Termínů, Lhůta zrušení, Sezóny, e‑maily, kontakty a sociální sítě, Pohotovost, Úvod, Google recenze, vyhledávače a Matomo, iCal.
  */
 class Pneukarnik_Admin_Settings {
 
@@ -320,6 +320,33 @@ class Pneukarnik_Admin_Settings {
 					</tr>
 				</table>
 
+				<h2><?php esc_html_e( 'Vyhledávače a návštěvnost', 'pneukarnik-booking' ); ?></h2>
+				<table class="form-table">
+					<tr>
+						<th><label for="pnk-matomo-url"><?php esc_html_e( 'Adresa Matomo', 'pneukarnik-booking' ); ?></label></th>
+						<td>
+							<input id="pnk-matomo-url" type="url" name="matomo_url" value="<?php echo esc_attr( (string) get_option( Pneukarnik_Seo::OPTION_MATOMO_URL, '' ) ); ?>" class="regular-text" placeholder="https://matomo.example.cz/">
+							<p class="description"><?php esc_html_e( 'Měření návštěvnosti v Matomu bez cookies, web proto nepotřebuje cookie lištu. Bez adresy a ID webu se nic neměří.', 'pneukarnik-booking' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="pnk-matomo-site"><?php esc_html_e( 'ID webu v Matomu', 'pneukarnik-booking' ); ?></label></th>
+						<td><input id="pnk-matomo-site" type="number" name="matomo_site_id" value="<?php echo esc_attr( (string) get_option( Pneukarnik_Seo::OPTION_MATOMO_SITE_ID, '' ) ); ?>" min="1" step="1" class="small-text"></td>
+					</tr>
+					<tr>
+						<th><label for="pnk-google-verification"><?php esc_html_e( 'Ověření Google Search Console', 'pneukarnik-booking' ); ?></label></th>
+						<td>
+							<input id="pnk-google-verification" type="text" name="google_verification" value="<?php echo esc_attr( Pneukarnik_Seo::google_verification() ); ?>" class="regular-text">
+							<p class="description">
+								<?php
+								/* translators: %s: adresa sitemapy */
+								echo esc_html( sprintf( __( 'Kód z ověření značkou HTML (stačí vložit celou značku). Prázdné, když je web ověřený jinak (DNS). Sitemapa pro Search Console: %s', 'pneukarnik-booking' ), home_url( '/wp-sitemap.xml' ) ) );
+								?>
+							</p>
+						</td>
+					</tr>
+				</table>
+
 				<h2><?php esc_html_e( 'Rezervace v kalendáři telefonu (iCal)', 'pneukarnik-booking' ); ?></h2>
 				<table class="form-table">
 					<tr>
@@ -432,6 +459,12 @@ class Pneukarnik_Admin_Settings {
 			! empty( $_POST['reviews_enabled'] ),
 			(string) wp_unslash( $_POST['reviews_api_key'] ?? '' ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitizuje save_settings().
 			(string) wp_unslash( $_POST['reviews_place_id'] ?? '' ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitizuje save_settings().
+		);
+
+		Pneukarnik_Seo::save_settings(
+			(string) wp_unslash( $_POST['matomo_url'] ?? '' ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitizuje save_settings().
+			(string) wp_unslash( $_POST['matomo_site_id'] ?? '' ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitizuje save_settings().
+			(string) wp_unslash( $_POST['google_verification'] ?? '' ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitizuje save_settings().
 		);
 
 		// iCal token regeneration

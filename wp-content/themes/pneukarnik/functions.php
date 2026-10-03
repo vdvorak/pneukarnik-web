@@ -13,6 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require __DIR__ . '/inc/template-tags.php';
 require __DIR__ . '/inc/content.php';
+require __DIR__ . '/inc/seo.php';
 
 add_action(
 	'after_setup_theme',

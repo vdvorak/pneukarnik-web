@@ -35,6 +35,8 @@ spl_autoload_register(
 			'Pneukarnik_Validity'             => 'includes/class-validity.php',
 			'Pneukarnik_Contact'              => 'includes/class-contact.php',
 			'Pneukarnik_Reviews'              => 'includes/class-reviews.php',
+			'Pneukarnik_Seo'                  => 'includes/class-seo.php',
+			'Pneukarnik_Sitemap_Provider'     => 'includes/class-sitemap-provider.php',
 			'Pneukarnik_Notice'               => 'includes/class-notice.php',
 			'Pneukarnik_Notice_Type'          => 'includes/class-notice-type.php',
 			'Pneukarnik_Guide'                => 'includes/class-guide.php',
@@ -118,6 +120,7 @@ Pneukarnik_Promotion_Type::init();
 Pneukarnik_Notice_Type::init();
 Pneukarnik_Guide_Type::init();
 Pneukarnik_Booking_Pages::init();
+Pneukarnik_Seo::init();
 add_action( 'init', [ 'Pneukarnik_Admin_Service_Meta', 'init' ] );
 add_action( 'init', [ 'Pneukarnik_Admin_Promotion_Meta', 'init' ] );
 add_action( 'init', [ 'Pneukarnik_Admin_Notice_Meta', 'init' ] );
