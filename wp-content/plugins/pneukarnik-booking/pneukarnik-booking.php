@@ -76,6 +76,9 @@ spl_autoload_register(
 			'Pneukarnik_Admin_Notice_Meta'    => 'admin/class-admin-notice-meta.php',
 			'Pneukarnik_Admin_Guide_Meta'     => 'admin/class-admin-guide-meta.php',
 			'Pneukarnik_Admin_Day_Exceptions' => 'admin/class-admin-day-exceptions.php',
+			'Pneukarnik_Legacy_Import'        => 'includes/class-legacy-import.php',
+			'Pneukarnik_Rest_Legacy_Import'   => 'api/class-rest-legacy-import.php',
+			'Pneukarnik_Admin_Legacy_Import'  => 'admin/class-admin-legacy-import.php',
 		];
 		if ( isset( $map[ $class_name ] ) ) {
 			require_once PNEUKARNIK_PLUGIN_DIR . $map[ $class_name ];
@@ -151,6 +154,7 @@ function pneukarnik_register_rest_routes(): void {
 	( new Pneukarnik_Rest_Calendar() )->register_routes();
 	( new Pneukarnik_Rest_Admin() )->register_routes();
 	( new Pneukarnik_Rest_Reminder() )->register_routes();
+	( new Pneukarnik_Rest_Legacy_Import() )->register_routes();
 }
 
 function pneukarnik_register_admin_menus(): void {
@@ -207,6 +211,18 @@ function pneukarnik_register_admin_menus(): void {
 	);
 	if ( $exceptions_hook ) {
 		add_action( "load-{$exceptions_hook}", [ 'Pneukarnik_Admin_Day_Exceptions', 'handle_post' ] );
+	}
+
+	$import_hook = add_submenu_page(
+		Pneukarnik_Admin_Calendar::PAGE,
+		__( 'Převod ze starého webu', 'pneukarnik-booking' ),
+		__( 'Převod ze starého webu', 'pneukarnik-booking' ),
+		'manage_options',
+		Pneukarnik_Admin_Legacy_Import::PAGE,
+		[ 'Pneukarnik_Admin_Legacy_Import', 'render_page' ]
+	);
+	if ( $import_hook ) {
+		add_action( "load-{$import_hook}", [ 'Pneukarnik_Admin_Legacy_Import', 'handle_post' ] );
 	}
 }
 

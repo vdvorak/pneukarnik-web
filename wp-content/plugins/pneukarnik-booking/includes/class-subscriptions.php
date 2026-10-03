@@ -51,6 +51,26 @@ final class Pneukarnik_Subscriptions {
 		);
 	}
 
+	/**
+	 * Souhlas „informace o slevách“ ze starého webu (převod #21) jen s původním účelem.
+	 * Existující záznam e‑mailu (i odhlášení starým odkazem) nepřepíše.
+	 *
+	 * @return bool Jestli se souhlas zapsal.
+	 */
+	public static function import_legacy( string $email, string $consented_at ): bool {
+		global $wpdb;
+		return 1 === $wpdb->query(
+			$wpdb->prepare(
+				'INSERT IGNORE INTO %i (email, purpose, source, consented_at) VALUES (%s, %s, %s, %s)',
+				Pneukarnik_DB::subscriptions_table(),
+				self::normalize( $email ),
+				self::LEGACY,
+				Pneukarnik_Booking::SOURCE_STARY_WEB,
+				$consented_at
+			)
+		);
+	}
+
 	public static function is_active( string $email, string $purpose ): bool {
 		global $wpdb;
 		return (bool) $wpdb->get_var(

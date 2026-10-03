@@ -33,6 +33,7 @@ final class Pneukarnik_Admin_Bookings {
 		$sources = [
 			Pneukarnik_Booking::SOURCE_WEB          => __( 'web', 'pneukarnik-booking' ),
 			Pneukarnik_Booking::SOURCE_PROVOZOVATEL => __( 'Provozovatel', 'pneukarnik-booking' ),
+			Pneukarnik_Booking::SOURCE_STARY_WEB    => __( 'starý web', 'pneukarnik-booking' ),
 		];
 		?>
 		<div class="wrap">

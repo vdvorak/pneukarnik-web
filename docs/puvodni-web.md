@@ -31,6 +31,35 @@ Další plugins: Complianz (cookies), Contact Form 7, WP Mail SMTP, Email Log, W
 - **Potvrzení:** e‑mail zákazníkovi s **klíčem pro zrušení** (20 znaků). Provozovatel o nové rezervaci e‑mail **nedostává**.
 - **Zrušení zákazníkem:** zadáním klíče na webu, nejpozději den před termínem (porovnává se jen den v měsíci, takže přes přelom měsíce to nefunguje). Při zrušení přijde e‑mail zákazníkovi i Provozovateli.
 
+### Data Rezervací
+
+Tabulka `{prefix}reservations` (živý web má prefix `hwjcw_`, k 2026‑07‑20 asi 3 900 řádků):
+
+| Sloupec | Obsah |
+|---|---|
+| `id` | `char(20)`, náhodný klíč, zároveň klíč pro zrušení z e‑mailu |
+| `name`, `spz`, `email`, `phone`, `comment` | údaje z formuláře, uložené přes `htmlspecialchars` (např. `&amp;`) |
+| `serviceId` | ID příspěvku Služby (`service`) |
+| `date`, `time` | Termín (`time` je začátek), konec se počítá z `duration` Služby |
+| `created` | čas vytvoření |
+| `allow_newsletters` | „informace o slevách“. Odhlášení i ruční přihlášení přepíše všechny řádky e‑mailu |
+| `deleted` | 1 = zrušená |
+
+Tabulka `{prefix}emails` je jen seznam e‑mailů z Rezervací, souhlas v ní není.
+Služby (`service`) mají meta `duration`, `price`, `display_price`, `sale`, `sale_price`, `reservable`, `mechanical` (1 = Autoservis), `seasonal`, `index` (pořadí).
+
+Ve stejné databázi zůstaly i data starého pokusu o nový web: 16 zveřejněných Služeb `pneukarnik_service` se stejnými slugy (pole `_service_is_autoservice`, `_service_index`, `_service_icon`, `_service_show_price`), tabulka `hwjcw_pneukarnik_bookings` s 1 řádkem a `pneukarnik_db_version` 1.2.
+
+### Převod dat (#21)
+
+Administrace → Rezervace → **Převod ze starého webu** (jen správce webu), nebo REST `POST /pneukarnik/v1/admin/legacy-import {send_cancel_links}`. Převádí:
+
+- **Služby** jako koncepty s meta `_service_legacy_id` (ID staré Služby). Službu bez té vazby se stejným slugem, jinak názvem (Služby starého pokusu), převezme a doplní jí jen Kategorii, pořadí a „cena od“. Když se Délka liší od starého webu, upozorní na to report.
+- **Rezervace** budoucí a minulé, od jejichž Termínu neuplynul rok, bez zrušených. Zdroj „starý web“, hash starého klíče v `legacy_key_hash`. Rezervace s neznámou Službou se nepřevede. Překryv se převede s upozorněním.
+- **Souhlasy** „informace o slevách“ jen jako starý odběr, ne jako souhlas s Připomínkou. Platí od první Rezervace se souhlasem, záznam e‑mailu, který už existuje (i odhlášení starým odkazem), se nepřepíše.
+
+Volitelně pošle nově převedeným budoucím Rezervacím e‑mail s novým odkazem na Zrušení. Opakované spuštění převede jen nové záznamy a nic nepřepíše. Report ukazuje počty převedených, přeskočených a chybných záznamů a seznam problémů.
+
 ## Administrace
 
 - **Dashboard widget „Rezervace“:** nadcházející rezervace po dnech, úprava údajů, zrušení s e‑mailem zákazníkovi.

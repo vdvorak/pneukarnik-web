@@ -47,6 +47,43 @@ final class Pneukarnik_Notifications {
 	}
 
 	/**
+	 * Zákazníkovi převedené budoucí Rezervace nový odkaz na Zrušení (starý klíč neplatí).
+	 *
+	 * @param array<string,mixed> $booking      Převedená Rezervace (Pneukarnik_Booking::get_by_id).
+	 * @param string              $cancel_token Token pro odkaz na Zrušení.
+	 * @return bool Jestli e‑mail odešel.
+	 */
+	public static function on_booking_imported( array $booking, string $cancel_token ): bool {
+		if ( ! is_email( $booking['customer_email'] ) ) {
+			return false;
+		}
+		$deadline = Pneukarnik_Cancellation::deadline( $booking );
+		$phone    = pneukarnik_phone();
+
+		/* translators: %s: Termín, např. „pondělí 1. 3. 2027 v 9:00“ */
+		return ( new Pneukarnik_Email( self::subject( __( 'Nový odkaz ke zrušení rezervace na %s', 'pneukarnik-booking' ), $booking ) ) )
+			->heading( __( 'Vaše rezervace platí', 'pneukarnik-booking' ) )
+			->paragraph( __( "Dobrý den,\nspustili jsme nový web s novým rezervačním systémem. Vaše rezervace v něm zůstává, jen starý klíč pro zrušení už neplatí.", 'pneukarnik-booking' ) )
+			->details(
+				self::visit( $booking ) + [
+					__( 'Adresa', 'pneukarnik-booking' ) => Pneukarnik_Contact::address(),
+				]
+			)
+			->paragraph(
+				$deadline >= Pneukarnik_Clock::now()
+					/* translators: %s: den a čas, do kdy jde Rezervaci zrušit */
+					? sprintf( __( 'Když nemůžete přijet, zrušte prosím rezervaci tímto odkazem nejpozději %s.', 'pneukarnik-booking' ), $deadline->format( 'j. n. Y \v G:i' ) )
+					: __( 'Rezervaci už nejde zrušit online.', 'pneukarnik-booking' )
+			)
+			->button( __( 'Zrušit rezervaci', 'pneukarnik-booking' ), Pneukarnik_Cancellation::url( $cancel_token ) )
+			/* translators: %s: telefon Provozovatele */
+			->paragraph( '' !== $phone ? sprintf( __( 'Potřebujete něco změnit? Zavolejte nám na %s.', 'pneukarnik-booking' ), $phone ) : '' )
+			->paragraph( self::text( 'signature' ) )
+			->paragraph( self::contact() )
+			->send( $booking['customer_email'], self::provozovatel_email() );
+	}
+
+	/**
 	 * @param array<string,mixed> $booking Zrušená Rezervace.
 	 * @param bool                $by_customer Zrušil ji Zákazník odkazem (jinak Provozovatel).
 	 */

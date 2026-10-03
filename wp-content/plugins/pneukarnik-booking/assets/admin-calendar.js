@@ -297,6 +297,9 @@ function init() {
 		return base + Math.floor((minutes - base) / step) * step;
 	}
 
+	/** @type {Record<string, string>} */
+	const SOURCES = { web: 'web', provozovatel: 'Provozovatel', 'stary-web': 'starý web' };
+
 	/**
 	 * @param {Booking} booking
 	 * @param {(minutes: number) => string} top
@@ -342,7 +345,7 @@ function init() {
 			['Poznámka', booking.note],
 			['Leasing', booking.leasing ? booking.leasing_company || 'ano' : ''],
 			['Uskladněná kola', booking.stored_wheels ? 'ano, připravit' : ''],
-			['Zdroj', booking.source === 'web' ? 'web' : 'Provozovatel'],
+			['Zdroj', SOURCES[booking.source] ?? booking.source],
 			['Zrušeno', booking.status === 'CANCELLED' ? [booking.cancelled_at, booking.cancel_reason].filter(Boolean).join(', ') : ''],
 		];
 		const editable = config.can_manage && booking.status === 'CONFIRMED';

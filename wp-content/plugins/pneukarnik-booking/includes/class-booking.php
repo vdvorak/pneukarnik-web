@@ -21,6 +21,8 @@ class Pneukarnik_Booking {
 
 	public const SOURCE_WEB          = 'web';
 	public const SOURCE_PROVOZOVATEL = 'provozovatel';
+	/** Převedená ze starého webu (Pneukarnik_Legacy_Import). */
+	public const SOURCE_STARY_WEB = 'stary-web';
 
 	public const STATUS_CONFIRMED = 'CONFIRMED';
 	public const STATUS_CANCELLED = 'CANCELLED';
@@ -530,6 +532,56 @@ class Pneukarnik_Booking {
 			'id'                 => $id,
 			'cancel_token'       => $cancel_token,
 			'confirmation_token' => $confirmation_token,
+		];
+	}
+
+	/**
+	 * Zapíše Rezervaci převedenou ze starého webu s jednou Službou, bez pravidel nabídky
+	 * Termínů a bez kontroly překryvu (ten hlásí převod). Nový token pro Zrušení, e‑mail neposílá.
+	 *
+	 * @param array{legacy_key:string,name:string,phone:string,email:string,plate:string,note:string,date:string,time:string,created_at:string} $fields
+	 * @return array{id:int,cancel_token:string}|null Null, když zápis selhal (např. souběžný převod téže Rezervace).
+	 */
+	public static function insert_imported( array $fields, Pneukarnik_Service $service ): ?array {
+		global $wpdb;
+		$cancel_token = bin2hex( random_bytes( 32 ) );
+		Pneukarnik_DB::begin();
+		try {
+			$suppress = $wpdb->suppress_errors();
+			$inserted = $wpdb->insert(
+				Pneukarnik_DB::bookings_table(),
+				[
+					'customer_name'     => $fields['name'],
+					'customer_plate'    => $fields['plate'],
+					'customer_email'    => $fields['email'],
+					'customer_phone'    => $fields['phone'],
+					'customer_note'     => '' !== $fields['note'] ? $fields['note'] : null,
+					'booking_date'      => $fields['date'],
+					'time_start'        => $fields['time'],
+					'time_end'          => Pneukarnik_Slot_Engine::minutes_to_hhmm( Pneukarnik_Slot_Engine::hhmm_to_minutes( $fields['time'] ) + $service->duration ),
+					'status'            => self::STATUS_CONFIRMED,
+					'cancel_token_hash' => hash( 'sha256', $cancel_token ),
+					// Starý formulář souhlas se zpracováním vyžadoval.
+					'consent_gdpr_at'   => $fields['created_at'],
+					'source'            => self::SOURCE_STARY_WEB,
+					'legacy_key_hash'   => hash( 'sha256', $fields['legacy_key'] ),
+					'created_at'        => $fields['created_at'],
+				]
+			);
+			$wpdb->suppress_errors( $suppress );
+			$id = (int) $wpdb->insert_id;
+			if ( ! $inserted || ! self::insert_services( $id, [ $service ] ) ) {
+				Pneukarnik_DB::rollback();
+				return null;
+			}
+			Pneukarnik_DB::commit();
+		} catch ( \Throwable $e ) {
+			Pneukarnik_DB::rollback();
+			throw $e;
+		}
+		return [
+			'id'           => $id,
+			'cancel_token' => $cancel_token,
 		];
 	}
 

@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Pneukarnik_DB {
 
 	private const DB_VERSION_OPTION = 'pneukarnik_db_version';
-	private const DB_VERSION        = '1.11';
+	private const DB_VERSION        = '1.12';
 
 	/** Testy běží uvnitř transakce WP test suite, transakce pluginu pak používají savepoint. */
 	private static bool $savepoints = false;
@@ -203,6 +203,7 @@ class Pneukarnik_DB {
 		$charset_collate = $wpdb->get_charset_collate();
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
+		// legacy_key_hash = SHA-256 klíče Rezervace ze starého webu (Pneukarnik_Legacy_Import), jen u převedených.
 		$bookings = "CREATE TABLE {$wpdb->prefix}pneukarnik_bookings (
 			id                      BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			customer_name           VARCHAR(255) NOT NULL,
@@ -226,8 +227,10 @@ class Pneukarnik_DB {
 			consent_gdpr_at         DATETIME     DEFAULT NULL,
 			source                  VARCHAR(20)  NOT NULL DEFAULT 'web',
 			reminder_sent           TINYINT(1)   NOT NULL DEFAULT 0,
+			legacy_key_hash         CHAR(64)     DEFAULT NULL,
 			created_at              DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
+			UNIQUE KEY uq_legacy_key (legacy_key_hash),
 			KEY idx_email (customer_email),
 			KEY idx_date (booking_date),
 			KEY idx_confirm_token (confirm_token_hash),
