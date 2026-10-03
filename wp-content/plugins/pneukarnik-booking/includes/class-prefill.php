@@ -21,6 +21,21 @@ final class Pneukarnik_Prefill {
 	}
 
 	/**
+	 * Formulář předvyplněný z poslední Rezervace e‑mailu, bez ní (anonymizovaná) prázdný.
+	 */
+	public static function url_for_email( string $email ): string {
+		global $wpdb;
+		$id = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT id FROM %i WHERE customer_email = %s ORDER BY booking_date DESC, id DESC LIMIT 1',
+				Pneukarnik_DB::bookings_table(),
+				strtolower( trim( $email ) )
+			)
+		);
+		return $id > 0 ? self::url( $id ) : home_url( '/rezervace/' );
+	}
+
+	/**
 	 * Kontaktní údaje Rezervace z podepsaného tokenu, nebo null (neplatný podpis, Rezervace
 	 * neexistuje nebo je anonymizovaná).
 	 *

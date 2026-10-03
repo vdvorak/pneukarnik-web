@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // phpcs:disable WordPress.Security.NonceVerification.Recommended
 
 /**
- * WP Admin settings page — Pracovní doba, pravidla Termínů, Lhůta zrušení, Sezóny, e‑maily, kontakty a sociální sítě, Pohotovost, Úvod, Google recenze, vyhledávače a Matomo, iCal.
+ * WP Admin settings page — Pracovní doba, pravidla Termínů, Lhůta zrušení, Sezóny, e‑maily, Připomínka přezutí, kontakty a sociální sítě, Pohotovost, Úvod, Google recenze, vyhledávače a Matomo, iCal.
  */
 class Pneukarnik_Admin_Settings {
 
@@ -59,7 +59,13 @@ class Pneukarnik_Admin_Settings {
 			<?php if ( isset( $_GET['season_error'] ) ) : ?>
 				<div class="notice notice-error"><p><?php esc_html_e( 'Sezóny se neuložily: zadejte den a měsíc (např. 15. 3.), od i do, od před do, leasingové datum uvnitř Sezóny a Sezóny se nesmí překrývat. Ostatní nastavení se uložilo.', 'pneukarnik-booking' ); ?></p></div>
 			<?php endif; ?>
-			<?php if ( isset( $_GET['saved'] ) ) : ?>
+			<?php if ( isset( $_GET['reminder_test'] ) ) : ?>
+				<?php if ( 'sent' === $_GET['reminder_test'] ) : ?>
+					<div class="notice notice-success"><p><?php echo esc_html( sprintf( /* translators: %s: e‑mail Provozovatele */ __( 'Nastavení uložena a zkušební Připomínka odeslaná na %s.', 'pneukarnik-booking' ), Pneukarnik_Contact::email() ) ); ?></p></div>
+				<?php else : ?>
+					<div class="notice notice-error"><p><?php esc_html_e( 'Nastavení se uložila, ale zkušební Připomínku se nepodařilo odeslat. Zkontrolujte kontaktní e‑mail a nastavení odesílání pošty.', 'pneukarnik-booking' ); ?></p></div>
+				<?php endif; ?>
+			<?php elseif ( isset( $_GET['saved'] ) ) : ?>
 				<div class="notice notice-success"><p><?php esc_html_e( 'Nastavení uložena.', 'pneukarnik-booking' ); ?></p></div>
 			<?php endif; ?>
 
@@ -200,6 +206,65 @@ class Pneukarnik_Admin_Settings {
 							<td><textarea id="pnk-email-<?php echo esc_attr( $key ); ?>" name="email_text[<?php echo esc_attr( $key ); ?>]" rows="3" class="large-text"><?php echo esc_textarea( Pneukarnik_Notifications::text( $key ) ); ?></textarea></td>
 						</tr>
 					<?php endforeach; ?>
+				</table>
+
+				<h2><?php esc_html_e( 'Připomínka přezutí', 'pneukarnik-booking' ); ?></h2>
+				<?php
+				$reminder           = Pneukarnik_Reminder::preview();
+				$provozovatel_email = Pneukarnik_Contact::email();
+				?>
+				<table class="form-table">
+					<tr>
+						<th><label for="pnk-reminder-days"><?php esc_html_e( 'Kolik dní před Sezónou', 'pneukarnik-booking' ); ?></label></th>
+						<td>
+							<input id="pnk-reminder-days" type="number" name="reminder_days" value="<?php echo esc_attr( (string) $reminder['days_before'] ); ?>" min="0" max="90" step="1" class="small-text">
+							<p class="description"><?php esc_html_e( 'Připomínka odchází Zákazníkům, kteří s ní při rezervaci souhlasili, nejvýš jednou za Sezónu. 0 = neposílat. Úvod e‑mailu je v textech výše.', 'pneukarnik-booking' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th><?php esc_html_e( 'Náhled', 'pneukarnik-booking' ); ?></th>
+						<td>
+							<?php if ( null === $reminder['season'] ) : ?>
+								<p><?php esc_html_e( 'Není nastavená žádná Sezóna, Připomínky se neposílají.', 'pneukarnik-booking' ); ?></p>
+							<?php elseif ( ! $reminder['enabled'] ) : ?>
+								<p><?php esc_html_e( 'Připomínky jsou vypnuté.', 'pneukarnik-booking' ); ?></p>
+							<?php else : ?>
+								<?php $sending = Pneukarnik_Clock::today()->format( 'Y-m-d' ) >= $reminder['send_from']; ?>
+								<p>
+									<?php
+									echo esc_html(
+										sprintf(
+											/* translators: 1: název Sezóny, 2: začátek Sezóny, 3: od kdy se posílá */
+											$sending ? __( '%1$s Sezóna začíná %2$s, Připomínky se posílají od %3$s.', 'pneukarnik-booking' ) : __( '%1$s Sezóna začíná %2$s, Připomínky se začnou posílat %3$s.', 'pneukarnik-booking' ),
+											Pneukarnik_Season::names()[ $reminder['season'] ],
+											Pneukarnik_Clock::at( (string) $reminder['season_from'] )->format( 'j. n. Y' ),
+											Pneukarnik_Clock::at( (string) $reminder['send_from'] )->format( 'j. n. Y' )
+										)
+									);
+									?>
+								</p>
+								<p>
+									<strong>
+										<?php
+										/* translators: %d: počet Zákazníků */
+										echo esc_html( sprintf( $sending ? __( 'Zbývá odeslat: %d', 'pneukarnik-booking' ) : __( 'Počet příjemců: %d', 'pneukarnik-booking' ), $reminder['recipients'] ) );
+										?>
+									</strong>
+								</p>
+							<?php endif; ?>
+							<?php if ( '' !== $provozovatel_email ) : ?>
+								<label>
+									<input type="checkbox" name="reminder_test" value="1">
+									<?php
+									/* translators: %s: e‑mail Provozovatele */
+									echo esc_html( sprintf( __( 'Po uložení poslat zkušební Připomínku na %s', 'pneukarnik-booking' ), $provozovatel_email ) );
+									?>
+								</label>
+							<?php else : ?>
+								<p class="description"><?php esc_html_e( 'Zkušební Připomínka jde poslat jen na kontaktní e‑mail, vyplňte ho níže.', 'pneukarnik-booking' ); ?></p>
+							<?php endif; ?>
+						</td>
+					</tr>
 				</table>
 
 				<h2><?php esc_html_e( 'Kontakt', 'pneukarnik-booking' ); ?></h2>
@@ -430,6 +495,7 @@ class Pneukarnik_Admin_Settings {
 		foreach ( array_keys( Pneukarnik_Notifications::texts() ) as $key ) {
 			update_option( 'pneukarnik_email_' . $key, sanitize_textarea_field( (string) ( $email_texts[ $key ] ?? '' ) ) );
 		}
+		update_option( Pneukarnik_Reminder::OPTION_DAYS, max( 0, min( 90, (int) ( $_POST['reminder_days'] ?? Pneukarnik_Reminder::days_before() ) ) ) );
 		// Kontakt a Pohotovost
 		foreach ( [ 'company', 'phone', 'address', 'ico', 'dic' ] as $field ) {
 			update_option( 'pneukarnik_' . $field, sanitize_text_field( wp_unslash( $_POST[ 'pneukarnik_' . $field ] ?? '' ) ) );
@@ -480,6 +546,9 @@ class Pneukarnik_Admin_Settings {
 			$result['season_error'] = '1';
 		}
 		$result = $result ?: [ 'saved' => '1' ];
+		if ( ! empty( $_POST['reminder_test'] ) ) {
+			$result['reminder_test'] = null !== Pneukarnik_Reminder::send_test() ? 'sent' : 'failed';
+		}
 		wp_safe_redirect( add_query_arg( $result, admin_url( 'admin.php?page=pneukarnik-settings' ) ) );
 		exit;
 	}

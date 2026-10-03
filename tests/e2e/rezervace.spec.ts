@@ -68,8 +68,10 @@ test('Zákazník si z detailu Služby zarezervuje Termín a uvidí potvrzení', 
 	await page.getByLabel('SPZ').fill(customer.plate);
 	await page.getByLabel('Značka a model (nepovinné)').fill('Škoda Fabia');
 	await page.getByLabel(/Souhlasím se zpracováním/).check();
-	await page.getByRole('button', { name: 'Rezervovat' }).click();
+	await page.getByLabel(/Připomeňte mi před každou sezónou/).check();
+	const [sent] = await Promise.all([page.waitForRequest(/\/pneukarnik\/v1\/bookings$/), page.getByRole('button', { name: 'Rezervovat' }).click()]);
 
+	expect(sent.postDataJSON()).toMatchObject({ consent_gdpr: true, consent_reminder: true });
 	await expect(page).toHaveURL(/\/rezervace\/potvrzeni\/\?r=[0-9a-f]{64}$/);
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Rezervace přijata');
 	await expect(page.locator('dd').filter({ hasText: serviceTitle })).toBeVisible();

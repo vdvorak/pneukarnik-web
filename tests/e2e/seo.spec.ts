@@ -61,6 +61,7 @@ test('Úvod má title, description, Open Graph a LocalBusiness z Nastavení', as
 });
 
 test('Detail Služby má title a description z polí, Open Graph a Service, Provozovatel je může přepsat', async ({ page, browser }) => {
+	test.slow(); // Úprava Služby v administraci, při souběhu všech testů trvá déle.
 	const visitor = await browser.newPage();
 	await visitor.goto(serviceUrl);
 

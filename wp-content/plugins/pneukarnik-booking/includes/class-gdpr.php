@@ -177,6 +177,9 @@ class Pneukarnik_GDPR {
 		global $wpdb;
 		$table = Pneukarnik_DB::bookings_table();
 
+		// Souhlasy s e‑maily (Připomínka přezutí, starý odběr) se smažou celé.
+		$subscriptions = 1 === $page ? Pneukarnik_Subscriptions::erase( $email_address ) : 0;
+
 		$per_page = 25;
 		$offset   = ( $page - 1 ) * $per_page;
 
@@ -193,14 +196,14 @@ class Pneukarnik_GDPR {
 
 		if ( empty( $rows ) ) {
 			return [
-				'items_removed'  => 0,
+				'items_removed'  => $subscriptions,
 				'items_retained' => 0,
 				'messages'       => [],
 				'done'           => true,
 			];
 		}
 
-		$removed = 0;
+		$removed = $subscriptions;
 		foreach ( $rows as $row ) {
 			$updated = $wpdb->update(
 				$table,

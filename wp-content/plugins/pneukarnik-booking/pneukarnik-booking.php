@@ -36,6 +36,9 @@ spl_autoload_register(
 			'Pneukarnik_Contact'              => 'includes/class-contact.php',
 			'Pneukarnik_Reviews'              => 'includes/class-reviews.php',
 			'Pneukarnik_Seo'                  => 'includes/class-seo.php',
+			'Pneukarnik_Subscriptions'        => 'includes/class-subscriptions.php',
+			'Pneukarnik_Reminder'             => 'includes/class-reminder.php',
+			'Pneukarnik_Rest_Reminder'        => 'api/class-rest-reminder.php',
 			'Pneukarnik_Sitemap_Provider'     => 'includes/class-sitemap-provider.php',
 			'Pneukarnik_Notice'               => 'includes/class-notice.php',
 			'Pneukarnik_Notice_Type'          => 'includes/class-notice-type.php',
@@ -102,6 +105,7 @@ function pneukarnik_deactivate(): void {
 	delete_option( 'pneukarnik_rewrite_version' );
 	wp_clear_scheduled_hook( Pneukarnik_GDPR::CRON_HOOK );
 	wp_clear_scheduled_hook( Pneukarnik_Reviews::CRON_HOOK );
+	wp_clear_scheduled_hook( Pneukarnik_Reminder::CRON_HOOK );
 }
 
 function pneukarnik_ensure_capabilities(): void {
@@ -111,6 +115,7 @@ function pneukarnik_ensure_capabilities(): void {
 // GDPR
 add_action( 'plugins_loaded', [ 'Pneukarnik_GDPR', 'init' ] );
 Pneukarnik_Reviews::init();
+Pneukarnik_Reminder::init();
 
 // Bootstrap
 add_action( 'plugins_loaded', [ 'Pneukarnik_DB', 'maybe_upgrade' ] );
@@ -149,6 +154,7 @@ function pneukarnik_register_rest_routes(): void {
 	( new Pneukarnik_Rest_Prefill() )->register_routes();
 	( new Pneukarnik_Rest_Calendar() )->register_routes();
 	( new Pneukarnik_Rest_Admin() )->register_routes();
+	( new Pneukarnik_Rest_Reminder() )->register_routes();
 }
 
 function pneukarnik_register_admin_menus(): void {

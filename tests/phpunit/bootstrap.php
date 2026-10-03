@@ -21,7 +21,7 @@ tests_add_filter(
 		// Instalace test suite maže jen tabulky WordPressu. Tabulky pluginu z dřívějších běhů
 		// (se starým schématem) se smažou, aby je plugin vytvořil podle aktuálního.
 		global $wpdb;
-		foreach ( [ 'pneukarnik_bookings', 'pneukarnik_booking_services', 'pneukarnik_day_exceptions', 'pneukarnik_closed_dates' ] as $table ) {
+		foreach ( [ 'pneukarnik_bookings', 'pneukarnik_booking_services', 'pneukarnik_day_exceptions', 'pneukarnik_closed_dates', 'pneukarnik_subscriptions' ] as $table ) {
 			$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $wpdb->prefix . $table ) );
 		}
 		require dirname( __DIR__, 2 ) . '/wp-content/plugins/pneukarnik-booking/pneukarnik-booking.php';

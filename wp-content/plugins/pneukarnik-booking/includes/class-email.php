@@ -132,9 +132,10 @@ final class Pneukarnik_Email {
 	/**
 	 * Odešle e‑mail jako HTML s textovou alternativou.
 	 *
-	 * @param string $reply_to Adresa pro odpověď, prázdná = bez Reply-To.
+	 * @param string       $reply_to Adresa pro odpověď, prázdná = bez Reply-To.
+	 * @param list<string> $extra_headers Další hlavičky „Název: hodnota“ (např. List-Unsubscribe).
 	 */
-	public function send( string $to, string $reply_to = '' ): bool {
+	public function send( string $to, string $reply_to = '', array $extra_headers = [] ): bool {
 		$host    = wp_parse_url( home_url(), PHP_URL_HOST ) ?: 'localhost';
 		$from    = (string) get_option( 'pneukarnik_noreply_email', 'noreply@' . $host );
 		$name    = str_replace( [ '"', '<', '>', "\r", "\n" ], '', (string) get_bloginfo( 'name' ) );
@@ -145,6 +146,7 @@ final class Pneukarnik_Email {
 		if ( is_email( $reply_to ) ) {
 			$headers[] = 'Reply-To: ' . $reply_to;
 		}
+		$headers = [ ...$headers, ...$extra_headers ];
 
 		$text = $this->text();
 		// wp_mail neumí textovou alternativu, PHPMailer ano. AltBody wp_mail před každým e‑mailem vymaže.

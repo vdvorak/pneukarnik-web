@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { E2E_PREFIX } from './support/admin';
 
-/** Smaže Služby, Akce, Oznámení, Průvodce, Rezervace a Výjimky vytvořené testy, aby nezůstávaly v lokálním webu. */
+/** Smaže Služby, Akce, Oznámení, Průvodce, Rezervace, Výjimky a souhlasy (e‑maily e2e-…) vytvořené testy, aby nezůstávaly v lokálním webu. */
 export default function globalTeardown(): void {
 	const prefix = E2E_PREFIX.trim();
 	const script = [
@@ -9,6 +9,7 @@ export default function globalTeardown(): void {
 		'[ -z "$ids" ] || wp post delete $ids --force --quiet',
 		`wp db query "DELETE b, s FROM wp_pneukarnik_bookings b LEFT JOIN wp_pneukarnik_booking_services s ON s.booking_id = b.id WHERE b.customer_name LIKE '${prefix}%'"`,
 		`wp db query "DELETE FROM wp_pneukarnik_day_exceptions WHERE note LIKE '${prefix}%'"`,
+		`wp db query "DELETE FROM wp_pneukarnik_subscriptions WHERE email LIKE 'e2e-%'"`,
 	].join('; ');
 	execFileSync('docker', ['compose', 'run', '--rm', '-T', 'cli', 'sh', '-c', script], { stdio: 'ignore' });
 }

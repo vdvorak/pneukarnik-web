@@ -99,7 +99,7 @@ function pneukarnik_default_pages(): array {
 				. $list(
 					[
 						'Rezervace: jméno nebo firma, telefon, e‑mail, SPZ, značka a model vozu a poznámka, abychom vás mohli objednat, potvrdit Termín a ozvat se při změně.',
-						'Připomínka přezutí: e‑mail, jen pokud k tomu dáte samostatný souhlas. Souhlas odvoláte odkazem v každé Připomínce.',
+						'Připomínka přezutí: e‑mail, jen pokud k tomu dáte samostatný souhlas. Uchováváme ho do odvolání souhlasu, odvoláte ho odkazem v každé Připomínce.',
 					]
 				)
 				. $heading( 'Jak dlouho údaje uchováváme' )

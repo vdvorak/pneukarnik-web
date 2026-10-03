@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Pneukarnik_DB {
 
 	private const DB_VERSION_OPTION = 'pneukarnik_db_version';
-	private const DB_VERSION        = '1.10';
+	private const DB_VERSION        = '1.11';
 
 	/** Testy běží uvnitř transakce WP test suite, transakce pluginu pak používají savepoint. */
 	private static bool $savepoints = false;
@@ -265,9 +265,26 @@ class Pneukarnik_DB {
 			KEY idx_service (service_id)
 		) ENGINE=InnoDB $charset_collate;";
 
+		// Souhlasy se zasíláním e‑mailů, jeden řádek na e‑mail a účel (Pneukarnik_Subscriptions).
+		// withdrawn_at = souhlas odvolaný, consented_at NULL = souhlas nikdy nebyl (jen odhlášení starým odkazem),
+		// last_season = Sezóna poslední odeslané Připomínky (např. 2027-spring).
+		$subscriptions = "CREATE TABLE {$wpdb->prefix}pneukarnik_subscriptions (
+			id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			email        VARCHAR(255)    NOT NULL,
+			purpose      VARCHAR(20)     NOT NULL,
+			source       VARCHAR(20)     NOT NULL,
+			consented_at DATETIME        DEFAULT NULL,
+			withdrawn_at DATETIME        DEFAULT NULL,
+			last_season  VARCHAR(20)     DEFAULT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY uq_email_purpose (email, purpose),
+			KEY idx_purpose (purpose, withdrawn_at)
+		) ENGINE=InnoDB $charset_collate;";
+
 		dbDelta( $bookings );
 		dbDelta( $day_exceptions );
 		dbDelta( $booking_services );
+		dbDelta( $subscriptions );
 	}
 
 	// Vrátí plný název tabulky rezervací
@@ -279,6 +296,11 @@ class Pneukarnik_DB {
 	public static function booking_services_table(): string {
 		global $wpdb;
 		return $wpdb->prefix . 'pneukarnik_booking_services';
+	}
+
+	public static function subscriptions_table(): string {
+		global $wpdb;
+		return $wpdb->prefix . 'pneukarnik_subscriptions';
 	}
 
 	public static function day_exceptions_table(): string {

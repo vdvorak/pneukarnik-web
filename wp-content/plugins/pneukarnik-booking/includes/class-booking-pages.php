@@ -7,18 +7,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Stránky rezervace: /rezervace/ (formulář), /rezervace/potvrzeni/?r={token}
- * a /rezervace/zruseni/?r={token} (Zrušení odkazem z e‑mailu).
+ * a /rezervace/zruseni/?r={token} (Zrušení odkazem z e‑mailu). K nim odhlášení z e‑mailů
+ * /odhlaseni/?t={token} (Připomínka přezutí) nebo ?email=… (starý odkaz /cancel-subscription?email=…
+ * se sem přesměruje).
  * Plugin vlastní adresy a data, vzhled dodává šablona webu souborem rezervace.php,
- * rezervace-potvrzeni.php a rezervace-zruseni.php.
+ * rezervace-potvrzeni.php, rezervace-zruseni.php a odhlaseni.php.
  */
 final class Pneukarnik_Booking_Pages {
 
 	public const QUERY_VAR = 'pnk_stranka';
 
+	/** Starý odkaz /cancel-subscription?email=… z e‑mailů starého webu. */
+	private const OLD_UNSUBSCRIBE = 'stary-odber';
+
 	private const PAGES = [
 		'rezervace' => 'rezervace.php',
 		'potvrzeni' => 'rezervace-potvrzeni.php',
 		'zruseni'   => 'rezervace-zruseni.php',
+		'odhlaseni' => 'odhlaseni.php',
 	];
 
 	public static function init(): void {
@@ -26,6 +32,8 @@ final class Pneukarnik_Booking_Pages {
 		add_filter( 'query_vars', [ self::class, 'query_vars' ] );
 		add_action( 'wp', [ self::class, 'reject_unknown_confirmation' ] );
 		add_action( 'template_redirect', [ self::class, 'handle_cancellation' ] );
+		add_action( 'template_redirect', [ self::class, 'redirect_old_unsubscribe' ], 1 ); // Před redirect_canonical.
+		add_action( 'template_redirect', [ self::class, 'handle_unsubscription' ] );
 		add_filter( 'template_include', [ self::class, 'template' ] );
 		add_filter( 'wp_robots', [ self::class, 'robots' ] );
 	}
@@ -34,6 +42,9 @@ final class Pneukarnik_Booking_Pages {
 		add_rewrite_rule( '^rezervace/potvrzeni/?$', 'index.php?' . self::QUERY_VAR . '=potvrzeni', 'top' );
 		add_rewrite_rule( '^rezervace/zruseni/?$', 'index.php?' . self::QUERY_VAR . '=zruseni', 'top' );
 		add_rewrite_rule( '^rezervace/?$', 'index.php?' . self::QUERY_VAR . '=rezervace', 'top' );
+		add_rewrite_rule( '^odhlaseni/?$', 'index.php?' . self::QUERY_VAR . '=odhlaseni', 'top' );
+		// Odkaz z e‑mailů starého webu (odhlášení z „informací o slevách“), přesměruje na /odhlaseni/.
+		add_rewrite_rule( '^cancel-subscription/?$', 'index.php?' . self::QUERY_VAR . '=' . self::OLD_UNSUBSCRIBE, 'top' );
 	}
 
 	/**
@@ -89,6 +100,7 @@ final class Pneukarnik_Booking_Pages {
 			'rezervace' => __( 'Rezervace termínu', 'pneukarnik-booking' ),
 			'potvrzeni' => __( 'Rezervace přijata', 'pneukarnik-booking' ),
 			'zruseni'   => __( 'Zrušení rezervace', 'pneukarnik-booking' ),
+			'odhlaseni' => __( 'Odhlášení z e‑mailů', 'pneukarnik-booking' ),
 		];
 		return $titles[ self::current() ] ?? '';
 	}
@@ -98,7 +110,7 @@ final class Pneukarnik_Booking_Pages {
 	 * @return array<string,bool|string>
 	 */
 	public static function robots( array $robots ): array {
-		if ( in_array( self::current(), [ 'potvrzeni', 'zruseni' ], true ) ) {
+		if ( in_array( self::current(), [ 'potvrzeni', 'zruseni', 'odhlaseni' ], true ) ) {
 			$robots['noindex'] = true;
 		}
 		return $robots;
@@ -152,6 +164,59 @@ final class Pneukarnik_Booking_Pages {
 			'prefill_url'  => Pneukarnik_Cancellation::prefill_url( $token ),
 			'phone'        => pneukarnik_phone(),
 		];
+	}
+
+	/**
+	 * Starý odkaz /cancel-subscription?email=… trvale (301) přesměruje na /odhlaseni/?email=…,
+	 * kde se odhlášení ze starého odběru provede.
+	 */
+	public static function redirect_old_unsubscribe(): void {
+		if ( self::OLD_UNSUBSCRIBE !== get_query_var( self::QUERY_VAR ) ) {
+			return;
+		}
+		$email = isset( $_GET['email'] ) ? sanitize_email( wp_unslash( $_GET['email'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- odkaz z e‑mailu starého webu.
+		if ( wp_safe_redirect( add_query_arg( 'email', rawurlencode( $email ), home_url( '/odhlaseni/' ) ), 301 ) ) {
+			exit;
+		}
+	}
+
+	/**
+	 * Odhlásí hned při otevření stránky, i když šablona webu výsledek nevypíše.
+	 */
+	public static function handle_unsubscription(): void {
+		if ( 'odhlaseni' === self::current() ) {
+			self::unsubscription();
+		}
+	}
+
+	/**
+	 * Odhlášení odkazem z e‑mailu hned při otevření stránky (i POST z tlačítka odhlášení v poště):
+	 * ?t={token} z Připomínky přezutí, ?email=… ze starého odkazu (jen starý odběr).
+	 * Výsledek pro šablonu: code unsubscribe.done nebo unsubscribe.invalid_token, legacy = starý odkaz.
+	 *
+	 * @return array{code:string,legacy:bool}
+	 */
+	public static function unsubscription(): array {
+		static $results = [];
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- odkaz z e‑mailu, token je sám tajemstvím.
+		$token = isset( $_GET['t'] ) ? sanitize_text_field( wp_unslash( $_GET['t'] ) ) : null;
+		$email = isset( $_GET['email'] ) ? sanitize_email( wp_unslash( $_GET['email'] ) ) : null;
+		// phpcs:enable
+		if ( 'odhlaseni' !== self::current() ) {
+			return [
+				'code'   => Pneukarnik_Subscriptions::INVALID_TOKEN,
+				'legacy' => false,
+			];
+		}
+		$key = wp_json_encode( [ $token, $email ] );
+		if ( ! isset( $results[ $key ] ) ) {
+			$legacy          = null === $token && null !== $email;
+			$results[ $key ] = [
+				'code'   => $legacy ? Pneukarnik_Subscriptions::withdraw_legacy( $email ) : Pneukarnik_Subscriptions::withdraw_by_token( $token ),
+				'legacy' => $legacy,
+			];
+		}
+		return $results[ $key ];
 	}
 
 	/**

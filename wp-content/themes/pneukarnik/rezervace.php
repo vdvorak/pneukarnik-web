@@ -156,6 +156,14 @@ get_header();
 				<span class="pole__chyba" id="chyba-consent_gdpr"></span>
 			</p>
 
+			<p class="pole pole--zaskrtavaci">
+				<label>
+					<input type="checkbox" name="consent_reminder" value="1" aria-describedby="napoveda-consent_reminder">
+					<?php esc_html_e( 'Připomeňte mi před každou sezónou, že je čas přezout (nepovinné).', 'pneukarnik' ); ?>
+				</label>
+				<span class="pole__napoveda" id="napoveda-consent_reminder"><?php esc_html_e( 'Přijde e‑mailem dvakrát do roka, odhlásit se jde jedním kliknutím v každé připomínce.', 'pneukarnik' ); ?></span>
+			</p>
+
 			<p id="rezervace-zprava" class="rezervace__zprava" role="alert"></p>
 			<button type="submit"><?php esc_html_e( 'Rezervovat', 'pneukarnik' ); ?></button>
 		</form>

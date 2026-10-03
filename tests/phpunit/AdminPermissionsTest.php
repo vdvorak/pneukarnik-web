@@ -22,6 +22,7 @@ class AdminPermissionsTest extends Pneukarnik_REST_Test_Case {
 		'GET /pneukarnik/v1/cancellation',
 		'POST /pneukarnik/v1/cancellation',
 		'GET /pneukarnik/v1/prefill',
+		'POST /pneukarnik/v1/unsubscribe',
 		'GET /pneukarnik/v1/calendar', // iCal, chráněný tajným tokenem (CalendarFeedTest).
 	];
 
