@@ -1,11 +1,13 @@
 <?php
 /**
- * Rozcestník Kategorie (/pneuservis/, /autoservis/): zveřejněné Služby v nastaveném pořadí.
+ * Rozcestník Kategorie (/pneuservis/, /autoservis/): zveřejněné Služby v nastaveném pořadí,
+ * Služba s platnou Akcí má na kartě štítek.
  *
  * @package Pneukarnik
  */
 
 get_header();
+$promotions = Pneukarnik_Promotion::current();
 ?>
 <main id="obsah" class="site-main kategorie">
 	<h1><?php post_type_archive_title(); ?></h1>
@@ -17,6 +19,9 @@ get_header();
 				$service = Pneukarnik_Service::from_post( get_post() );
 				?>
 				<li class="karta-sluzby">
+					<?php if ( isset( $promotions[ $service->id ] ) ) : ?>
+						<p class="stitek-akce"><?php esc_html_e( 'Akce', 'pneukarnik' ); ?></p>
+					<?php endif; ?>
 					<h2><a href="<?php echo esc_url( $service->url() ); ?>"><?php echo esc_html( $service->title ); ?></a></h2>
 					<p><?php echo esc_html( $service->perex ); ?></p>
 					<p class="karta-sluzby__cena"><?php echo esc_html( pneukarnik_price_label( $service ) ); ?></p>

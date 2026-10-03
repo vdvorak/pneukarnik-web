@@ -7,8 +7,9 @@
 
 get_header();
 the_post();
-$service = Pneukarnik_Service::from_post( get_post() );
-$related = $service->related();
+$service   = Pneukarnik_Service::from_post( get_post() );
+$related   = $service->related();
+$promotion = Pneukarnik_Promotion::current_for( $service->id );
 ?>
 <main id="obsah" class="site-main sluzba">
 	<article>
@@ -17,6 +18,12 @@ $related = $service->related();
 			<h1><?php echo esc_html( $service->title ); ?></h1>
 			<p class="sluzba__perex"><?php echo esc_html( $service->perex ); ?></p>
 		</header>
+
+		<?php
+		if ( $promotion ) {
+			pneukarnik_promotion_block( $promotion );
+		}
+		?>
 
 		<?php if ( $service->includes ) : ?>
 			<section class="sluzba__zahrnuje">

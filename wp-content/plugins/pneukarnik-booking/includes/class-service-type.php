@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Registrace Služeb ve WordPressu: typ obsahu, pole, adresy a pravidlo zveřejnění.
+ * Registrace Služeb ve WordPressu: typ obsahu, pole, adresy a pravidlo zveřejnění (Pneukarnik_Publish_Guard).
  *
  * Adresy:
  *   /{kategorie}/            rozcestník Kategorie (archiv typu s filtrem na Kategorii)
@@ -19,12 +19,6 @@ final class Pneukarnik_Service_Type {
 	/** Při změně adres pluginu (Služby i stránky rezervace) zvyšte, přegenerují se samy. */
 	private const REWRITE_VERSION = '3';
 
-	/** @var array<int, true> Služby vrácené do konceptu v tomto požadavku (kvůli hlášce po přesměrování). */
-	private static array $demoted = [];
-
-	/** Brání zacyklení: vracení do konceptu samo volá save_post. */
-	private static bool $demoting = false;
-
 	public static function init(): void {
 		add_action( 'init', [ self::class, 'register' ] );
 		add_action( 'init', [ self::class, 'maybe_flush_rewrites' ], 99 );
@@ -34,8 +28,6 @@ final class Pneukarnik_Service_Type {
 		add_filter( 'post_type_archive_link', [ self::class, 'archive_link' ], 10, 2 );
 		add_action( 'pre_get_posts', [ self::class, 'filter_category_archive' ] );
 		add_action( 'wp', [ self::class, 'reject_foreign_category' ] );
-		add_action( 'save_post_' . Pneukarnik_Service::POST_TYPE, [ self::class, 'enforce_required_for_publish' ], 20 );
-		add_filter( 'redirect_post_location', [ self::class, 'redirect_after_demotion' ], 10, 2 );
 	}
 
 	public static function register(): void {
@@ -94,6 +86,13 @@ final class Pneukarnik_Service_Type {
 				]
 			);
 		}
+
+		Pneukarnik_Publish_Guard::register(
+			Pneukarnik_Service::POST_TYPE,
+			static fn( int $id ): array => Pneukarnik_Service::find( $id )?->missing_required() ?? [],
+			/* translators: %s: seznam chybějících částí */
+			__( 'Služba není zveřejněná, chybí: %s. Zůstává uložená jako koncept.', 'pneukarnik-booking' )
+		);
 
 		$categories = implode( '|', array_keys( Pneukarnik_Service::categories() ) );
 		add_rewrite_rule(
@@ -188,62 +187,6 @@ final class Pneukarnik_Service_Type {
 		if ( ! $service || $service->category !== get_query_var( self::QUERY_VAR ) ) {
 			self::send_404();
 		}
-	}
-
-	/**
-	 * Služba bez povinných částí nesmí být zveřejněná: vrátí se do konceptu.
-	 * Běží po uložení polí (priorita 20), platí pro administraci i kód.
-	 */
-	public static function enforce_required_for_publish( int $post_id ): void {
-		if ( self::$demoting || wp_is_post_revision( $post_id ) ) {
-			return;
-		}
-		$service = Pneukarnik_Service::find( $post_id );
-		if ( ! $service || ! in_array( $service->status, [ 'publish', 'future' ], true ) ) {
-			return;
-		}
-		$missing = $service->missing_required();
-		if ( ! $missing ) {
-			return;
-		}
-		self::$demoted[ $post_id ] = true;
-		self::$demoting            = true;
-		try {
-			wp_update_post(
-				[
-					'ID'          => $post_id,
-					'post_status' => 'draft',
-				]
-			);
-		} finally {
-			self::$demoting = false;
-		}
-		set_transient( self::notice_key( $post_id ), $missing, MINUTE_IN_SECONDS );
-	}
-
-	/**
-	 * Po vrácení do konceptu nezobrazovat hlášku WordPressu „Služba publikována“.
-	 */
-	public static function redirect_after_demotion( string $location, int $post_id ): string {
-		if ( ! isset( self::$demoted[ $post_id ] ) ) {
-			return $location;
-		}
-		return add_query_arg( 'message', 10, $location ); // 10 = „Koncept aktualizován“.
-	}
-
-	/**
-	 * Co chybělo Službě, kterou systém právě vrátil do konceptu (pro hlášku po uložení).
-	 *
-	 * @return list<string>
-	 */
-	public static function pull_demotion_notice( int $post_id ): array {
-		$missing = get_transient( self::notice_key( $post_id ) );
-		delete_transient( self::notice_key( $post_id ) );
-		return is_array( $missing ) ? $missing : [];
-	}
-
-	private static function notice_key( int $post_id ): string {
-		return 'pnk_service_demoted_' . $post_id;
 	}
 
 	private static function send_404(): void {

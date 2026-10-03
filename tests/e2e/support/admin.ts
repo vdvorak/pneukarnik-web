@@ -66,6 +66,39 @@ export async function publishService(page: Page, s: ServiceFields): Promise<void
 	await Promise.all([page.waitForURL(/\/post\.php\?post=\d+&action=edit/), page.click('#publish')]);
 }
 
+export type PromotionFields = {
+	title: string;
+	service: string;
+	price: number;
+	description?: string;
+	/** YYYY-MM-DD */
+	from: string;
+	/** YYYY-MM-DD */
+	to: string;
+};
+
+/** Vyplní formulář Akce v administraci a klikne na Publikovat. */
+export async function publishPromotion(page: Page, a: PromotionFields): Promise<void> {
+	await page.goto('/wp-admin/post-new.php?post_type=pneukarnik_promotion');
+	await page.getByLabel('Služba *').selectOption({ label: a.service });
+	await page.getByLabel('Akční cena (Kč) *').fill(String(a.price));
+	if (a.description) await page.getByLabel('Popis').fill(a.description);
+	await page.getByLabel('Platí od *').fill(a.from);
+	await page.getByLabel('Platí do *').fill(a.to);
+	// Akce nemá adresu, takže WordPress po opuštění názvu spustí automatické uložení a zablokuje Publikovat.
+	// Když název opustí kliknutím na Publikovat, automatické uložení zruší, proto název až nakonec.
+	await page.fill('#title', a.title);
+	await Promise.all([page.waitForURL(/\/post\.php\?post=\d+&action=edit/), page.click('#publish')]);
+	await expect(page.getByText('Akce není zveřejněná')).toHaveCount(0);
+}
+
+/** Den posunutý o `days` od dneška jako YYYY-MM-DD v místním čase. */
+export function dayFromToday(days: number): string {
+	const day = new Date();
+	day.setDate(day.getDate() + days);
+	return `${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}`;
+}
+
 const WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri'] as const;
 
 /** Pracovní doba Po–Pá 8–12 a 13–17, víkend zavřeno, a pravidla Termínů přes Nastavení pluginu. */

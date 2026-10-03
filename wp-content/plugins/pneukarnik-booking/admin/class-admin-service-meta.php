@@ -20,7 +20,6 @@ class Pneukarnik_Admin_Service_Meta {
 	public static function init(): void {
 		add_action( 'add_meta_boxes_' . Pneukarnik_Service::POST_TYPE, [ self::class, 'register_meta_box' ] );
 		add_action( 'save_post_' . Pneukarnik_Service::POST_TYPE, [ self::class, 'save' ] );
-		add_action( 'admin_notices', [ self::class, 'render_demotion_notice' ] );
 	}
 
 	public static function register_meta_box(): void {
@@ -217,27 +216,5 @@ class Pneukarnik_Admin_Service_Meta {
 		$related = array_map( 'absint', (array) wp_unslash( $_POST['_service_related'] ?? [] ) );
 		$related = array_values( array_unique( array_filter( $related, static fn( int $id ): bool => $id > 0 && $id !== $post_id ) ) );
 		update_post_meta( $post_id, '_service_related', $related );
-	}
-
-	public static function render_demotion_notice(): void {
-		$screen = get_current_screen();
-		$post   = get_post();
-		if ( ! $screen || 'post' !== $screen->base || ! $post || Pneukarnik_Service::POST_TYPE !== $post->post_type ) {
-			return;
-		}
-		$missing = Pneukarnik_Service_Type::pull_demotion_notice( $post->ID );
-		if ( ! $missing ) {
-			return;
-		}
-		printf(
-			'<div class="notice notice-error"><p>%s</p></div>',
-			esc_html(
-				sprintf(
-					/* translators: %s: seznam chybějících částí */
-					__( 'Služba není zveřejněná, chybí: %s. Zůstává uložená jako koncept.', 'pneukarnik-booking' ),
-					implode( ', ', $missing )
-				)
-			)
-		);
 	}
 }
