@@ -28,20 +28,24 @@ abstract class Pneukarnik_REST_Test_Case extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Služba v administraci (zatím ve tvaru převzatém ze starého pluginu).
+	 * Zveřejněná Služba se všemi povinnými částmi.
 	 */
 	protected function create_service( int $duration_minutes, bool $seasonal = false ): int {
-		$id = self::factory()->post->create(
+		return self::factory()->post->create(
 			[
 				'post_type'   => 'pneukarnik_service',
 				'post_status' => 'publish',
 				'post_title'  => 'Přezutí',
+				'meta_input'  => [
+					'_service_category'    => 'pneuservis',
+					'_service_perex'       => 'Sezónní přezutí.',
+					'_service_price'       => '600',
+					'_service_duration'    => $duration_minutes,
+					'_service_bookable'    => '1',
+					'_service_is_seasonal' => $seasonal ? '1' : '',
+				],
 			]
 		);
-		update_post_meta( $id, '_service_duration', $duration_minutes );
-		update_post_meta( $id, '_service_bookable', '1' );
-		update_post_meta( $id, '_service_is_seasonal', $seasonal ? '1' : '' );
-		return $id;
 	}
 
 	/**

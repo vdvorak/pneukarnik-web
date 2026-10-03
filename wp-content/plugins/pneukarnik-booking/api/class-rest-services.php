@@ -49,21 +49,10 @@ class Pneukarnik_Rest_Services {
 		$season_active   = Pneukarnik_Season::is_active();
 
 		// Cache only the unfiltered base list; filters are applied after
-		$all = get_transient( 'pneukarnik_services_v1' );
+		$all = get_transient( 'pneukarnik_services_v2' );
 		if ( false === $all ) {
-			$query = new WP_Query(
-				[
-					'post_type'      => 'pneukarnik_service',
-					'post_status'    => 'publish',
-					'posts_per_page' => -1,
-					'orderby'        => 'meta_value_num',
-					'meta_key'       => '_service_index',
-					'order'          => 'ASC',
-				]
-			);
-
-			$all = array_map( [ $this, 'hydrate' ], $query->posts );
-			set_transient( 'pneukarnik_services_v1', $all, 5 * MINUTE_IN_SECONDS );
+			$all = array_map( [ $this, 'hydrate' ], Pneukarnik_Service::published() );
+			set_transient( 'pneukarnik_services_v2', $all, 5 * MINUTE_IN_SECONDS );
 		}
 
 		$services = [];
@@ -86,12 +75,12 @@ class Pneukarnik_Rest_Services {
 	}
 
 	public static function invalidate_cache(): void {
-		delete_transient( 'pneukarnik_services_v1' );
+		delete_transient( 'pneukarnik_services_v2' );
 	}
 
 	public function get_service( WP_REST_Request $request ): WP_REST_Response {
 		$slug = $request->get_param( 'slug' );
-		$post = get_page_by_path( $slug, OBJECT, 'pneukarnik_service' );
+		$post = get_page_by_path( $slug, OBJECT, Pneukarnik_Service::POST_TYPE );
 
 		if ( ! $post || $post->post_status !== 'publish' ) {
 			return new WP_REST_Response(
@@ -103,28 +92,25 @@ class Pneukarnik_Rest_Services {
 			);
 		}
 
-		return new WP_REST_Response( $this->hydrate( $post ), 200 );
+		return new WP_REST_Response( $this->hydrate( Pneukarnik_Service::from_post( $post ) ), 200 );
 	}
 
-	private function hydrate( WP_Post $post ): array {
-		$id         = $post->ID;
-		$price_sale = get_post_meta( $id, '_service_price_sale', true );
-		$sort_index = get_post_meta( $id, '_service_index', true );
+	/**
+	 * @return array<string, mixed>
+	 */
+	private function hydrate( Pneukarnik_Service $service ): array {
 		return [
-			'id'             => $id,
-			'slug'           => $post->post_name,
-			'name'           => $post->post_title,
-			'description'    => apply_filters( 'the_content', $post->post_content ),
-			'icon'           => (string) get_post_meta( $id, '_service_icon', true ),
-			'duration'       => (int) get_post_meta( $id, '_service_duration', true ),
-			'price'          => (float) get_post_meta( $id, '_service_price', true ),
-			'show_price'     => (bool) get_post_meta( $id, '_service_show_price', true ),
-			'price_sale'     => $price_sale !== '' ? (float) $price_sale : null,
-			'is_sale'        => (bool) get_post_meta( $id, '_service_is_sale', true ),
-			'bookable'       => (bool) get_post_meta( $id, '_service_bookable', true ),
-			'sort_index'     => $sort_index !== '' ? (int) $sort_index : null,
-			'is_autoservice' => (bool) get_post_meta( $id, '_service_is_autoservice', true ),
-			'is_seasonal'    => (bool) get_post_meta( $id, '_service_is_seasonal', true ),
+			'id'               => $service->id,
+			'slug'             => $service->slug,
+			'name'             => $service->title,
+			'category'         => $service->category,
+			'url'              => $service->url(),
+			'duration'         => $service->duration,
+			'price'            => $service->price,
+			'price_from'       => $service->price_from,
+			'price_by_vehicle' => $service->price_by_vehicle,
+			'bookable'         => $service->bookable,
+			'is_seasonal'      => $service->seasonal,
 		];
 	}
 }

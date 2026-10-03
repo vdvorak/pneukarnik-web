@@ -51,5 +51,7 @@
 	<!-- Testy používají názvy souborů podle PHPUnit (FooTest.php), ne WordPressu. -->
 	<rule ref="WordPress.Files.FileName">
 		<exclude-pattern>tests/phpunit/*</exclude-pattern>
+		<!-- Šablony pro vlastní typy obsahu musí mít název podle hierarchie WordPressu. -->
+		<exclude-pattern>wp-content/themes/pneukarnik/*-pneukarnik_*.php</exclude-pattern>
 	</rule>
 </ruleset>

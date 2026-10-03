@@ -27,6 +27,8 @@ spl_autoload_register(
 		$map = [
 			'Pneukarnik_Clock'              => 'includes/class-clock.php',
 			'Pneukarnik_DB'                 => 'includes/class-db.php',
+			'Pneukarnik_Service'            => 'includes/class-service.php',
+			'Pneukarnik_Service_Type'       => 'includes/class-service-type.php',
 			'Pneukarnik_Working_Hours'      => 'includes/class-working-hours.php',
 			'Pneukarnik_Season'             => 'includes/class-season.php',
 			'Pneukarnik_Closed_Dates'       => 'includes/class-closed-dates.php',
@@ -60,6 +62,8 @@ register_deactivation_hook( __FILE__, 'pneukarnik_deactivate' );
 
 function pneukarnik_activate(): void {
 	Pneukarnik_DB::activate();
+	// Adresy Služeb se přegenerují při dalším požadavku (Pneukarnik_Service_Type::maybe_flush_rewrites).
+	delete_option( 'pneukarnik_rewrite_version' );
 	pneukarnik_ensure_capabilities();
 	// Schedule daily GDPR anonymisation cron at 03:00
 	if ( ! wp_next_scheduled( Pneukarnik_GDPR::CRON_HOOK ) ) {
@@ -73,6 +77,9 @@ function pneukarnik_activate(): void {
 
 function pneukarnik_deactivate(): void {
 	Pneukarnik_DB::deactivate();
+	// Bez pluginu nesmí zůstat adresy /pneuservis/ a /autoservis/. WordPress pravidla vytvoří znovu.
+	delete_option( 'rewrite_rules' );
+	delete_option( 'pneukarnik_rewrite_version' );
 	wp_clear_scheduled_hook( Pneukarnik_GDPR::CRON_HOOK );
 }
 
@@ -90,7 +97,7 @@ add_action( 'plugins_loaded', [ 'Pneukarnik_GDPR', 'init' ] );
 // Bootstrap
 add_action( 'plugins_loaded', [ 'Pneukarnik_DB', 'maybe_upgrade' ] );
 add_action( 'plugins_loaded', 'pneukarnik_ensure_capabilities' );
-add_action( 'init', 'pneukarnik_register_cpt' );
+Pneukarnik_Service_Type::init();
 add_action( 'init', [ 'Pneukarnik_Admin_Service_Meta', 'init' ] );
 add_action( 'rest_api_init', 'pneukarnik_register_rest_routes' );
 add_action( 'admin_menu', 'pneukarnik_register_admin_menus' );
@@ -104,59 +111,6 @@ function pneukarnik_invalidate_post_cache( int $post_id ): void {
 	$type = get_post_type( $post_id );
 	if ( $type === 'pneukarnik_service' ) {
 		Pneukarnik_Rest_Services::invalidate_cache();
-	}
-}
-
-function pneukarnik_register_cpt(): void {
-	register_post_type(
-		'pneukarnik_service',
-		[
-			'labels'       => [
-				'name'               => __( 'Služby', 'pneukarnik-booking' ),
-				'singular_name'      => __( 'Služba', 'pneukarnik-booking' ),
-				'add_new_item'       => __( 'Přidat službu', 'pneukarnik-booking' ),
-				'edit_item'          => __( 'Upravit službu', 'pneukarnik-booking' ),
-				'new_item'           => __( 'Nová služba', 'pneukarnik-booking' ),
-				'view_item'          => __( 'Zobrazit službu', 'pneukarnik-booking' ),
-				'search_items'       => __( 'Hledat služby', 'pneukarnik-booking' ),
-				'not_found'          => __( 'Žádné služby nenalezeny', 'pneukarnik-booking' ),
-				'not_found_in_trash' => __( 'Koš je prázdný', 'pneukarnik-booking' ),
-			],
-			'public'       => false,
-			'show_ui'      => true,
-			'show_in_menu' => 'pneukarnik-booking',
-			'show_in_rest' => false, // Custom REST endpoint
-			'supports'     => [ 'title', 'editor', 'revisions' ],
-			'rewrite'      => false,
-			'has_archive'  => false,
-			'menu_icon'    => 'dashicons-car',
-		]
-	);
-
-	// Register meta fields for REST API and admin
-	$meta_fields = [
-		'_service_icon'           => 'string',
-		'_service_duration'       => 'integer',
-		'_service_price'          => 'number',
-		'_service_show_price'     => 'boolean',
-		'_service_price_sale'     => 'number',
-		'_service_is_sale'        => 'boolean',
-		'_service_bookable'       => 'boolean',
-		'_service_index'          => 'integer',
-		'_service_is_autoservice' => 'boolean',
-		'_service_is_seasonal'    => 'boolean',
-	];
-
-	foreach ( $meta_fields as $key => $type ) {
-		register_post_meta(
-			'pneukarnik_service',
-			$key,
-			[
-				'single'       => true,
-				'type'         => $type,
-				'show_in_rest' => false,
-			]
-		);
 	}
 }
 
@@ -205,6 +159,13 @@ function pneukarnik_register_admin_menus(): void {
 		'pneukarnik-closed-dates',
 		[ 'Pneukarnik_Admin_Closed_Dates', 'render_page' ]
 	);
+}
+
+/**
+ * Telefon Provozovatele z Nastavení, jak se má zobrazit (např. „+420 775 565 326“).
+ */
+function pneukarnik_phone(): string {
+	return trim( (string) get_option( 'pneukarnik_phone', '' ) );
 }
 
 function pneukarnik_format_date( string $ymd ): string {

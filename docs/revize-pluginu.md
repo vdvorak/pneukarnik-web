@@ -91,7 +91,7 @@ Seřazené podle ticketu, který je vyřeší. Nic z toho dnes neběží v provo
 
 ### Služby, nastavení, GDPR (#3, #15, #20)
 
-28. **Služba je neveřejný CPT.** Má ikonu jako třídu Font Awesome a slevu přímo ve Službě. Model se mění: Kategorie, detail Služby, Akce jako samostatný typ.
+28. **Služba je neveřejný CPT.** Má ikonu jako třídu Font Awesome a slevu přímo ve Službě. Model se mění: Kategorie, detail Služby, Akce jako samostatný typ. **Vyřešeno v #3:** Služba má Kategorii, strukturovaná pole detailu a veřejné adresy. Pole starého pluginu (`_service_icon`, `_service_index`, `_service_is_autoservice`, sleva) se už nečtou, jejich převod řeší #21.
 29. **Kontakty a sociální sítě v Nastavení.** Sociální sítě se zadávají jako ruční JSON a je tam embed URL mapy. Patří do jednoho místa kontaktů a mapa bude načítaná až po kliknutí.
 30. **Anonymizace po 2 letech**, zadání chce 1 rok. Zpracuje max. 200 záznamů za běh a nic dalšího v tom běhu neopakuje.
 31. **Výmaz osobních údajů (GDPR eraser) vynechá záznamy.** Stránkuje přes `OFFSET` nad `customer_email = %s`, ale každá stránka e‑mail přepíše. Další stránka pak přeskočí dosud neanonymizované řádky a výmaz se přesto ohlásí jako hotový (u zákazníka s víc než 25 Rezervacemi).

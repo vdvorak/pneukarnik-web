@@ -158,28 +158,19 @@ class Pneukarnik_Admin_Create {
 		return false;
 	}
 
+	/**
+	 * @return list<array{id:int,name:string,duration:int}>
+	 */
 	private static function get_bookable_services(): array {
-		$posts = get_posts(
-			[
-				'post_type'      => 'pneukarnik_service',
-				'post_status'    => 'publish',
-				'posts_per_page' => -1,
-				'orderby'        => 'meta_value_num',
-				'meta_key'       => '_service_index',
-				'order'          => 'ASC',
-			]
-		);
-
 		$services = [];
-		foreach ( $posts as $post ) {
-			if ( ! get_post_meta( $post->ID, '_service_bookable', true ) ) {
-				continue;
+		foreach ( Pneukarnik_Service::published() as $service ) {
+			if ( $service->bookable ) {
+				$services[] = [
+					'id'       => $service->id,
+					'name'     => $service->title,
+					'duration' => $service->duration,
+				];
 			}
-			$services[] = [
-				'id'       => $post->ID,
-				'name'     => $post->post_title,
-				'duration' => (int) get_post_meta( $post->ID, '_service_duration', true ),
-			];
 		}
 		return $services;
 	}

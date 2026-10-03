@@ -11,6 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require __DIR__ . '/inc/template-tags.php';
+
 add_action(
 	'after_setup_theme',
 	static function (): void {
