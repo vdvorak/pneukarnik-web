@@ -12,7 +12,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  *               Převedená Služba si pamatuje ID staré (SERVICE_META), podle něj se mapují Rezervace.
  *               Službu bez té vazby se stejným slugem (jinak názvem), např. ze starého pokusu o nový
  *               web ve stejné databázi, převod převezme a doplní jí jen chybějící Kategorii, pořadí
- *               a „cena od“. Její stav, Délku a cenu nechá.
+ *               a „cena od“. Její stav, Délku a cenu nechá. Převedené Rezervace ale zabírají dílnu
+ *               s Délkou staré Služby, jak si je Zákazník objednal.
  *   Rezervace   ze staré tabulky `{prefix}reservations`: budoucí a minulé, od jejichž Termínu
  *               neuplynul rok (starší by anonymizace hned smazala). Zrušené (deleted) ne.
  *               Starý klíč pro zrušení neplatí, Rezervace dostane nový token pro Zrušení
@@ -68,19 +69,20 @@ final class Pneukarnik_Legacy_Import {
 				'status' => 404,
 			];
 		}
-		[ $services, $service_map ] = self::import_services();
+		[ $services, $service_map, $durations ] = self::import_services();
 		return [
 			'ok'     => true,
 			'report' => [
 				'services' => $services,
-				'bookings' => self::import_bookings( $service_map, $send_cancel_links ),
+				'bookings' => self::import_bookings( $service_map, $durations, $send_cancel_links ),
 				'consents' => self::import_consents(),
 			],
 		];
 	}
 
 	/**
-	 * @return array{0:Section,1:array<int,int>} Výsledek a mapa ID staré Služby => ID Služby.
+	 * @return array{0:Section,1:array<int,int>,2:array<int,int>} Výsledek, mapa ID staré Služby => ID Služby
+	 *         a Délka staré Služby (minuty) podle jejího ID.
 	 */
 	private static function import_services(): array {
 		$section  = self::section();
@@ -96,7 +98,9 @@ final class Pneukarnik_Legacy_Import {
 				'order'       => 'ASC',
 			]
 		);
+		$durations    = [];
 		foreach ( $old_services as $old ) {
+			$durations[ $old->ID ] = max( 0, (int) get_post_meta( $old->ID, 'duration', true ) );
 			if ( isset( $map[ $old->ID ] ) ) {
 				++$section['skipped'];
 				continue;
@@ -149,7 +153,7 @@ final class Pneukarnik_Legacy_Import {
 			$map[ $old->ID ] = $id;
 			++$section['imported'];
 		}
-		return [ $section, $map ];
+		return [ $section, $map, $durations ];
 	}
 
 	/**
@@ -237,10 +241,11 @@ final class Pneukarnik_Legacy_Import {
 	}
 
 	/**
-	 * @param array<int,int> $service_map
+	 * @param array<int,int> $service_map ID staré Služby => ID Služby.
+	 * @param array<int,int> $durations   Délka staré Služby podle jejího ID.
 	 * @return BookingSection
 	 */
-	private static function import_bookings( array $service_map, bool $send_cancel_links ): array {
+	private static function import_bookings( array $service_map, array $durations, bool $send_cancel_links ): array {
 		global $wpdb;
 		$section = self::section() + [ 'emailed' => 0 ];
 		$now     = Pneukarnik_Clock::now();
@@ -286,8 +291,8 @@ final class Pneukarnik_Legacy_Import {
 				continue;
 			}
 
-			$email    = strtolower( self::text( $row['email'] ) );
-			$fields   = [
+			$email  = strtolower( self::text( $row['email'] ) );
+			$fields = [
 				'legacy_key' => (string) $row['id'],
 				'name'       => $name,
 				'phone'      => self::text( $row['phone'] ),
@@ -298,10 +303,14 @@ final class Pneukarnik_Legacy_Import {
 				'time'       => $time,
 				'created_at' => (string) $row['created'],
 			];
-			$end      = Pneukarnik_Slot_Engine::minutes_to_hhmm( Pneukarnik_Slot_Engine::hhmm_to_minutes( $time ) + $service->duration );
-			$overlaps = Pneukarnik_Slot_Engine::overlaps_confirmed( $date, $time, $end );
+			// Dílnu zabírá tak dlouho jako na starém webu, i když má převzatá Služba jinou Délku.
+			$duration = ( $durations[ (int) $row['serviceId'] ] ?? 0 ) ?: $service->duration;
+			$end      = Pneukarnik_Slot_Engine::minutes_to_hhmm( Pneukarnik_Slot_Engine::hhmm_to_minutes( $time ) + $duration );
+			$future   = Pneukarnik_Clock::at( "{$date} {$time}" ) > $now;
+			// U minulých Rezervací už překryv (chyba starého webu) nic neznamená.
+			$overlaps = $future && Pneukarnik_Slot_Engine::overlaps_confirmed( $date, $time, $end );
 
-			$result = Pneukarnik_Booking::insert_imported( $fields, $service );
+			$result = Pneukarnik_Booking::insert_imported( $fields, $service, $duration );
 			if ( null === $result ) {
 				++$section['failed'];
 				/* translators: %s: Rezervace (Termín a jméno) */
@@ -315,8 +324,7 @@ final class Pneukarnik_Legacy_Import {
 			}
 
 			$booking = Pneukarnik_Booking::get_by_id( $result['id'] );
-			if ( $send_cancel_links && null !== $booking && Pneukarnik_Clock::at( "{$date} {$time}" ) > $now
-				&& Pneukarnik_Notifications::on_booking_imported( $booking, $result['cancel_token'] ) ) {
+			if ( $send_cancel_links && $future && null !== $booking && Pneukarnik_Notifications::on_booking_imported( $booking, $result['cancel_token'] ) ) {
 				++$section['emailed'];
 			}
 		}
@@ -366,8 +374,9 @@ final class Pneukarnik_Legacy_Import {
 	}
 
 	private static function booking_label( string $date, string $time, string $name ): string {
+		$valid = (bool) preg_match( '/^(\d{4})-(\d{2})-(\d{2})$/', $date, $m ) && checkdate( (int) $m[2], (int) $m[3], (int) $m[1] );
 		/* translators: 1: datum, 2: čas, 3: jméno Zákazníka */
-		return sprintf( __( 'Rezervace %1$s v %2$s (%3$s)', 'pneukarnik-booking' ), pneukarnik_format_date( $date ), $time, $name );
+		return sprintf( __( 'Rezervace %1$s v %2$s (%3$s)', 'pneukarnik-booking' ), $valid ? pneukarnik_format_date( $date ) : $date, $time, $name );
 	}
 
 	/**

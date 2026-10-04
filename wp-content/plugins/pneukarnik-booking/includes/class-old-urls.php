@@ -11,7 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * zůstal (přepnutí ve stejné instalaci), nebo ne.
  *
  * Příspěvky o dekarbonizaci vedou na detail Služby Dekarbonizace, ostatní příspěvky a jejich
- * archivy na Úvod. Staré odkazy na Služby na Službu se stejným slugem. Kotvy staré jednostránky
+ * archivy na Úvod. Staré odkazy na Služby na Službu se stejným slugem, jinak na Službu převedenou
+ * z té staré (Pneukarnik_Legacy_Import). Kotvy staré jednostránky
  * (#services …) řeší skript šablony na Úvodu, na server se nedostanou.
  * Starý /cancel-subscription řeší Pneukarnik_Booking_Pages.
  */
@@ -115,17 +116,33 @@ final class Pneukarnik_Old_Urls {
 	}
 
 	/**
-	 * Adresa zveřejněné Služby se slugem, null když taková není.
+	 * Adresa zveřejněné Služby se slugem, jinak Služby převedené ze staré Služby s tímto slugem
+	 * (Pneukarnik_Legacy_Import), null když taková není.
 	 */
 	private static function service_url( string $slug ): ?string {
-		$posts = get_posts(
-			[
-				'post_type'   => Pneukarnik_Service::POST_TYPE,
-				'post_status' => 'publish',
-				'name'        => sanitize_title( $slug ),
-				'numberposts' => 1,
-			]
-		);
+		$query = [
+			'post_type'   => Pneukarnik_Service::POST_TYPE,
+			'post_status' => 'publish',
+			'numberposts' => 1,
+		];
+		$posts = get_posts( $query + [ 'name' => sanitize_title( $slug ) ] );
+		if ( ! $posts ) {
+			$old   = get_posts(
+				[
+					'post_type'   => 'service',
+					'post_status' => 'any',
+					'name'        => sanitize_title( $slug ),
+					'numberposts' => 1,
+					'fields'      => 'ids',
+				]
+			);
+			$posts = $old ? get_posts(
+				$query + [
+					'meta_key'   => Pneukarnik_Legacy_Import::SERVICE_META, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+					'meta_value' => (string) $old[0], // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+				]
+			) : [];
+		}
 		return $posts ? Pneukarnik_Service::from_post( $posts[0] )->url() : null;
 	}
 }

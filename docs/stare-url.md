@@ -12,7 +12,7 @@ Přesměrování dělá `Pneukarnik_Old_Urls` v pluginu (301, podle cesty, takž
 
 - příspěvky `/rok/měsíc/den/slug/` a `?p=ID`: o dekarbonizaci na detail Služby Dekarbonizace (slug `dekarbonizace`, bez ní na Autoservis), ostatní na Úvod,
 - archivy podle data, rubriky, autora a štítku na Úvod,
-- `/service/{slug}/` na zveřejněnou Službu se stejným slugem, jinak na Úvod,
+- `/service/{slug}/` na zveřejněnou Službu se stejným slugem, jinak na zveřejněnou Službu převedenou z té staré (#21), jinak na Úvod,
 - `/galery/…` na galerii stránky O nás, ostatní staré typy obsahu (`/closed/`, `/warning/` …) a `/nova/` na Úvod,
 - `/cancel-subscription?email=…` na odhlášení (#19, `Pneukarnik_Booking_Pages`).
 

@@ -540,9 +540,10 @@ class Pneukarnik_Booking {
 	 * Termínů a bez kontroly překryvu (ten hlásí převod). Nový token pro Zrušení, e‑mail neposílá.
 	 *
 	 * @param array{legacy_key:string,name:string,phone:string,email:string,plate:string,note:string,date:string,time:string,created_at:string} $fields
+	 * @param int $duration Délka, se kterou byla Rezervace na starém webu (minuty).
 	 * @return array{id:int,cancel_token:string}|null Null, když zápis selhal (např. souběžný převod téže Rezervace).
 	 */
-	public static function insert_imported( array $fields, Pneukarnik_Service $service ): ?array {
+	public static function insert_imported( array $fields, Pneukarnik_Service $service, int $duration ): ?array {
 		global $wpdb;
 		$cancel_token = bin2hex( random_bytes( 32 ) );
 		Pneukarnik_DB::begin();
@@ -558,7 +559,7 @@ class Pneukarnik_Booking {
 					'customer_note'     => '' !== $fields['note'] ? $fields['note'] : null,
 					'booking_date'      => $fields['date'],
 					'time_start'        => $fields['time'],
-					'time_end'          => Pneukarnik_Slot_Engine::minutes_to_hhmm( Pneukarnik_Slot_Engine::hhmm_to_minutes( $fields['time'] ) + $service->duration ),
+					'time_end'          => Pneukarnik_Slot_Engine::minutes_to_hhmm( Pneukarnik_Slot_Engine::hhmm_to_minutes( $fields['time'] ) + $duration ),
 					'status'            => self::STATUS_CONFIRMED,
 					'cancel_token_hash' => hash( 'sha256', $cancel_token ),
 					// Starý formulář souhlas se zpracováním vyžadoval.
@@ -570,7 +571,7 @@ class Pneukarnik_Booking {
 			);
 			$wpdb->suppress_errors( $suppress );
 			$id = (int) $wpdb->insert_id;
-			if ( ! $inserted || ! self::insert_services( $id, [ $service ] ) ) {
+			if ( ! $inserted || ! self::insert_services( $id, [ $service ], [ $duration ] ) ) {
 				Pneukarnik_DB::rollback();
 				return null;
 			}
@@ -589,8 +590,9 @@ class Pneukarnik_Booking {
 	 * Zapíše Služby Rezervace s názvem, Délkou a cenou platnými teď.
 	 *
 	 * @param list<Pneukarnik_Service> $services
+	 * @param array<int,int>           $durations Jiná Délka podle pořadí Služby (převod ze starého webu).
 	 */
-	private static function insert_services( int $booking_id, array $services ): bool {
+	private static function insert_services( int $booking_id, array $services, array $durations = [] ): bool {
 		global $wpdb;
 		foreach ( $services as $position => $service ) {
 			$price    = $service->price_by_vehicle ? null : $service->price;
@@ -601,7 +603,7 @@ class Pneukarnik_Booking {
 					'position'     => $position,
 					'service_id'   => $service->id,
 					'service_name' => $service->title,
-					'duration'     => $service->duration,
+					'duration'     => $durations[ $position ] ?? $service->duration,
 					'price'        => $price,
 					'price_from'   => null !== $price && $service->price_from ? 1 : 0,
 				]

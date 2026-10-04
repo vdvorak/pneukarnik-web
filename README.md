@@ -5,6 +5,7 @@ Nový web [pneukarnik.cz](https://pneukarnik.cz) (Pneuservis a autoservis Jan K�
 - Zadání: `docs/zadani.md`, spec a tickety v GitHub Issues (#1).
 - Pojmy: `CONTEXT.md`. Rozhodnutí: `docs/adr/`.
 - Revize převzatého pluginu: `docs/revize-pluginu.md`.
+- Přepnutí ze starého webu a jeho zkouška nad zálohou (`make zkouska`): `docs/prepnuti.md`.
 
 ## Struktura
 

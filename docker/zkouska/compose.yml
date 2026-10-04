@@ -1,0 +1,9 @@
+# Zkouška přepnutí nad zálohou živé databáze (make zkouska): vlastní projekt, data i porty,
+# vývojové prostředí se nemění. Živý web má prefix tabulek hwjcw_.
+services:
+  wordpress:
+    environment:
+      WORDPRESS_TABLE_PREFIX: hwjcw_
+  cli:
+    environment:
+      WORDPRESS_TABLE_PREFIX: hwjcw_

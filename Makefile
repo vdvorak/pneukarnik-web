@@ -9,7 +9,7 @@ export BASE_URL := http://localhost:$(WP_PORT)
 COMPOSE := docker compose
 TOOLS   := $(COMPOSE) run --rm tools
 
-.PHONY: help up down reset logs wp test test-php test-e2e lint fix check
+.PHONY: help up down reset logs wp test test-php test-e2e lint fix check zkouska zkouska-down
 
 help: ## Vypíše příkazy
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-10s %s\n", $$1, $$2}'
@@ -55,3 +55,15 @@ fix: vendor ## Automaticky opraví formátování (PHPCBF)
 	$(TOOLS) composer fix
 
 check: lint test ## Lint a všechny testy
+
+ZKOUSKA := WP_PORT=8090 MAILPIT_PORT=8035 $(COMPOSE) -p pneukarnik-zkouska -f docker-compose.yml -f docker/zkouska/compose.yml
+
+zkouska: ## Zkouška přepnutí nad zálohou živé DB (web :8090, pošta :8035), make zkouska DUMP=zaloha.sql
+	@test -f "$(DUMP)" || { echo "Chybí záloha: make zkouska DUMP=cesta/k/zaloze.sql (docs/prepnuti.md)"; exit 1; }
+	$(ZKOUSKA) down -v
+	$(ZKOUSKA) up -d --wait wordpress
+	$(ZKOUSKA) exec -T db mariadb -uwordpress -pwordpress wordpress < "$(DUMP)"
+	$(ZKOUSKA) run --rm -T cli sh /scripts/prepnuti.sh
+
+zkouska-down: ## Smaže prostředí zkoušky i s daty (jsou v něm osobní údaje zákazníků)
+	$(ZKOUSKA) down -v

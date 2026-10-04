@@ -40,6 +40,30 @@ class OldUrlsTest extends Pneukarnik_REST_Test_Case {
 		$this->assertSame( home_url( '/' ), Pneukarnik_Old_Urls::target( '/service/neexistuje/' ) );
 	}
 
+	public function test_old_service_link_finds_the_service_converted_from_it_when_the_slug_differs(): void {
+		// Starý web: Služba „Dezinfekce vozidla ozonem“ se slugem 780, nová Služba má slug dezinfekce-ozonem.
+		$old     = self::factory()->post->create(
+			[
+				'post_type'  => 'service',
+				'post_title' => 'Dezinfekce vozidla ozonem',
+				'post_name'  => '780',
+			]
+		);
+		$service = $this->create_service( 60, false, 'Dezinfekce vozidla ozonem' );
+		update_post_meta( $service, Pneukarnik_Legacy_Import::SERVICE_META, $old );
+
+		$this->assertSame( Pneukarnik_Service::find( $service )?->url(), Pneukarnik_Old_Urls::target( '/service/780/' ) );
+
+		wp_update_post(
+			[
+				'ID'          => $service,
+				'post_status' => 'draft',
+			]
+		);
+
+		$this->assertSame( home_url( '/' ), Pneukarnik_Old_Urls::target( '/service/780/' ), 'nezveřejněná Služba' );
+	}
+
 	/**
 	 * @return array<string, array{0:string}>
 	 */

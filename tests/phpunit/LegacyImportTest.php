@@ -102,8 +102,9 @@ class LegacyImportTest extends Pneukarnik_REST_Test_Case {
 		);
 		$this->assertSame( $attempt_ozone, $this->service_for( $old_ozone )->id );
 		$this->assertSame( 'autoservis', $this->service_for( $old_ozone )->category );
-		$this->assertSame( [ $attempt ], array_column( $this->bookings()[0]['services'], 'id' ) );
-		$this->assertSame( '09:30', $this->bookings()[0]['time_end'], 'Délka podle převzaté Služby' );
+		$booking = $this->bookings()[0];
+		$this->assertSame( [ $attempt ], array_column( $booking['services'], 'id' ) );
+		$this->assertSame( [ '10:00', [ 60 ] ], [ $booking['time_end'], array_column( $booking['services'], 'duration' ) ], 'dílnu zabírá jako na starém webu' );
 	}
 
 	public function test_future_and_last_year_bookings_are_converted(): void {
@@ -190,7 +191,7 @@ class LegacyImportTest extends Pneukarnik_REST_Test_Case {
 		);
 	}
 
-	public function test_overlapping_booking_is_converted_with_a_warning(): void {
+	public function test_overlapping_future_booking_is_converted_with_a_warning(): void {
 		$this->old_reservation( [ 'time' => '09:00:00' ] );
 		$this->old_reservation(
 			[
@@ -198,10 +199,19 @@ class LegacyImportTest extends Pneukarnik_REST_Test_Case {
 				'time' => '09:30:00',
 			]
 		);
+		// Minulé překryvy (chyba starého webu) se převedou bez upozornění.
+		foreach ( [ '09:00:00', '09:30:00' ] as $time ) {
+			$this->old_reservation(
+				[
+					'date' => '2026-12-01',
+					'time' => $time,
+				]
+			);
+		}
 
 		$report = $this->import();
 
-		$this->assertSame( [ 2, 0, 0 ], $this->counts( $report['bookings'] ) );
+		$this->assertSame( [ 4, 0, 0 ], $this->counts( $report['bookings'] ) );
 		$this->assertSame( [ 'Rezervace 18.01.2027 v 09:30 (Eva Malá): převedeno, ale překrývá se s jinou Rezervací. Domluvte se se Zákazníkem.' ], $report['bookings']['problems'] );
 	}
 
