@@ -391,6 +391,51 @@ a.card--muted:hover,a.card--tint:hover{box-shadow:var(--shadow-tile-hover)}
 .sluzby__kategorie h2{margin:0}
 .sluzby__prazdne{margin:0;font-size:17px;color:var(--text-muted)}
 
+/* Detail Služby: obsah ve dvou třetinách, karta Cena vpravo přilepená. Pod 1000 px karta nad obsahem,
+   pod 720 px plovoucí přes spodek hero a jen s cenou (Rezervovat a Zavolat jsou v mobilní liště). */
+.sluzba{max-width:var(--container);margin:0 auto;padding:24px var(--gutter) var(--section-y);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:48px;align-items:start}
+.sluzba__obsah{grid-column:1 / span 2;grid-row:1;min-width:0;display:flex;flex-direction:column;gap:44px}
+.sluzba__cast{display:flex;flex-direction:column;gap:18px}
+.sluzba__cast h2{margin:0}
+.sluzba__seznam{font-size:17px}
+.sluzba__prubeh,.sluzba__souvisejici{gap:14px}
+.sluzba__prubeh p{margin:0;font-size:17px;line-height:1.65;color:var(--text-soft);text-wrap:pretty}
+.sluzba__prubeh .sluzba__delka{color:var(--text-body)}
+.sluzba__dotazy{padding:28px;border-radius:var(--radius-lg);background:var(--surface-muted)}
+.sluzba__souvisejici ul{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:10px 24px}
+
+.sluzba__akce{display:flex;flex-direction:column;gap:10px;padding:28px 30px;border-radius:var(--radius-lg);background:var(--surface-dark);color:#fff}
+.sluzba__akce p{margin:0}
+.sluzba__akce-stitek{align-self:flex-start;padding:6px 14px;border-radius:var(--radius-pill);background:var(--brand-accent);color:var(--neutral-900);font-weight:800;font-size:14px;line-height:1.3}
+.sluzba__akce-hlava{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px 20px}
+.sluzba__akce h2{margin:0;font:900 24px/1.25 var(--font-display)}
+.sluzba__akce .sluzba__akce-cena{font:900 32px var(--font-display);color:var(--brand-accent);white-space:nowrap}
+.sluzba__akce-popis{font-size:16px;line-height:1.6;opacity:.85}
+.sluzba__akce-popis p + p{margin-top:.6em}
+.sluzba__akce .sluzba__akce-platnost{font-size:15px;opacity:.75}
+
+.cena-sluzby{grid-column:3;grid-row:1;position:sticky;top:24px;display:flex;flex-direction:column;gap:14px;padding:28px;border-radius:var(--radius-lg);background:#fff;box-shadow:var(--shadow-float)}
+.cena-sluzby p{margin:0}
+.cena-sluzby__radek{display:flex;flex-direction:column;gap:14px}
+.cena-sluzby__castka{font:var(--type-price-xl)}
+.cena-sluzby__zahrnuje{font-size:15px;line-height:1.55;color:var(--text-muted)}
+.cena-sluzby .cena-sluzby__akce{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.cena-sluzby__poznamka{font-size:14px;color:var(--text-muted)}
+
+@media (max-width:999px){
+	.sluzba{grid-template-columns:minmax(0,1fr)}
+	.sluzba__obsah,.cena-sluzby{grid-column:1;grid-row:auto}
+	.cena-sluzby{position:static;max-width:480px}
+}
+@media (max-width:719px){
+	.sluzba{padding:0 16px 48px;gap:24px}
+	.cena-sluzby{max-width:none;margin-top:-16px;gap:6px;padding:18px 20px}
+	.cena-sluzby__radek{flex-direction:row;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:12px}
+	.cena-sluzby__castka{font:900 26px var(--font-display)}
+	.cena-sluzby__zahrnuje{font-size:14px;line-height:1.5}
+	.cena-sluzby .cena-sluzby__akce{display:none}
+}
+
 /* 404 */
 .chyba{background:var(--gradient-hero)}
 .chyba__inner{max-width:var(--container-narrow);margin:0 auto;padding:88px var(--gutter) 112px;display:flex;flex-direction:column;align-items:flex-start;gap:20px}

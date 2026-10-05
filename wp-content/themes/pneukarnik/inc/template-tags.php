@@ -27,16 +27,18 @@ function pneukarnik_amount( int $amount ): string {
 }
 
 /**
- * Blok platné Akce v detailu Služby: název, akční cena, popis a do kdy platí.
+ * Blok platné Akce v detailu Služby (tmavý): štítek, název, akční cena, popis a do kdy platí.
  */
 function pneukarnik_promotion_block( Pneukarnik_Promotion $promotion ): void {
 	?>
 	<section class="sluzba__akce">
-		<p class="stitek-akce"><?php esc_html_e( 'Akce', 'pneukarnik' ); ?></p>
-		<h2><?php echo esc_html( $promotion->title ); ?></h2>
-		<p class="sluzba__akce-cena"><?php echo esc_html( pneukarnik_amount( (int) $promotion->price ) ); ?></p>
+		<p class="sluzba__akce-stitek"><?php esc_html_e( 'Akce', 'pneukarnik' ); ?></p>
+		<div class="sluzba__akce-hlava">
+			<h2><?php echo esc_html( $promotion->title ); ?></h2>
+			<p class="sluzba__akce-cena"><?php echo esc_html( pneukarnik_amount( (int) $promotion->price ) ); ?></p>
+		</div>
 		<?php if ( '' !== $promotion->description ) : ?>
-			<?php echo wp_kses_post( wpautop( esc_html( $promotion->description ) ) ); ?>
+			<div class="sluzba__akce-popis"><?php echo wp_kses_post( wpautop( esc_html( $promotion->description ) ) ); ?></div>
 		<?php endif; ?>
 		<p class="sluzba__akce-platnost">
 			<?php
@@ -46,6 +48,51 @@ function pneukarnik_promotion_block( Pneukarnik_Promotion $promotion ): void {
 		</p>
 	</section>
 	<?php
+}
+
+/**
+ * Karta Cena v detailu Služby: cena, co zahrnuje, Rezervovat (jen online rezervovatelná) a Zavolat.
+ * Na desktopu přilepená vpravo, na mobilu pod hero jen s cenou (akce jsou v mobilní liště).
+ */
+function pneukarnik_service_price_card( Pneukarnik_Service $service ): void {
+	$phone = Pneukarnik_Contact::phone();
+	?>
+	<aside class="cena-sluzby" aria-labelledby="cena-sluzby">
+		<div class="cena-sluzby__radek">
+			<h2 class="eyebrow" id="cena-sluzby"><?php esc_html_e( 'Cena', 'pneukarnik' ); ?></h2>
+			<p class="cena-sluzby__castka"><?php echo esc_html( pneukarnik_price_label( $service ) ); ?></p>
+		</div>
+		<?php if ( '' !== $service->price_note ) : ?>
+			<p class="cena-sluzby__zahrnuje"><?php esc_html_e( 'Cena zahrnuje:', 'pneukarnik' ); ?> <?php echo esc_html( $service->price_note ); ?></p>
+		<?php endif; ?>
+		<?php if ( $service->bookable || '' !== $phone ) : ?>
+			<p class="cena-sluzby__akce">
+				<?php if ( $service->bookable ) : ?>
+					<a class="button button--block" href="<?php echo esc_url( pneukarnik_booking_url( $service ) ); ?>"><?php esc_html_e( 'Rezervovat', 'pneukarnik' ); ?></a>
+				<?php endif; ?>
+				<?php if ( '' !== $phone ) : ?>
+					<a class="button button--secondary button--block" href="<?php echo esc_url( pneukarnik_tel_href( $phone ) ); ?>">
+						<?php
+						/* translators: %s: telefonní číslo */
+						echo esc_html( sprintf( __( 'Zavolat %s', 'pneukarnik' ), $phone ) );
+						?>
+					</a>
+				<?php endif; ?>
+			</p>
+		<?php endif; ?>
+		<?php if ( ! $service->bookable ) : ?>
+			<p class="cena-sluzby__poznamka"><?php esc_html_e( 'Tuto službu objednáváme jen telefonicky.', 'pneukarnik' ); ?></p>
+		<?php endif; ?>
+	</aside>
+	<?php
+}
+
+/**
+ * Adresa rezervačního formuláře, u online rezervovatelné Služby s ní předvybranou.
+ */
+function pneukarnik_booking_url( ?Pneukarnik_Service $service = null ): string {
+	$url = home_url( '/rezervace/' );
+	return $service && $service->bookable ? add_query_arg( 'sluzba', $service->slug, $url ) : $url;
 }
 
 /**
@@ -297,7 +344,7 @@ function pneukarnik_service_cta( Pneukarnik_Service $service ): void {
 	?>
 	<div class="cta">
 		<?php if ( $service->bookable ) : ?>
-			<a class="cta__rezervovat" href="<?php echo esc_url( add_query_arg( 'sluzba', $service->slug, home_url( '/rezervace/' ) ) ); ?>"><?php esc_html_e( 'Rezervovat', 'pneukarnik' ); ?></a>
+			<a class="cta__rezervovat" href="<?php echo esc_url( pneukarnik_booking_url( $service ) ); ?>"><?php esc_html_e( 'Rezervovat', 'pneukarnik' ); ?></a>
 		<?php endif; ?>
 		<?php if ( '' !== $phone ) : ?>
 			<a class="cta__zavolat" href="<?php echo esc_url( pneukarnik_tel_href( $phone ) ); ?>">
@@ -430,14 +477,8 @@ function pneukarnik_mobile_bar(): void {
 	if ( ! $on_page ) {
 		return;
 	}
-	$booking = home_url( '/rezervace/' );
-	if ( is_singular( Pneukarnik_Service::POST_TYPE ) ) {
-		$service = Pneukarnik_Service::from_post( get_post() );
-		if ( $service->bookable ) {
-			$booking = add_query_arg( 'sluzba', $service->slug, $booking );
-		}
-	}
-	$phone = Pneukarnik_Contact::phone();
+	$booking = pneukarnik_booking_url( is_singular( Pneukarnik_Service::POST_TYPE ) ? Pneukarnik_Service::from_post( get_post() ) : null );
+	$phone   = Pneukarnik_Contact::phone();
 	?>
 	<nav class="mobilni-lista" aria-label="<?php esc_attr_e( 'Rychlý kontakt', 'pneukarnik' ); ?>">
 		<?php if ( '' !== $phone ) : ?>

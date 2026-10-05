@@ -5,7 +5,7 @@ test.beforeEach(async ({ page }) => {
 	await login(page);
 });
 
-test('Služba z administrace je na rozcestníku i v detailu se všemi částmi v pořadí', async ({ page }) => {
+test('Služba z administrace je na rozcestníku i v detailu se všemi částmi v pořadí', async ({ page, browser }) => {
 	const related = uniqueTitle('Vyvážení kol');
 	await publishService(page, {
 		title: related,
@@ -39,25 +39,46 @@ test('Služba z administrace je na rozcestníku i v detailu se všemi částmi v
 	await page.getByRole('link', { name: title }).click();
 
 	await expect(page).toHaveURL(/\/pneuservis\/e2e-prezuti-\d+\/$/);
+	const url = page.url();
+	const slug = new URL(url).pathname.split('/').at(-2);
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText(title);
+	await expect(page.getByRole('main').getByRole('link', { name: 'Pneuservis' })).toHaveAttribute('href', /\/pneuservis\/$/);
 	await expect(page.getByText('Sezónní přezutí včetně vyvážení.')).toBeVisible();
 	await expect(page.locator('main h2')).toHaveText([
+		'Cena',
 		'Co zahrnuje',
 		'Jak to probíhá',
-		'Cena',
 		'Co si vzít s sebou',
 		'Časté dotazy',
 		'Související služby',
 	]);
 	await expect(page.getByRole('listitem').filter({ hasText: 'Demontáž a montáž kol' })).toBeVisible();
 	await expect(page.getByText('zhruba 30 minut')).toBeVisible();
-	await expect(page.getByText('od 600 Kč')).toBeVisible();
-	await expect(page.getByText('osobní auto do 16"')).toBeVisible();
-	await expect(page.getByText('Musím čekat na místě?')).toBeVisible();
-	await expect(page.getByRole('main').getByRole('link', { name: 'Rezervovat' })).toHaveAttribute('href', /\/rezervace\//);
-	await expect(page.getByRole('link', { name: /Zavolat/ })).toHaveAttribute('href', /^tel:\+420/);
+	const price = page.getByRole('complementary', { name: 'Cena' });
+	await expect(price.getByText('od 600 Kč')).toBeVisible();
+	await expect(price.getByText('Cena zahrnuje: osobní auto do 16"')).toBeVisible();
+	await expect(price.getByRole('link', { name: 'Rezervovat' })).toHaveAttribute('href', new RegExp(`/rezervace/\\?sluzba=${slug}$`));
+	await expect(price.getByRole('link', { name: 'Zavolat +420 775 565 326' })).toHaveAttribute('href', 'tel:+420775565326');
+	await expect(price.getByText('Tuto službu objednáváme jen telefonicky.')).toHaveCount(0);
+	await expect(page.getByText('Můžete, máme čekárnu.')).toBeHidden();
+
+	// Na mobilu je karta Cena pod hero jen s cenou, Rezervovat s touto Službou je v liště.
+	await page.setViewportSize({ width: 375, height: 700 });
+	await expect(price.getByText('od 600 Kč')).toBeInViewport();
+	await expect(price.getByRole('link', { name: 'Rezervovat' })).toBeHidden();
+	await expect(page.getByRole('navigation', { name: 'Rychlý kontakt' }).getByRole('link', { name: 'Rezervovat' })).toHaveAttribute('href', new RegExp(`\\?sluzba=${slug}$`));
+	await page.setViewportSize({ width: 1280, height: 720 });
+
 	await page.getByRole('link', { name: related }).click();
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText(related);
+
+	// Časté dotazy se rozbalí i bez JavaScriptu.
+	const context = await browser.newContext({ javaScriptEnabled: false });
+	const visitor = await context.newPage();
+	await visitor.goto(url);
+	await visitor.getByText('Musím čekat na místě?').click();
+	await expect(visitor.getByText('Můžete, máme čekárnu.')).toBeVisible();
+	await context.close();
 });
 
 test('Služba jen na telefon s cenou dle vozu ukáže jen vyplněné části a Zavolat', async ({ page }) => {
@@ -74,9 +95,15 @@ test('Služba jen na telefon s cenou dle vozu ukáže jen vyplněné části a Z
 	await page.getByRole('link', { name: title }).click();
 
 	await expect(page.locator('main h2')).toHaveText(['Cena']);
-	await expect(page.getByText('Cena dle vozu')).toBeVisible();
+	const price = page.getByRole('complementary', { name: 'Cena' });
+	await expect(price.getByText('Cena dle vozu')).toBeVisible();
+	await expect(price.getByText('Tuto službu objednáváme jen telefonicky.')).toBeVisible();
 	await expect(page.getByRole('main').getByRole('link', { name: 'Rezervovat' })).toHaveCount(0);
-	await expect(page.getByRole('link', { name: /Zavolat/ })).toBeVisible();
+	await expect(price.getByRole('link', { name: /Zavolat/ })).toBeVisible();
+
+	await page.setViewportSize({ width: 375, height: 700 });
+	await expect(price.getByText('Tuto službu objednáváme jen telefonicky.')).toBeInViewport();
+	await expect(page.getByRole('navigation', { name: 'Rychlý kontakt' }).getByRole('link', { name: 'Rezervovat' })).toHaveAttribute('href', /\/rezervace\/$/);
 });
 
 test('Stránka Služby ukáže obě Kategorie, přepínač bez JavaScriptu nechá jednu', async ({ page, browser }) => {
