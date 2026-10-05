@@ -37,6 +37,11 @@ test('Sociální sítě z Nastavení jsou v patičce', async ({ page }) => {
 		const social = page.getByRole('list', { name: 'Sociální sítě' });
 		await expect(social.getByRole('link')).toHaveText(['Facebook']);
 		await expect(social.getByRole('link', { name: 'Facebook' })).toHaveAttribute('href', 'https://www.facebook.com/pneukarnik');
+
+		setOptions({ pneukarnik_social_facebook: '' });
+		await page.reload();
+		await expect(page.getByRole('list', { name: 'Sociální sítě' })).toHaveCount(0);
+		await expect(page.getByText('Sledujte nás')).toHaveCount(0);
 	} finally {
 		setOptions(original);
 	}

@@ -49,19 +49,20 @@ function pneukarnik_promotion_block( Pneukarnik_Promotion $promotion ): void {
 }
 
 /**
- * Oznámení nahoře na webu: nejnovější platné, Zákazník ho může zavřít do konce relace prohlížeče.
- * Na stránce rezervace se nevykreslí, když je stejné Oznámení ve výpisu u formuláře.
+ * Oznámení nad hlavičkou: nejnovější platné, Zákazník ho může zavřít do konce relace prohlížeče.
+ * Na stránce rezervace se nevykreslí vůbec, Oznámení k rezervaci jsou u formuláře.
  */
 function pneukarnik_top_notice(): void {
 	$notice = Pneukarnik_Notice::top();
-	if ( ! $notice || ( $notice->at_booking && 'rezervace' === Pneukarnik_Booking_Pages::current() ) ) {
+	if ( ! $notice || 'rezervace' === Pneukarnik_Booking_Pages::current() ) {
 		return;
 	}
 	?>
 	<section class="oznameni" id="oznameni" data-id="<?php echo (int) $notice->id; ?>" aria-label="<?php esc_attr_e( 'Oznámení', 'pneukarnik' ); ?>">
-		<p class="oznameni__nadpis"><strong><?php echo esc_html( $notice->title ); ?></strong></p>
-		<?php echo wp_kses_post( wpautop( esc_html( $notice->text ) ) ); ?>
-		<button type="button" class="oznameni__zavrit" hidden><?php esc_html_e( 'Zavřít oznámení', 'pneukarnik' ); ?></button>
+		<div class="oznameni__inner">
+			<p class="oznameni__text"><strong class="oznameni__nadpis"><?php echo esc_html( $notice->title ); ?></strong> <?php echo nl2br( esc_html( $notice->text ) ); ?></p>
+			<button type="button" class="oznameni__zavrit" aria-label="<?php esc_attr_e( 'Zavřít oznámení', 'pneukarnik' ); ?>" title="<?php esc_attr_e( 'Zavřít oznámení', 'pneukarnik' ); ?>" hidden><span aria-hidden="true">×</span></button>
+		</div>
 	</section>
 	<?php
 	// Hned za prvkem, aby zavřené Oznámení po načtení stránky ani nebliklo. Bez cookies, jen sessionStorage.
@@ -151,7 +152,7 @@ function pneukarnik_contact_cta( string $css_class ): void {
 }
 
 /**
- * Pohotovost výrazně v hlavičce, jen když ji Provozovatel zapnul.
+ * Pohotovost jako tmavý pruh nad hlavičkou, jen když ji Provozovatel zapnul.
  */
 function pneukarnik_emergency(): void {
 	$emergency = Pneukarnik_Contact::emergency();
@@ -159,13 +160,15 @@ function pneukarnik_emergency(): void {
 		return;
 	}
 	?>
-	<p class="pohotovost">
-		<strong><?php esc_html_e( 'Pohotovost', 'pneukarnik' ); ?></strong>
-		<a href="<?php echo esc_url( pneukarnik_tel_href( $emergency['phone'] ) ); ?>"><?php echo esc_html( $emergency['phone'] ); ?></a>
-		<?php if ( '' !== $emergency['text'] ) : ?>
-			<span><?php echo esc_html( $emergency['text'] ); ?></span>
-		<?php endif; ?>
-	</p>
+	<div class="pohotovost">
+		<p class="pohotovost__inner">
+			<strong class="pohotovost__stitek"><?php esc_html_e( 'Pohotovost', 'pneukarnik' ); ?></strong>
+			<?php if ( '' !== $emergency['text'] ) : ?>
+				<span class="pohotovost__text"><?php echo esc_html( $emergency['text'] ); ?></span>
+			<?php endif; ?>
+			<a class="pohotovost__telefon" href="<?php echo esc_url( pneukarnik_tel_href( $emergency['phone'] ) ); ?>"><span aria-hidden="true">☎ </span><?php echo esc_html( $emergency['phone'] ); ?></a>
+		</p>
+	</div>
 	<?php
 }
 
@@ -186,7 +189,7 @@ function pneukarnik_hours_label( ?array $hours ): string {
  * Otevírací doba na 7 dní od dneška včetně Výjimek a svátků (stejná pravidla jako Termíny).
  */
 function pneukarnik_upcoming_hours(): void {
-	$weekdays = [ 'neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota' ];
+	$weekdays = [ 'Neděle', 'Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota' ];
 	$relative = [ __( 'Dnes', 'pneukarnik' ), __( 'Zítra', 'pneukarnik' ) ];
 	?>
 	<table class="oteviraci-doba">
@@ -227,13 +230,13 @@ function pneukarnik_map(): void {
 	$address = Pneukarnik_Contact::address();
 	?>
 	<div class="mapa" data-mapa="<?php echo esc_url( $embed ); ?>">
-		<button type="button" class="mapa__nacist" hidden><?php esc_html_e( 'Zobrazit mapu', 'pneukarnik' ); ?></button>
+		<button type="button" class="mapa__nacist button button--dark button--md" hidden><?php esc_html_e( 'Zobrazit mapu', 'pneukarnik' ); ?></button>
 		<p class="mapa__info"><?php esc_html_e( 'Mapa se načte z Google Maps až po kliknutí.', 'pneukarnik' ); ?></p>
 	</div>
 	<?php if ( '' !== $address ) : ?>
 		<p class="mapa__adresa">
-			<?php echo esc_html( $address ); ?>
-			· <a href="<?php echo esc_url( Pneukarnik_Contact::map_link() ); ?>" rel="noopener" target="_blank"><?php esc_html_e( 'Otevřít v Google Maps', 'pneukarnik' ); ?></a>
+			<span><strong><?php bloginfo( 'name' ); ?></strong>, <?php echo esc_html( $address ); ?></span>
+			<a class="arrow-link" href="<?php echo esc_url( Pneukarnik_Contact::map_link() ); ?>" rel="noopener" target="_blank"><?php esc_html_e( 'Otevřít v Google Maps', 'pneukarnik' ); ?></a>
 		</p>
 	<?php endif; ?>
 	<?php
@@ -297,5 +300,125 @@ function pneukarnik_reviews( array $summary ): void {
 	<?php if ( '' !== $summary['url'] ) : ?>
 		<p><a class="recenze__vse" href="<?php echo esc_url( $summary['url'] ); ?>" rel="noopener" target="_blank"><?php esc_html_e( 'Všechna hodnocení na Google', 'pneukarnik' ); ?></a></p>
 	<?php endif; ?>
+	<?php
+}
+
+/**
+ * Název webu pro značku: první slovo akcentem („Pneuservis“), zbytek („Kárník“).
+ *
+ * @return array{0:string,1:string} předpona a zbytek názvu
+ */
+function pneukarnik_brand(): array {
+	$parts = explode( ' ', trim( (string) get_bloginfo( 'name' ) ), 2 );
+	return 2 === count( $parts ) ? [ $parts[0], $parts[1] ] : [ '', $parts[0] ];
+}
+
+/**
+ * Odkazy hlavního menu, aktivní položka má aria-current (stránka sama „page“, stránka pod ní „true“).
+ */
+function pneukarnik_nav_links(): void {
+	$items = [];
+	foreach ( Pneukarnik_Service::categories() as $category => $label ) {
+		$items[ $category ] = [ $label, Pneukarnik_Service::category_url( $category ) ];
+	}
+	$items['o-nas']     = [ __( 'O nás', 'pneukarnik' ), home_url( '/o-nas/' ) ];
+	$items['kontakt']   = [ __( 'Kontakt', 'pneukarnik' ), home_url( '/kontakt/' ) ];
+	$items['rezervace'] = [ __( 'Rezervace', 'pneukarnik' ), home_url( '/rezervace/' ) ];
+
+	[ $active, $exact ] = pneukarnik_nav_active();
+	foreach ( $items as $key => [ $label, $url ] ) {
+		printf(
+			'<a href="%s"%s>%s</a>',
+			esc_url( $url ),
+			$key === $active ? ' aria-current="' . ( $exact ? 'page' : 'true' ) . '"' : '',
+			esc_html( $label )
+		);
+	}
+}
+
+/**
+ * Položka menu, pod kterou patří aktuální stránka, a jestli je to přímo ona.
+ *
+ * @return array{0:string,1:bool}
+ */
+function pneukarnik_nav_active(): array {
+	if ( is_post_type_archive( Pneukarnik_Service::POST_TYPE ) ) {
+		return [ (string) get_query_var( Pneukarnik_Service_Type::QUERY_VAR ), true ];
+	}
+	if ( is_singular( Pneukarnik_Service::POST_TYPE ) ) {
+		return [ Pneukarnik_Service::from_post( get_post() )->category, false ];
+	}
+	if ( is_page( [ 'o-nas', 'kontakt' ] ) ) {
+		return [ (string) get_post_field( 'post_name', get_queried_object_id() ), true ];
+	}
+	$booking_page = Pneukarnik_Booking_Pages::current();
+	if ( 'rezervace' === $booking_page || 'potvrzeni' === $booking_page ) {
+		return [ 'rezervace', 'rezervace' === $booking_page ];
+	}
+	return [ '', false ];
+}
+
+/**
+ * Ikona sociální sítě (obrys ve stylu Lucide, barva textu).
+ */
+function pneukarnik_social_icon( string $network ): void {
+	$paths = [
+		'facebook'  => '<path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>',
+		'instagram' => '<rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><path d="M17.5 6.5h.01"/>',
+		'google'    => '<path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 12h-9"/>',
+	];
+	if ( ! isset( $paths[ $network ] ) ) {
+		return;
+	}
+	echo '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' . $paths[ $network ] . '</svg>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- pevné SVG výše.
+}
+
+/**
+ * Lišta Zavolat + Rezervovat dole na mobilu (Úvod, Služby, detail Služby, Kontakt, O nás, Průvodce, 404).
+ * Na detailu online rezervovatelné Služby vede Rezervovat na formulář s touto Službou.
+ */
+function pneukarnik_mobile_bar(): void {
+	// Stránky rezervace jdou přes dotaz Úvodu, is_front_page() je pro ně také true.
+	$on_page = ( '' === Pneukarnik_Booking_Pages::current() && ( is_front_page() || is_404() ) )
+		|| is_page( [ 'kontakt', 'o-nas' ] ) || is_post_type_archive( Pneukarnik_Service::POST_TYPE ) || is_singular( [ Pneukarnik_Service::POST_TYPE, Pneukarnik_Guide::POST_TYPE ] );
+	if ( ! $on_page ) {
+		return;
+	}
+	$booking = home_url( '/rezervace/' );
+	if ( is_singular( Pneukarnik_Service::POST_TYPE ) ) {
+		$service = Pneukarnik_Service::from_post( get_post() );
+		if ( $service->bookable ) {
+			$booking = add_query_arg( 'sluzba', $service->slug, $booking );
+		}
+	}
+	$phone = Pneukarnik_Contact::phone();
+	?>
+	<nav class="mobilni-lista" aria-label="<?php esc_attr_e( 'Rychlý kontakt', 'pneukarnik' ); ?>">
+		<?php if ( '' !== $phone ) : ?>
+			<a class="mobilni-lista__zavolat" href="<?php echo esc_url( pneukarnik_tel_href( $phone ) ); ?>"><?php esc_html_e( 'Zavolat', 'pneukarnik' ); ?></a>
+		<?php endif; ?>
+		<a class="mobilni-lista__rezervovat" href="<?php echo esc_url( $booking ); ?>"><?php esc_html_e( 'Rezervovat', 'pneukarnik' ); ?></a>
+	</nav>
+	<?php
+}
+
+/**
+ * Úvod stránky (PageHero): nadpis, nepovinný perex a drobeček zpět.
+ *
+ * @param array{0:string,1:string}|null $back popisek a adresa drobečku zpět
+ */
+function pneukarnik_page_hero( string $title, string $lead = '', ?array $back = null, bool $narrow = false ): void {
+	?>
+	<section class="page-hero">
+		<div class="page-hero__inner<?php echo $narrow ? ' page-hero__inner--narrow' : ''; ?>">
+			<?php if ( $back ) : ?>
+				<a class="page-hero__back arrow-link--back" href="<?php echo esc_url( $back[1] ); ?>"><?php echo esc_html( $back[0] ); ?></a>
+			<?php endif; ?>
+			<h1 class="page-hero__title"><?php echo esc_html( $title ); ?></h1>
+			<?php if ( '' !== $lead ) : ?>
+				<p class="page-hero__lead"><?php echo esc_html( $lead ); ?></p>
+			<?php endif; ?>
+		</div>
+	</section>
 	<?php
 }

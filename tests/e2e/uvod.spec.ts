@@ -60,10 +60,10 @@ test('Telefon a Rezervovat jsou na mobilu vidět bez scrollování', async ({ pa
 
 	for (const path of ['/', '/pneuservis/']) {
 		await page.goto(path);
-		const header = page.locator('.site-header__kontakt');
-		await expect(header.getByRole('link', { name: '+420 775 565 326' })).toHaveAttribute('href', 'tel:+420775565326');
-		await expect(header.getByRole('link', { name: '+420 775 565 326' })).toBeInViewport();
-		await expect(header.getByRole('link', { name: 'Rezervovat' })).toBeInViewport();
+		const call = page.locator('.site-header').getByRole('link', { name: 'Zavolat +420 775 565 326' });
+		await expect(call).toHaveAttribute('href', 'tel:+420775565326');
+		await expect(call).toBeInViewport();
+		await expect(page.locator('.mobilni-lista').getByRole('link', { name: 'Rezervovat' })).toBeInViewport();
 	}
 	await page.goto('/');
 	await expect(page.locator('.uvod__cta').getByRole('link', { name: 'Rezervovat' })).toBeInViewport();
@@ -101,7 +101,7 @@ test('Kontakty z Nastavení jsou v patičce a Pohotovost jen po zapnutí', async
 	setOptions({ pneukarnik_emergency_enabled: '1' });
 	await page.reload();
 
-	const emergency = page.locator('.site-header .pohotovost');
+	const emergency = page.locator('.pohotovost');
 	await expect(emergency).toContainText('Pohotovost');
 	await expect(emergency.getByRole('link', { name: '+420 600 700 800' })).toHaveAttribute('href', 'tel:+420600700800');
 	await expect(emergency).toContainText('Defekt na cestě nonstop');

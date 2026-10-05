@@ -43,6 +43,40 @@ add_action(
 	}
 );
 
+// Web nic nenačítá z cizích domén: emoji WordPressu by v prohlížečích bez emoji stahovaly obrázky z s.w.org.
+remove_action( 'wp_head', 'print_emoji_detection_script', 7 );
+remove_action( 'wp_enqueue_scripts', 'wp_enqueue_emoji_styles' );
+
+add_filter( 'get_site_icon_url', 'pneukarnik_site_icon_url' );
+add_action( 'wp', 'pneukarnik_use_theme_favicons' );
+
+/**
+ * Bez ikony webu z administrace (Vzhled → Přizpůsobit) je ikonou PNG 512 px ze šablony,
+ * i pro og:image a strukturovaná data.
+ */
+function pneukarnik_site_icon_url( string $url ): string {
+	return '' !== $url ? $url : get_theme_file_uri( 'assets/img/ikona-512.png' );
+}
+
+/**
+ * Bez ikony webu z administrace vypíše favikony šablony (SVG, pro iOS PNG) místo odkazů WordPressu.
+ */
+function pneukarnik_use_theme_favicons(): void {
+	if ( (int) get_option( 'site_icon' ) ) {
+		return;
+	}
+	remove_action( 'wp_head', 'wp_site_icon', 99 );
+	add_action(
+		'wp_head',
+		static function (): void {
+			printf( '<link rel="icon" href="%s" type="image/svg+xml" sizes="any">' . "\n", esc_url( get_theme_file_uri( 'assets/img/favicon.svg' ) ) );
+			printf( '<link rel="icon" href="%s" type="image/svg+xml" sizes="16x16">' . "\n", esc_url( get_theme_file_uri( 'assets/img/favicon-16.svg' ) ) );
+			printf( '<link rel="apple-touch-icon" href="%s">' . "\n", esc_url( get_theme_file_uri( 'assets/img/apple-touch-icon.png' ) ) );
+		},
+		99
+	);
+}
+
 add_action( 'wp_head', 'pneukarnik_old_anchors', 0 );
 
 /**

@@ -44,6 +44,8 @@ test('U rezervace jsou všechna platná Oznámení s volbou „u rezervace“', 
 	await expect(list.getByText('Leasingové vozy až od 1. 4.')).toBeVisible();
 	await expect(list.getByText(expired)).toHaveCount(0);
 	await expect(list.getByText(notAtBooking)).toHaveCount(0);
+	// Pruh Oznámení nahoře na stránce rezervace není vůbec.
+	await expect(page.locator('#oznameni')).toHaveCount(0);
 });
 
 test('Zavřené horní Oznámení se do konce relace znovu nezobrazí', async ({ page, browser }) => {

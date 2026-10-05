@@ -1,9 +1,365 @@
 /*
 Theme Name: Pneukarník
 Description: Šablona webu Pneuservis a autoservis Jan Kárník. Obsah vykresluje serverově, rezervační pravidla patří pluginu pneukarnik-booking.
-Version: 0.1.0
+Version: 0.2.0
 Requires at least: 7.1
 Requires PHP: 8.1
 Text Domain: pneukarnik
 License: Proprietary
 */
+
+/*
+ * Vzhled podle návrhu z Claude Design (docs/design/…/Pneuservis Karnik v2 foto.dc.html),
+ * designový systém „Simple Web“ přebarvený na barvy Provozovatele. Mění se jen tokeny --brand-*.
+ *
+ * Pořadí: písma → tokeny → základ → komponenty systému (anglické názvy podle návrhu: Button,
+ * Card …) → části webu (české názvy: hlavička, patička, sdílené bloky, stránky).
+ */
+
+/* Písma: hostovaná u nás, proměnná, latin + latin-ext. */
+@font-face{font-family:'Montserrat';font-style:normal;font-weight:600 900;font-display:swap;src:url('assets/fonts/Montserrat-latin-ext-600.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Montserrat';font-style:normal;font-weight:600 900;font-display:swap;src:url('assets/fonts/Montserrat-latin-600.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Nunito Sans';font-style:normal;font-weight:400 800;font-display:swap;src:url('assets/fonts/NunitoSans-latin-ext-400.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Nunito Sans';font-style:normal;font-weight:400 800;font-display:swap;src:url('assets/fonts/NunitoSans-latin-400.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+
+/* ---------------------------------------------------------------- Tokeny */
+
+:root{
+	/* Značka Provozovatele (jediné, co se proti systému mění) */
+	--brand-primary:#1F2933;
+	--brand-primary-hover:#0E1419;
+	--brand-primary-tint:#EEF1F4;
+	--brand-accent:#F5A400;
+	--brand-accent-hover:#E09200;
+	--brand-accent-strong:#9A6200;
+	--brand-accent-tint:#FFF1D6;
+
+	/* Neutrální */
+	--neutral-0:#FFFFFF;
+	--neutral-50:#F5F7F9;
+	--neutral-100:#EEF0F2;
+	--neutral-200:#D5D9DE;
+	--neutral-500:#777777;
+	--neutral-600:#555555;
+	--neutral-700:#444444;
+	--neutral-900:#232323;
+	--neutral-950:#1A1A1A;
+
+	--danger:#C8321E;
+	--danger-tint:#FCEDEA;
+
+	--text-body:var(--neutral-900);
+	--text-muted:var(--neutral-600);
+	--text-soft:var(--neutral-700);
+	--text-on-dark:#FFFFFF;
+	--text-on-primary:#FFFFFF;
+	--text-on-accent:var(--neutral-900);
+	--text-link:var(--brand-primary);
+	--text-link-hover:var(--brand-primary-hover);
+	--surface-page:#FFFFFF;
+	--surface-card:#FFFFFF;
+	--surface-muted:var(--neutral-50);
+	--surface-tint:var(--brand-primary-tint);
+	--surface-dark:var(--neutral-900);
+	--surface-footer:var(--neutral-950);
+	--border-divider:var(--neutral-100);
+	--border-input:var(--neutral-200);
+	--border-on-dark:rgba(255,255,255,.15);
+	--gradient-hero:linear-gradient(180deg,var(--brand-primary-tint) 0%,#fff 100%);
+
+	/* Písmo */
+	--font-display:'Montserrat',sans-serif;
+	--font-body:'Nunito Sans',system-ui,sans-serif;
+	--type-h1:900 clamp(34px,4.8vw,58px)/1.12 var(--font-display);
+	--type-h2:900 clamp(30px,4vw,44px)/1.15 var(--font-display);
+	--type-h2-sub:900 clamp(24px,3vw,32px)/1.2 var(--font-display);
+	--type-card-title:900 22px var(--font-display);
+	--type-item-title:800 18px/1.3 var(--font-display);
+	--type-price-xl:900 44px/1 var(--font-display);
+	--type-lead-display:700 clamp(18px,2vw,22px)/1.4 var(--font-display);
+	--type-eyebrow:800 15px var(--font-display);
+	--text-lead:18px;
+	--lh-lead:1.6;
+	--text-lg:17px;
+	--text-md:16px;
+	--lh-body:1.6;
+	--text-base:15px;
+	--lh-tight:1.5;
+	--text-sm:14px;
+	--text-xs:13px;
+	--tracking-eyebrow:1.5px;
+	--tracking-wide:2px;
+
+	/* Rozměry */
+	--container:1200px;
+	--container-narrow:960px;
+	--gutter:24px;
+	--section-y:80px;
+	--radius-input:10px;
+	--radius-sm:14px;
+	--radius-md:16px;
+	--radius-lg:20px;
+	--radius-xl:24px;
+	--radius-pill:999px;
+
+	/* Stíny */
+	--shadow-xs:0 1px 6px rgba(35,35,35,.08);
+	--shadow-sm:0 2px 12px rgba(35,35,35,.1);
+	--shadow-header:0 2px 16px rgba(35,35,35,.08);
+	--shadow-card:0 4px 24px rgba(35,35,35,.08);
+	--shadow-float:0 10px 40px rgba(35,35,35,.12);
+	--shadow-card-hover:0 12px 36px color-mix(in srgb,var(--brand-primary) 18%,transparent);
+	--shadow-tile-hover:0 8px 28px color-mix(in srgb,var(--brand-primary) 15%,transparent);
+	--shadow-cta:0 6px 18px color-mix(in srgb,var(--brand-accent) 35%,transparent);
+	--shadow-bar:0 -4px 20px rgba(35,35,35,.12);
+}
+
+/* ---------------------------------------------------------------- Základ */
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--surface-page);color:var(--text-body);font-family:var(--font-body);font-size:var(--text-md);line-height:var(--lh-body);-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column}
+.site-main{flex:1}
+img,svg{max-width:100%;height:auto}
+a{color:var(--brand-primary);text-decoration:none}
+a:hover{color:var(--brand-accent-strong)}
+input,select,textarea,button{font:inherit}
+h1,h2,h3{font-family:var(--font-display);font-weight:900;text-transform:uppercase;line-height:1.15;text-wrap:balance}
+h1{font:var(--type-h1)}
+h2{font:var(--type-h2-sub)}
+address{font-style:normal}
+
+/* Viditelný focus akcentem (návrh), u kulatých prvků kulatý. */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--brand-accent);outline-offset:2px;box-shadow:0 0 0 2px var(--neutral-900);border-radius:6px}
+button:focus-visible,.button:focus-visible,.mobilni-menu summary:focus-visible,.mobilni-lista a:focus-visible,.site-footer__socialni a:focus-visible,.site-header__ikona:focus-visible{border-radius:var(--radius-pill)}
+
+.screen-reader-text{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.skip-link{position:absolute;left:16px;top:-100px;z-index:50;background:var(--neutral-900);color:#fff;padding:12px 18px;border-radius:var(--radius-pill);font-weight:800}
+.skip-link:focus{top:12px;color:#fff}
+
+.container{max-width:var(--container);margin:0 auto;padding-left:var(--gutter);padding-right:var(--gutter)}
+
+/* ---------------------------------------------------------------- Komponenty systému */
+
+/* Button: accent (výchozí), primary, secondary, outline, dark, muted; velikosti sm, md, lg (výchozí), xl. */
+.button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:16px 28px;border:0;border-radius:var(--radius-pill);background:var(--brand-accent);color:var(--text-on-accent);font-family:var(--font-body);font-weight:800;font-size:16px;line-height:1.2;text-align:center;text-decoration:none;cursor:pointer}
+.button:hover{background:var(--brand-accent-hover);color:var(--text-on-accent)}
+.button--primary{background:var(--brand-primary);color:var(--text-on-primary)}
+.button--primary:hover{background:var(--brand-primary-hover);color:var(--text-on-primary)}
+.button--secondary{background:#fff;color:var(--text-body);box-shadow:var(--shadow-sm)}
+.button--secondary:hover{background:#fff;color:var(--brand-primary)}
+.button--outline{background:transparent;color:var(--text-body);border:1.5px solid var(--border-input)}
+.button--outline:hover{background:transparent;color:var(--brand-primary)}
+.button--dark{background:var(--neutral-900);color:#fff}
+.button--dark:hover{background:#000;color:#fff}
+.button--muted{background:var(--surface-muted);color:var(--text-body)}
+.button--muted:hover{background:var(--neutral-100);color:var(--text-body)}
+.button--glow{box-shadow:var(--shadow-cta)}
+.button--block{display:flex;width:100%}
+.button--sm{font-size:14px;padding:11px 20px}
+.button--md{font-size:15px;padding:12px 22px}
+.button--xl{font-size:17px;padding:17px 32px}
+.button:disabled,.button[aria-disabled="true"]{opacity:.5;cursor:not-allowed}
+.button:disabled:hover{background:var(--brand-accent)}
+
+/* Card: bílá se stínem (výchozí), muted, tint, dark; odkaz na hover zvedne stín značkou. */
+.card{display:flex;flex-direction:column;gap:var(--card-gap,12px);padding:var(--card-pad,28px);border-radius:var(--radius-lg);background:var(--surface-card);color:var(--text-body);box-shadow:var(--shadow-card);text-decoration:none}
+.card--muted{background:var(--surface-muted);box-shadow:none}
+.card--tint{background:var(--surface-tint);box-shadow:none}
+.card--dark{background:var(--surface-dark);color:#fff;box-shadow:none}
+a.card:hover{color:var(--text-body);box-shadow:var(--shadow-card-hover)}
+a.card--muted:hover,a.card--tint:hover{box-shadow:var(--shadow-tile-hover)}
+
+/* Section: plný pruh (bílý, muted, dark) s obsahem na šířku kontejneru a nadpisem uprostřed. */
+.section--muted{background:var(--surface-muted)}
+.section--dark{background:var(--surface-dark);color:#fff}
+.section__inner{max-width:var(--container);margin:0 auto;padding:var(--section-y) var(--gutter);display:flex;flex-direction:column;gap:40px}
+.section__inner--narrow{max-width:var(--container-narrow)}
+.section__title{margin:0;font:var(--type-h2);text-align:center}
+
+/* PageHero: přechod od tintu do bílé, volitelný drobeček zpět, nadpis a perex. */
+.page-hero{background:var(--gradient-hero)}
+.page-hero__inner{max-width:var(--container);margin:0 auto;padding:56px var(--gutter) 40px;display:flex;flex-direction:column;gap:16px}
+.page-hero__inner--narrow{max-width:var(--container-narrow)}
+.page-hero__inner:has(> .page-hero__back){padding-top:48px}
+.page-hero__back{align-self:flex-start;font-size:14px;font-weight:800}
+.page-hero__title{margin:0;font:900 clamp(36px,5vw,58px)/1.12 var(--font-display)}
+.page-hero__lead{margin:0;max-width:680px;font-size:18px;line-height:1.6;color:var(--text-muted);text-wrap:pretty}
+
+/* Eyebrow: nadtitulek nad nadpisem. */
+.eyebrow{margin:0;font:var(--type-eyebrow);letter-spacing:var(--tracking-eyebrow);text-transform:uppercase;color:var(--brand-primary)}
+.eyebrow--accent{color:var(--brand-accent)}
+
+/* Pill: štítek; bílý se stínem (výchozí), muted, tint, accent. */
+.pill{display:inline-flex;align-items:center;padding:7px 14px;border-radius:var(--radius-pill);background:#fff;color:var(--text-body);box-shadow:var(--shadow-xs);font-size:14px;font-weight:700;line-height:1.3}
+.pill--muted{background:var(--surface-muted);box-shadow:none}
+.pill--tint{background:var(--surface-tint);color:var(--brand-primary);box-shadow:none}
+.pill--accent{background:var(--brand-accent-tint);color:var(--brand-accent-strong);box-shadow:none}
+
+/* Notice: upozornění; akcentové (výchozí), info, danger. */
+.notice{padding:16px 20px;border:1.5px solid var(--brand-accent);border-radius:var(--radius-md);background:var(--brand-accent-tint);color:var(--text-body);font-size:16px;line-height:1.5}
+.notice--info{border-color:var(--brand-primary);background:var(--brand-primary-tint)}
+.notice--danger{border-color:var(--danger);background:var(--danger-tint)}
+.notice > :first-child{margin-top:0}
+.notice > :last-child{margin-bottom:0}
+
+/* ArrowLink: odkaz se šipkou, zpět se šipkou vlevo. Šipka se nečte. */
+.arrow-link{font-weight:800;color:var(--text-link)}
+.arrow-link:hover{color:var(--text-link-hover)}
+.arrow-link::after{content:" →";content:" →" / ""}
+.arrow-link--back::after{content:none}
+.arrow-link--back::before{content:"← ";content:"← " / ""}
+
+/* CheckList: seznam s fajfkami. */
+.check-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;line-height:1.45}
+.check-list li{display:flex;gap:10px}
+.check-list li::before{content:"✓";content:"✓" / "";color:var(--brand-primary);font-weight:900}
+
+/* Accordion: otázky a odpovědi bez JavaScriptu (<details>). */
+.accordion{display:flex;flex-direction:column;gap:12px}
+.accordion__item{background:#fff;border-radius:var(--radius-md);box-shadow:0 2px 12px rgba(35,35,35,.05);overflow:hidden}
+.accordion__item summary{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 24px;font:800 17px/1.35 var(--font-display);color:var(--text-body);cursor:pointer;list-style:none}
+.accordion__item summary::-webkit-details-marker{display:none}
+.accordion__item summary::after{content:"+";content:"+" / "";flex:none;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--brand-primary-tint);color:var(--brand-primary);font:700 20px/1 var(--font-body)}
+.accordion__item[open] summary::after{content:"−";content:"−" / "";background:var(--brand-primary);color:#fff}
+.accordion__body{padding:0 24px 22px;font-size:16px;line-height:1.6;color:var(--text-soft);text-wrap:pretty}
+.accordion__body > :first-child{margin-top:0}
+.accordion__body > :last-child{margin-bottom:0}
+
+/* ---------------------------------------------------------------- Pohotovost a Oznámení nad hlavičkou */
+
+.pohotovost{background:var(--neutral-900);color:#fff}
+.pohotovost__inner{max-width:var(--container);margin:0 auto;padding:10px var(--gutter);display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;font-size:15px}
+.pohotovost__stitek{padding:6px 12px;border-radius:var(--radius-pill);background:var(--brand-accent);color:var(--neutral-900);font:900 13px var(--font-display);letter-spacing:var(--tracking-eyebrow);text-transform:uppercase}
+.pohotovost__text{opacity:.85}
+.pohotovost__telefon{color:var(--brand-accent);font-weight:800;font-size:17px;white-space:nowrap}
+.pohotovost__telefon:hover{color:#fff}
+
+.oznameni{background:var(--brand-accent-tint);border-bottom:1.5px solid var(--brand-accent)}
+.oznameni__inner{max-width:var(--container);margin:0 auto;padding:12px var(--gutter);display:flex;align-items:center;gap:16px}
+.oznameni__text{flex:1;margin:0;font-size:15px;line-height:1.5}
+.oznameni__zavrit{position:relative;flex:none;width:32px;height:32px;padding:0;border:0;border-radius:50%;background:#fff;color:var(--text-body);font-size:18px;font-weight:700;line-height:1;cursor:pointer}
+.oznameni__zavrit::before{content:"";position:absolute;inset:-6px} /* cíl dotyku 44 px */
+.oznameni__zavrit[hidden]{display:none}
+
+/* ---------------------------------------------------------------- Hlavička */
+
+.site-header{position:relative;z-index:5;background:#fff;box-shadow:var(--shadow-header)}
+.site-header__inner{max-width:var(--container);margin:0 auto;padding:10px var(--gutter);display:flex;flex-wrap:wrap;align-items:center;gap:12px 28px}
+
+.znacka{display:flex;align-items:center;gap:12px;min-width:0;color:var(--text-body)}
+.znacka:hover{color:var(--text-body)}
+.znacka__logo{flex:none;width:60px;height:60px;object-fit:contain}
+.znacka__text{display:flex;flex-direction:column;line-height:1.1}
+.znacka__nazev{font:900 20px var(--font-display);text-transform:uppercase}
+.znacka__prefix{color:var(--brand-accent)}
+.znacka__podtitul{font-size:12px;font-weight:700;letter-spacing:var(--tracking-wide);text-transform:uppercase;opacity:.6}
+
+.site-nav{order:1;margin-left:auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:4px 20px}
+.site-nav a{padding:6px 0;border-bottom:3px solid transparent;color:var(--text-body);font-weight:700;font-size:16px}
+.site-nav a:hover{color:var(--brand-accent-strong)}
+.site-nav a[aria-current]{color:var(--brand-primary);border-bottom-color:var(--brand-accent)}
+
+.site-header__kontakt{order:2;flex:none;margin-left:auto;display:flex;align-items:center;gap:16px}
+.site-header__telefon{color:var(--text-body);font-weight:800;font-size:17px;white-space:nowrap}
+
+.site-header__ikona,.mobilni-menu{display:none}
+
+/* Užší desktop: menu na druhý řádek. */
+@media (max-width:1179px){
+	.site-nav{order:3;flex-basis:100%;margin-left:0;justify-content:flex-start}
+}
+
+/* Mobil: logo, ikona telefonu a Menu, menu se rozbalí pod hlavičkou. */
+@media (max-width:899px){
+	.site-header__inner{flex-wrap:nowrap;padding:8px 16px;gap:10px}
+	.znacka{gap:8px;margin-right:auto}
+	.znacka__logo{width:44px;height:44px}
+	.znacka__nazev{font-size:15px}
+	.znacka__prefix{display:block}
+	.znacka__podtitul,.site-nav,.site-header__kontakt{display:none}
+	.site-header__ikona{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--surface-muted);color:var(--text-body);font-size:18px}
+	.mobilni-menu{display:block;flex:none}
+}
+.mobilni-menu summary{display:flex;align-items:center;height:44px;padding:0 18px;border-radius:var(--radius-pill);background:var(--neutral-900);color:#fff;font-weight:800;font-size:15px;cursor:pointer;list-style:none;user-select:none}
+.mobilni-menu summary::-webkit-details-marker{display:none}
+.mobilni-menu__zavrit,.mobilni-menu[open] .mobilni-menu__otevrit{display:none}
+.mobilni-menu[open] .mobilni-menu__zavrit{display:inline}
+.mobilni-menu__panel{position:absolute;left:0;right:0;top:100%;display:flex;flex-direction:column;padding:8px 16px 16px;background:#fff;border-top:1px solid var(--border-divider);box-shadow:0 12px 16px -8px rgba(35,35,35,.12)}
+.mobilni-menu__panel a:not(.button){display:flex;align-items:center;min-height:48px;padding-left:12px;border-bottom:1px solid var(--border-divider);border-left:3px solid transparent;color:var(--text-body);font-weight:800;font-size:17px}
+.mobilni-menu__panel a[aria-current]{color:var(--brand-primary);border-left-color:var(--brand-accent)}
+.mobilni-menu__panel .button{margin-top:14px}
+
+/* ---------------------------------------------------------------- Patička a mobilní lišta */
+
+.site-footer{background:var(--surface-footer);color:#fff}
+.site-footer a{color:#fff}
+.site-footer a:hover{color:var(--brand-accent)}
+.site-footer__inner{max-width:var(--container);margin:0 auto;padding:48px var(--gutter) 28px;display:flex;flex-direction:column;gap:32px}
+.site-footer__sloupce{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:28px;font-size:15px;line-height:1.8}
+.site-footer__sloupec{display:flex;flex-direction:column;margin:0}
+.site-footer__sloupec p{margin:0}
+.site-footer__sloupec ul{margin:0;padding:0;list-style:none}
+.site-footer__znacka{display:flex;flex-direction:column;gap:6px}
+.site-footer__nazev{font:900 20px var(--font-display);text-transform:uppercase}
+.site-footer__nazev span{color:var(--brand-accent)}
+.site-footer__popis{opacity:.75;line-height:1.5}
+.site-footer__titulek{color:var(--brand-accent);font-weight:800}
+.site-footer__znacka .site-footer__titulek{margin-top:10px}
+.site-footer__vedlejsi{opacity:.7;font-size:14px;line-height:1.5}
+.site-footer__socialni{display:flex;gap:10px;margin:0;padding:0;list-style:none}
+.site-footer__socialni a{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.1)}
+.site-footer__socialni a:hover{background:var(--brand-accent);color:var(--neutral-900)}
+.site-footer__socialni svg{width:20px;height:20px}
+.site-footer__spodek{border-top:1px solid var(--border-on-dark);padding-top:18px;font-size:13px}
+.site-footer__spodek p{margin:0;opacity:.6}
+
+/* Zavolat + Rezervovat přilepené dole, jen na mobilu. */
+.mobilni-lista{display:none}
+@media (max-width:719px){
+	.mobilni-lista{position:sticky;bottom:0;z-index:20;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:10px;padding:10px 12px;background:#fff;box-shadow:var(--shadow-bar)}
+	.mobilni-lista a{padding:14px;border-radius:var(--radius-pill);font-weight:800;font-size:16px;line-height:1.2;text-align:center}
+	.mobilni-lista__zavolat{background:var(--neutral-900);color:#fff}
+	.mobilni-lista__zavolat:hover{background:#000;color:#fff}
+	.mobilni-lista__rezervovat{background:var(--brand-accent);color:var(--text-on-accent)}
+	.mobilni-lista__rezervovat:hover{background:var(--brand-accent-hover);color:var(--text-on-accent)}
+}
+
+/* ---------------------------------------------------------------- Sdílené bloky */
+
+/* Otevírací doba na 7 dní, Dnes zvýrazněný. */
+.oteviraci-doba{width:100%;border-collapse:separate;border-spacing:0 2px;font-size:16px}
+.oteviraci-doba th,.oteviraci-doba td{padding:12px 16px;font-weight:inherit;vertical-align:baseline}
+.oteviraci-doba th{text-align:left}
+.oteviraci-doba td{text-align:right}
+.oteviraci-doba small{color:var(--text-muted);font-size:inherit;font-weight:400}
+.oteviraci-doba__dnes{background:var(--brand-primary-tint);font-weight:800}
+.oteviraci-doba__dnes th{border-radius:12px 0 0 12px}
+.oteviraci-doba__dnes td{border-radius:0 12px 12px 0}
+
+/* Mapa po kliknutí: šedá plocha, tlačítko a vysvětlivka, pod ní adresa. */
+.mapa{position:relative;aspect-ratio:4/3;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;border-radius:var(--radius-lg);background:var(--surface-muted);text-align:center}
+.mapa__nacist[hidden]{display:none}
+.mapa__info{margin:0;font-size:14px;color:var(--text-muted)}
+.mapa iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.mapa__adresa{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;margin:16px 0 0;font-size:16px}
+
+/* ---------------------------------------------------------------- Stránky */
+
+/* Obecná stránka a text z editoru. */
+.obsah{max-width:var(--container-narrow);margin:0 auto;padding:24px var(--gutter) var(--section-y);font-size:17px;line-height:1.7;color:var(--text-soft)}
+.obsah > :first-child{margin-top:0}
+.obsah h2{margin:40px 0 12px;color:var(--text-body);font-size:26px}
+.obsah h3{margin:28px 0 8px;color:var(--text-body);font:900 19px/1.3 var(--font-display)}
+.obsah strong{color:var(--text-body)}
+.obsah a{font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.obsah ul,.obsah ol{padding-left:24px}
+.obsah li + li{margin-top:6px}
+
+/* 404 */
+.chyba{background:var(--gradient-hero)}
+.chyba__inner{max-width:var(--container-narrow);margin:0 auto;padding:88px var(--gutter) 112px;display:flex;flex-direction:column;align-items:flex-start;gap:20px}
+.chyba__inner h1{margin:0}
+.chyba__text{margin:0;max-width:520px;font-size:18px;line-height:1.6;color:var(--text-muted)}
+.chyba__odkazy{display:flex;flex-wrap:wrap;gap:10px 28px;width:100%;margin-top:8px;padding-top:20px;border-top:1px solid var(--border-divider)}
+.chyba__odkazy a:not(.arrow-link){font-weight:800}
