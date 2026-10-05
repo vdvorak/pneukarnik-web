@@ -153,9 +153,8 @@ final class Pneukarnik_Reminder {
 			->button( __( 'Objednat přezutí', 'pneukarnik-booking' ), Pneukarnik_Prefill::url_for_email( $to ) )
 			/* translators: %s: telefon Provozovatele */
 			->paragraph( '' !== $phone ? sprintf( __( 'Raději zavoláte? Jsme na %s.', 'pneukarnik-booking' ), $phone ) : '' )
-			->paragraph( Pneukarnik_Notifications::text( 'signature' ) )
-			->paragraph( __( 'Připomínku dostáváte, protože jste s ní při rezervaci souhlasili.', 'pneukarnik-booking' ) )
-			->link( __( 'Odhlásit Připomínky přezutí', 'pneukarnik-booking' ), $unsubscribe_url );
+			->signature( Pneukarnik_Notifications::text( 'signature' ) )
+			->footer( __( 'Připomínku dostáváte, protože jste s ní při rezervaci souhlasili.', 'pneukarnik-booking' ), __( 'Odhlásit Připomínky přezutí', 'pneukarnik-booking' ), $unsubscribe_url );
 	}
 
 	/**

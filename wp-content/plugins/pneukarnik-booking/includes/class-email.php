@@ -8,10 +8,28 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * E‑mail poskládaný z bloků. Z týchž bloků vznikne HTML i textová alternativa,
  * všechny texty se v HTML escapují (mohou pocházet od Zákazníka nebo z Nastavení).
+ *
+ * HTML podle šablony e‑mailů z návrhu: šířka 600 px, rozvržení tabulkami a inline styly,
+ * protože poštovní klienti styly v hlavičce ani vlastní písma spolehlivě neumí.
  */
 final class Pneukarnik_Email {
 
-	/** @var list<array{type:string,text?:string,rows?:array<string,string|list<string>>,items?:list<string>,url?:string}> */
+	public const BUTTON_ACCENT = 'accent';
+	public const BUTTON_DARK   = 'dark';
+	public const BUTTON_DANGER = 'danger';
+
+	private const FONT_HEADING = 'Montserrat,Arial,Helvetica,sans-serif';
+	private const FONT_BODY    = "'Nunito Sans',Arial,Helvetica,sans-serif";
+	private const COLOR_TEXT   = '#232323';
+	private const COLOR_MUTED  = '#555555';
+	private const COLOR_LINK   = '#1F2933';
+	private const COLOR_ACCENT = '#F5A400';
+	private const COLOR_CHECK  = '#9A6200';
+	private const COLOR_BORDER = '#E3E7EB';
+	private const COLOR_PANEL  = '#F5F7F9';
+	private const COLOR_DANGER = '#C0392B';
+
+	/** @var list<array{type:string,text?:string,rows?:array<string,string|list<string>>,items?:list<string>,url?:string,label?:string,variant?:string}> */
 	private array $blocks = [];
 
 	public function __construct( private readonly string $subject ) {}
@@ -74,11 +92,35 @@ final class Pneukarnik_Email {
 		return $this;
 	}
 
-	public function button( string $label, string $url ): self {
+	/** Hlavní tlačítko. Odvolání akce (Zrušit rezervaci) jako BUTTON_DANGER, pro Provozovatele BUTTON_DARK. */
+	public function button( string $label, string $url, string $variant = self::BUTTON_ACCENT ): self {
 		$this->blocks[] = [
-			'type' => 'button',
-			'text' => $label,
-			'url'  => $url,
+			'type'    => 'button',
+			'text'    => $label,
+			'url'     => $url,
+			'variant' => $variant,
+		];
+		return $this;
+	}
+
+	/** Podpis s kontakty na konci e‑mailu, konce řádků zůstanou. */
+	public function signature( string $text ): self {
+		if ( '' !== trim( $text ) ) {
+			$this->blocks[] = [
+				'type' => 'signature',
+				'text' => trim( $text ),
+			];
+		}
+		return $this;
+	}
+
+	/** Patička pod podpisem: proč e‑mail chodí a odkaz, jak ho přestat dostávat. */
+	public function footer( string $text, string $label, string $url ): self {
+		$this->blocks[] = [
+			'type'  => 'footer',
+			'text'  => $text,
+			'label' => $label,
+			'url'   => $url,
 		];
 		return $this;
 	}
@@ -88,31 +130,40 @@ final class Pneukarnik_Email {
 	}
 
 	public function html(): string {
-		$parts = [];
+		$rows = [ self::html_header() ];
 		foreach ( $this->blocks as $block ) {
-			$parts[] = match ( $block['type'] ) {
-				'heading'   => '<h1 style="font-size:20px;margin:0 0 16px">' . esc_html( $block['text'] ?? '' ) . '</h1>',
-				'paragraph' => '<p style="margin:0 0 16px">' . nl2br( esc_html( $block['text'] ?? '' ) ) . '</p>',
-				'details'   => self::html_details( $block['rows'] ?? [] ),
-				'items'     => '<p style="margin:0 0 4px"><strong>' . esc_html( $block['text'] ?? '' ) . '</strong></p><ul style="margin:0 0 16px;padding-left:20px">'
-					. implode( '', array_map( static fn( string $item ): string => '<li>' . esc_html( $item ) . '</li>', $block['items'] ?? [] ) ) . '</ul>',
-				'link'      => '<p style="margin:0 0 16px"><a href="' . esc_url( $block['url'] ?? '' ) . '">' . esc_html( $block['text'] ?? '' ) . '</a></p>',
-				'button'    => '<p style="margin:24px 0"><a href="' . esc_url( $block['url'] ?? '' ) . '" style="background:#1a1a1a;color:#ffffff;padding:10px 20px;text-decoration:none;border-radius:4px;display:inline-block">'
-					. esc_html( $block['text'] ?? '' ) . '</a></p>',
+			$rows[] = match ( $block['type'] ) {
+				'heading'   => self::row( '8px 32px 16px', self::FONT_HEADING, 'font-size:26px;line-height:32px;font-weight:900;text-transform:uppercase;color:' . self::COLOR_TEXT, esc_html( $block['text'] ?? '' ) ),
+				'paragraph' => self::row( '0 32px 14px', self::FONT_BODY, 'font-size:16px;line-height:24px;color:' . self::COLOR_TEXT, nl2br( esc_html( $block['text'] ?? '' ) ) ),
+				'details'   => self::row( '4px 32px 18px', '', '', self::html_details( $block['rows'] ?? [] ) ),
+				'items'     => self::row( '10px 32px 8px', self::FONT_HEADING, 'font-size:15px;line-height:20px;font-weight:900;text-transform:uppercase;color:' . self::COLOR_TEXT, esc_html( $block['text'] ?? '' ) )
+					. self::row( '0 32px 14px', '', '', self::html_checklist( $block['items'] ?? [] ) ),
+				'link'      => self::row( '0 32px 14px', self::FONT_BODY, 'font-size:15px;line-height:22px', self::html_link( $block['text'] ?? '', $block['url'] ?? '' ) ),
+				'button'    => self::row( '10px 32px 18px', '', '', self::html_button( $block['text'] ?? '', $block['url'] ?? '', $block['variant'] ?? self::BUTTON_ACCENT ) ),
+				'signature' => self::row( '12px 32px 28px', self::FONT_BODY, 'font-size:15px;line-height:22px;color:' . self::COLOR_MUTED, nl2br( esc_html( $block['text'] ?? '' ) ) ),
+				'footer'    => self::row( '16px 32px', self::FONT_BODY, 'font-size:13px;line-height:19px;color:' . self::COLOR_MUTED . ';background:' . self::COLOR_PANEL, esc_html( $block['text'] ?? '' ) . ' ' . self::html_link( $block['label'] ?? '', $block['url'] ?? '' ) ),
 				default     => '',
 			};
 		}
-		return '<!DOCTYPE html><html lang="cs"><head><meta charset="UTF-8"><title>' . esc_html( $this->subject ) . '</title></head>'
-			. '<body style="font-family:Arial,sans-serif;font-size:15px;line-height:1.5;color:#1a1a1a;max-width:600px;margin:0 auto;padding:24px">'
-			. implode( "\n", $parts )
-			. '</body></html>';
+		$last = end( $this->blocks );
+		if ( ! $last || ! in_array( $last['type'], [ 'signature', 'footer' ], true ) ) {
+			$rows[] = '<tr><td style="padding:0 0 12px"></td></tr>';
+		}
+
+		return '<!DOCTYPE html><html lang="cs"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
+			. '<title>' . esc_html( $this->subject ) . '</title></head>'
+			. '<body style="margin:0;padding:0;background:' . self::COLOR_BORDER . '">'
+			. '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:' . self::COLOR_BORDER . '"><tr><td align="center" style="padding:24px 8px">'
+			. '<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:#ffffff;border-collapse:collapse">'
+			. implode( "\n", array_filter( $rows ) )
+			. '</table></td></tr></table></body></html>';
 	}
 
 	public function text(): string {
 		$parts = [];
 		foreach ( $this->blocks as $block ) {
 			$parts[] = match ( $block['type'] ) {
-				'heading', 'paragraph' => $block['text'] ?? '',
+				'heading', 'paragraph', 'signature' => $block['text'] ?? '',
 				'details'              => implode(
 					"\n",
 					array_map(
@@ -123,6 +174,7 @@ final class Pneukarnik_Email {
 				),
 				'items'                => ( $block['text'] ?? '' ) . ":\n" . implode( "\n", array_map( static fn( string $item ): string => '- ' . $item, $block['items'] ?? [] ) ),
 				'button', 'link'       => ( $block['text'] ?? '' ) . ': ' . ( $block['url'] ?? '' ),
+				'footer'               => ( $block['text'] ?? '' ) . "\n" . ( $block['label'] ?? '' ) . ': ' . ( $block['url'] ?? '' ),
 				default                => '',
 			};
 		}
@@ -166,15 +218,65 @@ final class Pneukarnik_Email {
 		return $sent;
 	}
 
+	/** Hlavička s logem a názvem webu. Logo z vlastní domény, bez obrázků zůstane alt text a název. */
+	private static function html_header(): string {
+		$name = (string) get_bloginfo( 'name' );
+		$name = '' !== $name ? $name : Pneukarnik_Contact::company();
+		return '<tr><td style="padding:24px 32px 12px;border-top:4px solid ' . self::COLOR_ACCENT . '">'
+			. '<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>'
+			. '<td style="padding-right:12px"><img src="' . esc_url( PNEUKARNIK_PLUGIN_URL . 'assets/email-logo.png' ) . '" width="48" height="48" alt="' . esc_attr( $name ) . '" style="display:block;border:0"></td>'
+			. '<td style="font-family:' . self::FONT_HEADING . ';font-size:17px;line-height:20px;font-weight:900;text-transform:uppercase;color:' . self::COLOR_TEXT . '">' . esc_html( $name ) . '</td>'
+			. '</tr></table></td></tr>';
+	}
+
+	/** Řádek e‑mailu: buňka s odsazením, písmem a styly, obsah už escapovaný. */
+	private static function row( string $padding, string $font, string $style, string $html ): string {
+		$css = 'padding:' . $padding . ( '' !== $font ? ';font-family:' . $font : '' ) . ( '' !== $style ? ';' . $style : '' );
+		return '<tr><td style="' . $css . '">' . $html . '</td></tr>';
+	}
+
+	private static function html_link( string $label, string $url ): string {
+		return '<a href="' . esc_url( $url ) . '" style="color:' . self::COLOR_LINK . ';font-weight:700;text-decoration:underline">' . esc_html( $label ) . '</a>';
+	}
+
+	/** Tlačítko jako tabulka s barvou pozadí, aby mělo plochu i v Outlooku. */
+	private static function html_button( string $label, string $url, string $variant ): string {
+		[ $cell, $color ] = match ( $variant ) {
+			self::BUTTON_DARK   => [ 'background:' . self::COLOR_LINK, '#ffffff' ],
+			self::BUTTON_DANGER => [ 'background:#ffffff;border:2px solid ' . self::COLOR_DANGER, self::COLOR_DANGER ],
+			default             => [ 'background:' . self::COLOR_ACCENT, self::COLOR_TEXT ],
+		};
+		return '<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="' . $cell . ';border-radius:999px">'
+			. '<a href="' . esc_url( $url ) . '" style="display:inline-block;padding:14px 28px;font-family:' . self::FONT_BODY . ';font-size:16px;line-height:20px;font-weight:800;color:' . $color . ';text-decoration:none">'
+			. esc_html( $label ) . '</a></td></tr></table>';
+	}
+
+	/**
+	 * @param list<string> $items
+	 */
+	private static function html_checklist( array $items ): string {
+		$cell = 'font-family:' . self::FONT_BODY . ';font-size:16px;line-height:24px;';
+		$html = '<table role="presentation" cellpadding="0" cellspacing="0" border="0">';
+		foreach ( $items as $item ) {
+			$html .= '<tr><td style="padding:2px 10px 2px 0;' . $cell . 'font-weight:900;color:' . self::COLOR_CHECK . ';vertical-align:top">✓</td>'
+				. '<td style="padding:2px 0;' . $cell . 'color:' . self::COLOR_TEXT . '">' . esc_html( $item ) . '</td></tr>';
+		}
+		return $html . '</table>';
+	}
+
 	/**
 	 * @param array<string, string|list<string>> $rows
 	 */
 	private static function html_details( array $rows ): string {
-		$html = '<table style="border-collapse:collapse;margin:0 0 16px;width:100%">';
+		$cell  = 'padding:10px 16px;font-family:' . self::FONT_BODY . ';font-size:15px;line-height:22px;';
+		$html  = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;background:' . self::COLOR_PANEL . ';border-radius:12px">';
+		$first = true;
 		foreach ( $rows as $label => $value ) {
-			$value = is_array( $value ) ? implode( '<br>', array_map( 'esc_html', $value ) ) : nl2br( esc_html( $value ) );
-			$html .= '<tr><td style="padding:6px 12px 6px 0;color:#555;vertical-align:top;white-space:nowrap">' . esc_html( (string) $label ) . '</td>'
-				. '<td style="padding:6px 0;vertical-align:top">' . $value . '</td></tr>';
+			$value  = is_array( $value ) ? implode( '<br>', array_map( 'esc_html', $value ) ) : nl2br( esc_html( $value ) );
+			$border = $first ? '' : 'border-top:1px solid ' . self::COLOR_BORDER . ';';
+			$html  .= '<tr><td style="' . $cell . $border . 'color:' . self::COLOR_MUTED . ';width:150px;vertical-align:top">' . esc_html( (string) $label ) . '</td>'
+				. '<td style="' . $cell . $border . 'font-weight:700;color:' . self::COLOR_TEXT . ';vertical-align:top">' . $value . '</td></tr>';
+			$first  = false;
 		}
 		return $html . '</table>';
 	}

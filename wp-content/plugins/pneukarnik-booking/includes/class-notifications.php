@@ -75,11 +75,10 @@ final class Pneukarnik_Notifications {
 					? sprintf( __( 'Když nemůžete přijet, zrušte prosím rezervaci tímto odkazem nejpozději %s.', 'pneukarnik-booking' ), $deadline->format( 'j. n. Y \v G:i' ) )
 					: __( 'Rezervaci už nejde zrušit online.', 'pneukarnik-booking' )
 			)
-			->button( __( 'Zrušit rezervaci', 'pneukarnik-booking' ), Pneukarnik_Cancellation::url( $cancel_token ) )
+			->button( __( 'Zrušit rezervaci', 'pneukarnik-booking' ), Pneukarnik_Cancellation::url( $cancel_token ), Pneukarnik_Email::BUTTON_DANGER )
 			/* translators: %s: telefon Provozovatele */
 			->paragraph( '' !== $phone ? sprintf( __( 'Potřebujete něco změnit? Zavolejte nám na %s.', 'pneukarnik-booking' ), $phone ) : '' )
-			->paragraph( self::text( 'signature' ) )
-			->paragraph( self::contact() )
+			->signature( self::text( 'signature' ) . "\n" . self::contact() )
 			->send( $booking['customer_email'], self::provozovatel_email() );
 	}
 
@@ -118,12 +117,11 @@ final class Pneukarnik_Notifications {
 			)
 			->items( __( 'Co si vzít s sebou', 'pneukarnik-booking' ), self::bring( $booking ) )
 			->paragraph( $cancel )
-			->button( __( 'Zrušit rezervaci', 'pneukarnik-booking' ), Pneukarnik_Cancellation::url( $cancel_token ) )
+			->button( __( 'Zrušit rezervaci', 'pneukarnik-booking' ), Pneukarnik_Cancellation::url( $cancel_token ), Pneukarnik_Email::BUTTON_DANGER )
 			/* translators: %s: telefon Provozovatele */
 			->paragraph( '' !== $phone ? sprintf( __( 'Potřebujete něco změnit? Zavolejte nám na %s.', 'pneukarnik-booking' ), $phone ) : '' )
 			->link( __( 'Objednat znovu', 'pneukarnik-booking' ), Pneukarnik_Prefill::url( (int) $booking['id'] ) )
-			->paragraph( self::text( 'signature' ) )
-			->paragraph( self::contact() );
+			->signature( self::text( 'signature' ) . "\n" . self::contact() );
 	}
 
 	/**
@@ -140,8 +138,7 @@ final class Pneukarnik_Notifications {
 			->paragraph( '' !== $reason ? sprintf( __( 'Důvod: %s', 'pneukarnik-booking' ), $reason ) : '' )
 			->details( self::visit( $booking ) )
 			->button( __( 'Objednat znovu', 'pneukarnik-booking' ), Pneukarnik_Prefill::url( (int) $booking['id'] ) )
-			->paragraph( self::text( 'signature' ) )
-			->paragraph( self::contact() );
+			->signature( self::text( 'signature' ) . "\n" . self::contact() );
 	}
 
 	/**
@@ -152,7 +149,7 @@ final class Pneukarnik_Notifications {
 		return ( new Pneukarnik_Email( self::provozovatel_subject( __( 'Nová rezervace: %1$s, %2$s', 'pneukarnik-booking' ), $booking ) ) )
 			->heading( __( 'Nová online rezervace', 'pneukarnik-booking' ) )
 			->details( self::visit( $booking ) + self::customer( $booking ) )
-			->button( __( 'Otevřít v administraci', 'pneukarnik-booking' ), Pneukarnik_Admin_Calendar::url( $booking['booking_date'], (int) $booking['id'] ) );
+			->button( __( 'Otevřít v administraci', 'pneukarnik-booking' ), Pneukarnik_Admin_Calendar::url( $booking['booking_date'], (int) $booking['id'] ), Pneukarnik_Email::BUTTON_DARK );
 	}
 
 	/**

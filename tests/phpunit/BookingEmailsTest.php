@@ -91,6 +91,20 @@ class BookingEmailsTest extends Pneukarnik_REST_Test_Case {
 		}
 	}
 
+	public function test_emails_share_the_template_with_logo_button_and_signature(): void {
+		$this->book( $this->tyres, self::MONDAY, '09:00' );
+		$customer     = $this->mail_to( self::CUSTOMER )['html'];
+		$provozovatel = $this->mail_to( self::PROVOZOVATEL )['html'];
+
+		foreach ( [ $customer, $provozovatel ] as $html ) {
+			$this->assertMatchesRegularExpression( '~<img src="' . preg_quote( home_url( '/' ), '~' ) . '[^"]*email-logo\.png"[^>]* alt="Pneuservis Kárník"~', $html, 'Logo z vlastní domény s alt textem' );
+			$this->assertStringContainsString( 'width="600"', $html );
+		}
+		$this->assertMatchesRegularExpression( '~<td style="background:#ffffff;border:2px solid #C0392B;border-radius:999px"><a href="[^"]*/rezervace/zruseni/\?r=~', $customer, 'Hlavní tlačítko Zrušit rezervaci' );
+		$this->assertMatchesRegularExpression( '~<td style="background:#1F2933;border-radius:999px"><a href="[^"]*" style="[^"]*">Otevřít v administraci</a>~', $provozovatel, 'Hlavní tlačítko pro Provozovatele' );
+		$this->assertMatchesRegularExpression( '~<td style="padding:12px 32px 28px;[^"]*">Jan Kárník<br />\s*Pneuservis a autoservis<br />\s*Pneuservis a autoservis Jan Kárník<br />\s*Dobšická 10~', $customer, 'Podpis s kontakty' );
+	}
+
 	public function test_editable_blocks_are_escaped_in_html(): void {
 		update_option( 'pneukarnik_email_intro', 'Ceny <b>od</b> 500 Kč & víc' );
 
