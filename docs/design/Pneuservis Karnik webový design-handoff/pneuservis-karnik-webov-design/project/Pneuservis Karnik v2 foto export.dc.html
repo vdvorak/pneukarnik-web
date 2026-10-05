@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<template id="__bundler_thumbnail" data-bg-color="#F5A400"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#F5A400"/><circle cx="50" cy="50" r="24" fill="#1F2933"/><text x="50" y="57" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" font-size="17" fill="#F5A400">JVK</text></svg></template>
+<meta name="ext-resource-dependency" content="assets/icons/activity.svg" data-resource-id="ic_activity">
+<meta name="ext-resource-dependency" content="assets/icons/battery-charging.svg" data-resource-id="ic_battery_charging">
+<meta name="ext-resource-dependency" content="assets/icons/bike.svg" data-resource-id="ic_bike">
+<meta name="ext-resource-dependency" content="assets/icons/car-front.svg" data-resource-id="ic_car_front">
+<meta name="ext-resource-dependency" content="assets/icons/circle-dot.svg" data-resource-id="ic_circle_dot">
+<meta name="ext-resource-dependency" content="assets/icons/clipboard-check.svg" data-resource-id="ic_clipboard_check">
+<meta name="ext-resource-dependency" content="assets/icons/cloud-fog.svg" data-resource-id="ic_cloud_fog">
+<meta name="ext-resource-dependency" content="assets/icons/crosshair.svg" data-resource-id="ic_crosshair">
+<meta name="ext-resource-dependency" content="assets/icons/disc-3.svg" data-resource-id="ic_disc_3">
+<meta name="ext-resource-dependency" content="assets/icons/droplet.svg" data-resource-id="ic_droplet">
+<meta name="ext-resource-dependency" content="assets/icons/flame.svg" data-resource-id="ic_flame">
+<meta name="ext-resource-dependency" content="assets/icons/lightbulb.svg" data-resource-id="ic_lightbulb">
+<meta name="ext-resource-dependency" content="assets/icons/luggage.svg" data-resource-id="ic_luggage">
+<meta name="ext-resource-dependency" content="assets/icons/move-vertical.svg" data-resource-id="ic_move_vertical">
+<meta name="ext-resource-dependency" content="assets/icons/shield-check.svg" data-resource-id="ic_shield_check">
+<meta name="ext-resource-dependency" content="assets/icons/shopping-cart.svg" data-resource-id="ic_shopping_cart">
+<meta name="ext-resource-dependency" content="assets/icons/snowflake.svg" data-resource-id="ic_snowflake">
+<meta name="ext-resource-dependency" content="assets/icons/warehouse.svg" data-resource-id="ic_warehouse">
+<meta name="ext-resource-dependency" content="assets/icons/wind.svg" data-resource-id="ic_wind">
+<meta name="ext-resource-dependency" content="assets/icons/wrench.svg" data-resource-id="ic_wrench">
+<script src="./support.js"></script>
+<script>window.__icon = n => (window.__resources || {})['ic_' + n.replace(/-/g, '_')] || ('assets/icons/' + n + '.svg');</script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Pneuservis a autoservis Jan Kárník – Znojmo</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.svg">
+  <link rel="stylesheet" href="_ds/simple-web-design-system-2e6a6cdf-f54b-49c9-990a-d06845cbd675/tokens/webfonts.css">
+  <link rel="stylesheet" href="_ds/simple-web-design-system-2e6a6cdf-f54b-49c9-990a-d06845cbd675/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/simple-web-design-system-2e6a6cdf-f54b-49c9-990a-d06845cbd675/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/simple-web-design-system-2e6a6cdf-f54b-49c9-990a-d06845cbd675/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/simple-web-design-system-2e6a6cdf-f54b-49c9-990a-d06845cbd675/tokens/base.css">
+  <link rel="stylesheet" href="_ds/simple-web-design-system-2e6a6cdf-f54b-49c9-990a-d06845cbd675/styles.css">
+  <script src="_ds/simple-web-design-system-2e6a6cdf-f54b-49c9-990a-d06845cbd675/_ds_bundle.js"></script>
+  <style>
+    :root{--brand-primary:#1F2933;--brand-primary-hover:#0E1419;--brand-primary-tint:#EEF1F4;--brand-accent:#F5A400;--brand-accent-hover:#E09200;--brand-accent-strong:#9A6200;--brand-accent-tint:#FFF1D6}
+    body{margin:0;background:#fff;color:var(--text-body);font-family:var(--font-body)}
+    a{color:var(--brand-primary);text-decoration:none}
+    a:hover{color:var(--brand-accent-strong)}
+    a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--brand-accent);outline-offset:2px;box-shadow:0 0 0 2px var(--neutral-900);border-radius:6px}
+    button:focus-visible,a[href^="#/rezervace"]:focus-visible{border-radius:999px}
+  </style>
+</helmet>
+
+<div style="background:{{ deskBg }};min-height:100vh">
+<div style="min-height:100vh;display:flex;flex-direction:column;max-width:{{ frameW }};margin:0 auto;background:#fff;box-shadow:{{ frameShadow }};position:relative">
+
+  <sc-if value="{{ showPohotovost }}" hint-placeholder-val="{{ true }}">
+    <div style="background:var(--neutral-900);color:#fff">
+      <div style="max-width:var(--container);margin:0 auto;padding:10px 24px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;font-size:15px">
+        <span style="background:var(--brand-accent);color:var(--neutral-900);font:900 13px var(--font-display);letter-spacing:1.5px;text-transform:uppercase;padding:6px 12px;border-radius:999px">Pohotovost</span>
+        <span style="opacity:.85">Nonstop pomoc na cestě mimo otevírací dobu</span>
+        <a href="tel:+420777000001" style="color:var(--brand-accent);font-weight:800;font-size:17px">☎ 777 000 001</a>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ showOznameniBar }}" hint-placeholder-val="{{ true }}">
+    <div style="background:var(--brand-accent-tint);border-bottom:1.5px solid var(--brand-accent)">
+      <div style="max-width:var(--container);margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:16px">
+        <div style="flex:1;font-size:15px;line-height:1.5"><strong>Sezóna přezouvání začala.</strong> Od 1. 10. do 30. 11. jde online objednat jen přezutí a související služby. Ostatní služby objednáváme telefonicky.</div>
+        <button onClick="{{ closeOznameni }}" aria-label="Zavřít oznámení" title="Zavřít oznámení" style="flex:none;width:32px;height:32px;border-radius:50%;border:0;background:#fff;cursor:pointer;font-size:18px;font-weight:700;color:var(--text-body)">×</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ headDesk }}" hint-placeholder-val="{{ true }}">
+  <header style="background:#fff;box-shadow:var(--shadow-header);position:relative;z-index:5">
+    <div style="max-width:var(--container);margin:0 auto;padding:10px 24px;display:flex;align-items:center;gap:12px 28px;flex-wrap:wrap">
+      <a href="#/" style="display:flex;align-items:center;gap:12px;color:var(--text-body)">
+        <img src="assets/logo-jvk.png" alt="JVK – Jan Kárník" style="width:60px;height:60px;object-fit:contain">
+        <span style="display:flex;flex-direction:column;line-height:1.1">
+          <span style="font:900 20px var(--font-display);text-transform:uppercase"><span style="color:var(--brand-accent)">Pneuservis</span> Kárník</span>
+          <span style="font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;opacity:.6">Pneu a autoservis · Znojmo</span>
+        </span>
+      </a>
+      <nav style="order:{{ navOrder }};flex-basis:{{ navBasis }};justify-content:{{ navJustify }};display:flex;gap:4px 20px;flex-wrap:wrap;align-items:center;margin-left:auto">
+        <sc-for list="{{ nav }}" as="n" hint-placeholder-count="5">
+          <a href="{{ n.href }}" style="color:{{ n.color }};font-weight:700;font-size:16px;padding:6px 0;border-bottom:3px solid {{ n.line }}">{{ n.label }}</a>
+        </sc-for>
+      </nav>
+      <div style="order:2;flex:none;display:flex;align-items:center;gap:16px;margin-left:auto">
+        <a href="tel:+420777000000" style="font-weight:800;font-size:17px;color:var(--text-body);white-space:nowrap">☎ 777 000 000</a>
+        <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Button" variant="accent" size="md" href="#/rezervace" hint-size="130px,44px">Rezervovat</x-import>
+      </div>
+    </div>
+  </header>
+  </sc-if>
+  <sc-if value="{{ headMob }}" hint-placeholder-val="{{ false }}">
+  <header style="background:#fff;box-shadow:var(--shadow-header);position:relative;z-index:5">
+    <div style="padding:8px 16px;display:flex;align-items:center;gap:10px">
+      <a href="#/" style="display:flex;align-items:center;gap:8px;color:var(--text-body);min-width:0;margin-right:auto">
+        <img src="assets/logo-jvk.png" alt="JVK – Jan Kárník" style="width:44px;height:44px;object-fit:contain;flex:none">
+        <span style="font:900 15px/1.1 var(--font-display);text-transform:uppercase"><span style="color:var(--brand-accent)">Pneuservis</span><br>Kárník</span>
+      </a>
+      <a href="tel:+420777000000" aria-label="Zavolat 777 000 000" style="width:44px;height:44px;border-radius:50%;background:var(--surface-muted);display:grid;place-items:center;color:var(--text-body);font-size:18px;flex:none">☎</a>
+      <button onClick="{{ toggleMenu }}" aria-expanded="{{ menuOpen }}" style="height:44px;padding:0 18px;border-radius:999px;border:0;background:var(--neutral-900);color:#fff;font-family:inherit;font-weight:800;font-size:15px;cursor:pointer;flex:none">{{ menuLabel }}</button>
+    </div>
+    <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+      <nav style="border-top:1px solid var(--border-divider);padding:8px 16px 16px;display:flex;flex-direction:column">
+        <sc-for list="{{ nav }}" as="n" hint-placeholder-count="4">
+          <a href="{{ n.href }}" onClick="{{ closeMenu }}" style="display:flex;align-items:center;min-height:48px;border-bottom:1px solid var(--border-divider);color:{{ n.color }};font-weight:800;font-size:17px;padding-left:12px;border-left:3px solid {{ n.line }}">{{ n.label }}</a>
+        </sc-for>
+        <div style="padding-top:14px"><x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Button" variant="accent" block="{{ true }}" href="#/rezervace" hint-size="100%,54px">Rezervovat</x-import></div>
+      </nav>
+    </sc-if>
+  </header>
+  </sc-if>
+
+  <main style="flex:1">
+
+  <!-- ÚVOD -->
+  <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+    <section data-screen-label="Úvod" style="position:relative;background:var(--neutral-900) url('assets/foto-provozovna.jpg') {{ heroPos }} / cover no-repeat;color:#fff">
+      <div style="position:absolute;inset:0;background:{{ heroOverlay }}"></div>
+      <div style="position:relative;max-width:var(--container);margin:0 auto;padding:{{ heroPad }};display:flex;flex-direction:column;gap:22px;min-height:min(62vh,560px);justify-content:center;box-sizing:border-box">
+        <sc-if value="{{ hasRok }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Eyebrow" tone="accent" hint-size="200px,20px">Znojmo · od roku [0000]</x-import></sc-if>
+        <sc-if value="{{ noRok }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Eyebrow" tone="accent" hint-size="80px,20px">Znojmo</x-import></sc-if>
+        <h1 style="margin:0;font:var(--type-h1);text-transform:uppercase;text-wrap:balance;max-width:640px">Pneuservis a autoservis Jan Kárník</h1>
+        <p style="margin:0;font-size:19px;line-height:1.6;color:rgba(255,255,255,.88);max-width:520px">Pneuservis a autoservis. Objednejte se online, nebo zavolejte.</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Button" variant="accent" glow="{{ true }}" href="#/rezervace" hint-size="170px,54px">Rezervovat termín</x-import>
+          <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Button" variant="secondary" href="tel:+420777000000" hint-size="200px,54px">☎ 777 000 000</x-import>
+        </div>
+        <div style="display:flex;gap:8px 24px;flex-wrap:wrap;padding-top:18px;margin-top:8px;border-top:1px solid var(--border-on-dark);max-width:520px;font-size:15px">
+          <span><span style="opacity:.7">Dnes:</span> <strong style="color:var(--brand-accent)">{{ todayHours }}</strong></span>
+          <span><span style="opacity:.7">Zítra:</span> <strong>{{ tomorrowHours }}</strong></span>
+        </div>
+      </div>
+    </section>
+
+    <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Section" title="Co pro vás uděláme" hint-size="100%,420px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:20px">
+        <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Card" tone="muted" href="#/pneuservis" padding="{{ 36 }}" gap="{{ 16 }}" hint-size="100%,260px">
+          <span style="font:900 13px var(--font-display);letter-spacing:1.5px;text-transform:uppercase;color:var(--brand-accent-strong)">Kategorie</span>
+          <span style="font:900 32px/1.1 var(--font-display);text-transform:uppercase;color:var(--text-body)">Pneuservis</span>
+          <span style="font-size:16px;line-height:1.6;color:var(--text-muted)">Přezutí, uskladnění, prodej pneu, geometrie a opravy defektů.</span>
+          <span style="margin-top:8px;font-weight:800;color:var(--brand-primary)">Zobrazit služby →</span>
+        </x-import>
+        <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Card" tone="muted" href="#/autoservis" padding="{{ 36 }}" gap="{{ 16 }}" hint-size="100%,260px">
+          <span style="font:900 13px var(--font-display);letter-spacing:1.5px;text-transform:uppercase;color:var(--brand-accent-strong)">Kategorie</span>
+          <span style="font:900 32px/1.1 var(--font-display);text-transform:uppercase;color:var(--text-body)">Autoservis</span>
+          <span style="font-size:16px;line-height:1.6;color:var(--text-muted)">Příprava na STK, klimatizace, brzdy, olej, diagnostika a další.</span>
+          <span style="margin-top:8px;font-weight:800;color:var(--brand-primary)">Zobrazit služby →</span>
+        </x-import>
+      </div>
+    </x-import>
+
+    <sc-if value="{{ hasTop }}" hint-placeholder-val="{{ true }}">
+    <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Section" title="Nejžádanější služby" tone="muted" hint-size="100%,420px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:20px">
+        <sc-for list="{{ topServices }}" as="s" hint-placeholder-count="3">
+                <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Card" href="{{ s.href }}" padding="{{ 26 }}" hint-size="100%,210px">
+                  <sc-if value="{{ s.hasHead }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:4px">
+                    <sc-if value="{{ s.hasIcon }}" hint-placeholder-val="{{ true }}">
+                      <span style="width:52px;height:52px;border-radius:50%;background:var(--brand-primary-tint);display:grid;place-items:center;flex:none"><img src="{{ s.icon }}" alt="" width="26" height="26"></span>
+                    </sc-if>
+                    <sc-if value="{{ s.hasAkce }}" hint-placeholder-val="{{ false }}">
+                      <span style="margin-left:auto;display:flex"><x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Pill" tone="accent" hint-size="60px,30px">Akce</x-import></span>
+                    </sc-if>
+                  </div>
+                  </sc-if>
+                  <span style="font:900 20px var(--font-display);color:var(--text-body)">{{ s.name }}</span>
+                  <span style="font-size:15px;line-height:1.55;color:var(--text-muted);text-wrap:pretty">{{ s.perex }}</span>
+                  <span style="margin-top:auto;padding-top:6px;display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+                    <span style="font:900 18px var(--font-display);color:var(--brand-primary)">{{ s.price }}</span>
+                    <span style="font-size:13px;font-weight:700;color:var(--text-muted)">{{ s.mode }}</span>
+                  </span>
+                </x-import>
+        </sc-for>
+      </div>
+    </x-import>
+    </sc-if>
+
+    <sc-if value="{{ showAkce }}" hint-placeholder-val="{{ true }}">
+      <section style="padding:80px 24px 0">
+        <div style="max-width:var(--container);margin:0 auto;background:var(--surface-dark);color:#fff;border-radius:var(--radius-xl);padding:44px clamp(24px,5vw,56px);display:flex;flex-direction:column;gap:24px">
+          <h2 style="margin:0;font:var(--type-h2-sub);text-transform:uppercase">Aktuální akce</h2>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px 40px">
+            <sc-for list="{{ akce }}" as="a" hint-placeholder-count="1">
+              <div style="display:flex;flex-direction:column;gap:6px;padding-top:16px;border-top:1px solid var(--border-on-dark)">
+                <a href="{{ a.href }}" style="font:900 22px var(--font-display);color:var(--brand-accent)">{{ a.name }} →</a>
+                <span style="font-size:17px">{{ a.line }}</span>
+                <span style="font-size:15px;opacity:.75">Akce platí do {{ a.until }}.</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </section>
+    </sc-if>
+
+    <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Section" title="Proč k nám" width="var(--container-narrow)" hint-size="100%,420px">
+      <div style="display:flex;flex-direction:column;gap:22px">
+        <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.ReasonItem" n="1" title="Rodinná firma ve Znojmě od roku [0000]" text="[Krátce o historii a o tom, kdo v dílně pracuje.]" hint-size="100%,60px"></x-import>
+        <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.ReasonItem" n="2" title="Partner sítě BestDrive" text="[Co partnerství přináší zákazníkovi, včetně věrnostní karty BestDrive.]" hint-size="100%,60px"></x-import>
+        <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.ReasonItem" n="3" title="[Vybavení dílny: 3D geometrie, montážní a vyvažovací stroje]" hint-size="100%,60px"></x-import>
+        <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.ReasonItem" n="4" title="Termín online, bez registrace" text="Vyberete službu a volný čas. Potvrzení přijde e‑mailem." hint-size="100%,60px"></x-import>
+      </div>
+    </x-import>
+
+    <sc-if value="{{ showReviews }}" hint-placeholder-val="{{ true }}">
+    <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Section" title="Hodnocení na Google" tone="muted" hint-size="100%,420px">
+      <div style="display:flex;justify-content:center;align-items:baseline;gap:12px;flex-wrap:wrap;margin-top:-16px">
+        <span style="font:900 44px/1 var(--font-display)">4,8</span>
+        <span style="font-size:22px;color:var(--brand-accent);letter-spacing:2px">★★★★★</span>
+        <span style="color:var(--text-muted)">z 5 (123 hodnocení)</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:20px">
+        <sc-for list="{{ reviews }}" as="r" hint-placeholder-count="3">
+          <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Card" padding="{{ 26 }}" hint-size="100%,180px">
+            <span style="color:var(--brand-accent);letter-spacing:2px;font-size:18px">{{ r.stars }}</span>
+            <span style="font-size:16px;line-height:1.6;color:var(--text-soft);text-wrap:pretty">{{ r.text }}</span>
+            <span style="margin-top:auto;font-size:14px;color:var(--text-muted)"><a href="#" style="font-weight:800">{{ r.author }}</a> · {{ r.date }}</span>
+          </x-import>
+        </sc-for>
+      </div>
+      <div style="text-align:center"><x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.ArrowLink" href="#" hint-size="240px,24px">Všechna hodnocení na Google</x-import></div>
+    </x-import>
+    </sc-if>
+
+    <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Section" hint-size="100%,520px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:40px;align-items:start">
+        <div style="display:flex;flex-direction:column;gap:20px">
+          <h2 style="margin:0;font:var(--type-h2-sub);text-transform:uppercase">Otevírací doba</h2>
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <sc-for list="{{ hours }}" as="h" hint-placeholder-count="7">
+              <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 16px;padding:12px 16px;border-radius:12px;background:{{ h.bg }};font-weight:{{ h.fw }};font-size:16px">
+                <span>{{ h.label }} <span style="color:var(--text-muted);font-weight:400">{{ h.date }}</span></span>
+                <span>{{ h.value }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:20px">
+          <h2 style="margin:0;font:var(--type-h2-sub);text-transform:uppercase">Kde nás najdete</h2>
+          <sc-if value="{{ mapOn }}" hint-placeholder-val="{{ false }}">
+            <iframe title="Mapa" src="https://www.google.com/maps?q=Znojmo&amp;output=embed" style="width:100%;aspect-ratio:4/3;border:0;border-radius:var(--radius-lg)"></iframe>
+          </sc-if>
+          <sc-if value="{{ mapOff }}" hint-placeholder-val="{{ true }}">
+            <div style="aspect-ratio:4/3;border-radius:var(--radius-lg);background:var(--surface-muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center">
+              <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Button" variant="dark" size="md" onClick="{{ showMap }}" hint-size="160px,44px">Zobrazit mapu</x-import>
+              <span style="font-size:14px;color:var(--text-muted)">Mapa se načte z Google Maps až po kliknutí.</span>
+            </div>
+          </sc-if>
+          <div style="display:flex;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;font-size:16px">
+            <span><strong>Pneuservis Kárník</strong>, [Ulice 000], 669 02 Znojmo</span>
+            <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.ArrowLink" href="https://maps.google.com/?q=Znojmo" hint-size="200px,24px">Otevřít v Google Maps</x-import>
+          </div>
+        </div>
+      </div>
+    </x-import>
+  </sc-if>
+
+  <!-- SLUŽBY -->
+  <sc-if value="{{ isCat }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Služby">
+      <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.PageHero" title="Služby" lead="Pneuservis i autoservis pod jednou střechou. Vyberte, co potřebujete, a rovnou se objednejte." hint-size="100%,220px">
+        <div style="padding-top:8px"><x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.ChoiceChips" options="{{ filterOptions }}" value="{{ filterValue }}" on-change="{{ setFilter }}" hint-size="320px,44px"></x-import></div>
+      </x-import>
+      <div style="max-width:var(--container);margin:0 auto;padding:24px 24px 80px;display:flex;flex-direction:column;gap:56px">
+        <sc-for list="{{ catGroups }}" as="g" hint-placeholder-count="2">
+          <div style="display:flex;flex-direction:column;gap:20px">
+            <h2 style="margin:0;font:var(--type-h2-sub);text-transform:uppercase">{{ g.name }}</h2>
+            <sc-if value="{{ g.empty }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font-size:17px;color:var(--text-muted)">Služby připravujeme.</p></sc-if>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:20px">
+              <sc-for list="{{ g.items }}" as="s" hint-placeholder-count="6">
+                <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Card" href="{{ s.href }}" padding="{{ 26 }}" hint-size="100%,210px">
+                  <sc-if value="{{ s.hasHead }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:4px">
+                    <sc-if value="{{ s.hasIcon }}" hint-placeholder-val="{{ true }}">
+                      <span style="width:52px;height:52px;border-radius:50%;background:var(--brand-primary-tint);display:grid;place-items:center;flex:none"><img src="{{ s.icon }}" alt="" width="26" height="26"></span>
+                    </sc-if>
+                    <sc-if value="{{ s.hasAkce }}" hint-placeholder-val="{{ false }}">
+                      <span style="margin-left:auto;display:flex"><x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Pill" tone="accent" hint-size="60px,30px">Akce</x-import></span>
+                    </sc-if>
+                  </div>
+                  </sc-if>
+                  <span style="font:900 20px var(--font-display);color:var(--text-body)">{{ s.name }}</span>
+                  <span style="font-size:15px;line-height:1.55;color:var(--text-muted);text-wrap:pretty">{{ s.perex }}</span>
+                  <span style="margin-top:auto;padding-top:6px;display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+                    <span style="font:900 18px var(--font-display);color:var(--brand-primary)">{{ s.price }}</span>
+                    <span style="font-size:13px;font-weight:700;color:var(--text-muted)">{{ s.mode }}</span>
+                  </span>
+                </x-import>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- DETAIL SLUŽBY -->
+  <sc-if value="{{ isDetail }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Detail služby">
+      <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.PageHero" title="{{ svc.name }}" lead="{{ svc.perex }}" back="{{ svc.catName }}" back-href="{{ svc.catHref }}" hint-size="100%,240px"></x-import>
+      <sc-if value="{{ mob }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:0 16px">
+          <div style="margin-top:-16px;background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-float);padding:18px 20px;display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+              <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Eyebrow" hint-size="60px,20px">Cena</x-import>
+              <span style="font:900 26px var(--font-display)">{{ svc.price }}</span>
+            </div>
+            <sc-if value="{{ svc.hasPriceNote }}" hint-placeholder-val="{{ true }}"><span style="font-size:14px;line-height:1.5;color:var(--text-muted)">Cena zahrnuje: {{ svc.priceNote }}</span></sc-if>
+            <sc-if value="{{ svc.phoneOnly }}" hint-placeholder-val="{{ false }}"><span style="font-size:14px;color:var(--text-muted)">Tuto službu objednáváme jen telefonicky.</span></sc-if>
+          </div>
+        </div>
+      </sc-if>
+      <div style="max-width:var(--container);margin:0 auto;padding:{{ pagePad }};display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:48px;align-items:start">
+        <div style="display:flex;flex-direction:column;gap:44px;grid-column:span 2;min-width:0">
+          <sc-if value="{{ svcAkceOn }}" hint-placeholder-val="{{ false }}">
+            <div style="background:var(--surface-dark);color:#fff;border-radius:var(--radius-lg);padding:28px 30px;display:flex;flex-direction:column;gap:10px">
+              <span style="align-self:flex-start;background:var(--brand-accent);color:var(--neutral-900);font-weight:800;font-size:14px;padding:6px 14px;border-radius:999px">Akce</span>
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px 20px;flex-wrap:wrap">
+                <span style="font:900 24px var(--font-display);text-transform:uppercase">{{ svc.akce.name }}</span>
+                <span style="font:900 32px var(--font-display);color:var(--brand-accent)">{{ svc.akce.price }}</span>
+              </div>
+              <span style="font-size:16px;line-height:1.6;opacity:.85">{{ svc.akce.text }}</span>
+              <span style="font-size:15px;opacity:.75">Akce platí do {{ svc.akce.until }}.</span>
+            </div>
+          </sc-if>
+          <sc-if value="{{ svc.hasIncludes }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:18px">
+              <h2 style="margin:0;font:var(--type-h2-sub);text-transform:uppercase">Co zahrnuje</h2>
+              <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.CheckList" items="{{ svc.includes }}" size="{{ 17 }}" hint-size="100%,140px"></x-import>
+            </div>
+          </sc-if>
+          <sc-if value="{{ svc.hasProcess }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <h2 style="margin:0;font:var(--type-h2-sub);text-transform:uppercase">Jak to probíhá</h2>
+              <sc-for list="{{ svc.process }}" as="p" hint-placeholder-count="2">
+                <p style="margin:0;font-size:17px;line-height:1.65;color:var(--text-soft);text-wrap:pretty">{{ p }}</p>
+              </sc-for>
+              <p style="margin:0;font-size:17px"><strong>Jak dlouho to trvá:</strong> {{ svc.duration }}</p>
+            </div>
+          </sc-if>
+          <sc-if value="{{ svc.hasBring }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:18px">
+              <h2 style="margin:0;font:var(--type-h2-sub);text-transform:uppercase">Co si vzít s sebou</h2>
+              <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.CheckList" items="{{ svc.bring }}" size="{{ 17 }}" hint-size="100%,70px"></x-import>
+            </div>
+          </sc-if>
+          <sc-if value="{{ svc.hasFaq }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:18px;background:var(--surface-muted);border-radius:var(--radius-lg);padding:28px">
+              <h2 style="margin:0;font:var(--type-h2-sub);text-transform:uppercase">Časté dotazy</h2>
+              <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Accordion" items="{{ svc.faq }}" default-open="{{ -1 }}" hint-size="100%,200px"></x-import>
+            </div>
+          </sc-if>
+          <sc-if value="{{ svc.hasRelated }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <h2 style="margin:0;font:var(--type-h2-sub);text-transform:uppercase">Související služby</h2>
+              <div style="display:flex;flex-wrap:wrap;gap:10px 24px">
+                <sc-for list="{{ svc.relatedLinks }}" as="l" hint-placeholder-count="3">
+                  <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.ArrowLink" href="{{ l.href }}" hint-size="160px,24px">{{ l.name }}</x-import>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+        <sc-if value="{{ notMob }}" hint-placeholder-val="{{ true }}">
+        <aside style="position:sticky;top:24px;background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-float);padding:28px;display:flex;flex-direction:column;gap:14px">
+          <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Eyebrow" hint-size="80px,20px">Cena</x-import>
+          <span style="font:var(--type-price-xl)">{{ svc.price }}</span>
+          <sc-if value="{{ svc.hasPriceNote }}" hint-placeholder-val="{{ true }}">
+            <span style="font-size:15px;line-height:1.55;color:var(--text-muted)">Cena zahrnuje: {{ svc.priceNote }}</span>
+          </sc-if>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+            <sc-if value="{{ svc.online }}" hint-placeholder-val="{{ true }}">
+              <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Button" variant="accent" block="{{ true }}" href="{{ svc.resHref }}" hint-size="100%,54px">Rezervovat</x-import>
+            </sc-if>
+            <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Button" variant="secondary" block="{{ true }}" href="tel:+420777000000" hint-size="100%,54px">Zavolat 777 000 000</x-import>
+          </div>
+          <sc-if value="{{ svc.phoneOnly }}" hint-placeholder-val="{{ false }}">
+            <span style="font-size:14px;color:var(--text-muted)">Tuto službu objednáváme jen telefonicky.</span>
+          </sc-if>
+        </aside>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- REZERVACE -->
+  <sc-if value="{{ isRes }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Rezervace">
+      <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.PageHero" title="Rezervace termínu" lead="Vyberte službu, den a volný čas. Registrace není potřeba." hint-size="100%,220px"></x-import>
+      <sc-if value="{{ resOff }}" hint-placeholder-val="{{ false }}">
+        <div style="max-width:var(--container-narrow);margin:0 auto;padding:24px 24px 80px">
+          <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Notice" tone="info" hint-size="100%,80px">
+            <div style="display:flex;flex-direction:column;gap:14px;align-items:flex-start">
+              <span>{{ resOffText }}</span>
+              <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Button" variant="dark" size="md" href="tel:+420777000000" hint-size="200px,44px">Zavolat 777 000 000</x-import>
+            </div>
+          </x-import>
+        </div>
+      </sc-if>
+      <sc-if value="{{ resOn }}" hint-placeholder-val="{{ true }}">
+        <div style="max-width:var(--container);margin:0 auto;padding:{{ pagePad }};display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:32px;align-items:start">
+          <div style="grid-column:span 2;min-width:0;display:flex;flex-direction:column;gap:20px">
+            <sc-if value="{{ showOznameni }}" hint-placeholder-val="{{ true }}">
+              <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Notice" hint-size="100%,70px"><strong>Vozidla na leasing:</strong> [podmínky leasingových společností pro objednání v sezóně.]</x-import>
+            </sc-if>
+
+            <sc-if value="{{ prefilled }}" hint-placeholder-val="{{ false }}">
+              <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Notice" tone="info" hint-size="100%,56px">Služby a údaje jsme předvyplnili podle vaší předchozí rezervace. Vyberte prosím nový Termín.</x-import>
+            </sc-if>
+            <div style="background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-card);padding:{{ formPad }};display:flex;flex-direction:column;gap:36px">
+
+              <div style="display:flex;flex-direction:column;gap:16px">
+                <div style="display:flex;align-items:center;gap:14px"><x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.NumberBadge" n="1" tone="accent" hint-size="44px,44px"></x-import><h2 style="margin:0;font:var(--type-item-title);font-size:22px;text-transform:uppercase">Služba</h2></div>
+                <sc-for list="{{ rows }}" as="r" hint-placeholder-count="1">
+                  <div style="display:flex;gap:12px;align-items:flex-end">
+                    <div style="flex:1;min-width:0">
+                      <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Field" label="{{ r.label }}" error="{{ r.error }}" hint-size="100%,76px">
+                        <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Select" options="{{ serviceOptions }}" dc-props="{{ r.selProps }}" error="{{ r.hasError }}" hint-size="100%,50px"></x-import>
+                      </x-import>
+                    </div>
+                    <sc-if value="{{ r.canRemove }}" hint-placeholder-val="{{ false }}">
+                      <button onClick="{{ r.remove }}" style="border:0;background:transparent;color:var(--danger);font-weight:800;font-size:15px;cursor:pointer;padding:14px 4px;font-family:inherit">Odebrat</button>
+                    </sc-if>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ canAddRow }}" hint-placeholder-val="{{ true }}">
+                  <button onClick="{{ addRow }}" style="align-self:flex-start;border:1.5px dashed var(--border-input);background:transparent;border-radius:999px;padding:10px 18px;font-weight:800;font-size:15px;cursor:pointer;color:var(--text-body);font-family:inherit">+ přidat další službu</button>
+                </sc-if>
+                <div style="display:flex;flex-direction:column;gap:12px;padding-top:4px">
+                  <sc-if value="{{ askWheels }}" hint-placeholder-val="{{ true }}">
+                    <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Checkbox" checked="{{ f.wheels }}" on-change="{{ toggleWheels }}" hint-size="100%,24px">Kola mám uskladněná u vás</x-import>
+                  </sc-if>
+                  <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Checkbox" checked="{{ f.leasing }}" on-change="{{ toggleLeasing }}" hint-size="100%,24px">Vozidlo je na leasing</x-import>
+                  <sc-if value="{{ f.leasing }}" hint-placeholder-val="{{ false }}">
+                    <div style="max-width:420px;padding-left:30px">
+                      <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Field" label="Leasingová společnost" hint-size="100%,76px">
+                        <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Input" value="{{ f.leasingCo }}" on-change="{{ onLeasingCo }}" hint-size="100%,50px"></x-import>
+                      </x-import>
+                    </div>
+                  </sc-if>
+                </div>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:16px">
+                <div style="display:flex;align-items:center;gap:14px"><x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.NumberBadge" n="2" tone="accent" hint-size="44px,44px"></x-import><h2 style="margin:0;font:var(--type-item-title);font-size:22px;text-transform:uppercase">Den a čas</h2></div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:24px;align-items:start">
+                  <div style="display:flex;flex-direction:column;gap:12px">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                      <button onClick="{{ prevMonth }}" disabled="{{ prevDisabled }}" aria-label="Předchozí měsíc" style="width:40px;height:40px;border-radius:50%;border:0;background:var(--surface-muted);cursor:pointer;font-size:18px;font-weight:800;color:var(--text-body)">←</button>
+                      <span style="font:900 17px var(--font-display);text-transform:uppercase">{{ monthLabel }}</span>
+                      <button onClick="{{ nextMonth }}" disabled="{{ nextDisabled }}" aria-label="Další měsíc" style="width:40px;height:40px;border-radius:50%;border:0;background:var(--surface-muted);cursor:pointer;font-size:18px;font-weight:800;color:var(--text-body)">→</button>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(7,minmax(40px,1fr));gap:{{ calGap }};text-align:center">
+                      <sc-for list="{{ weekdays }}" as="w" hint-placeholder-count="7">
+                        <span style="font-size:12px;font-weight:800;color:var(--text-muted);text-transform:uppercase;padding:4px 0">{{ w }}</span>
+                      </sc-for>
+                      <sc-for list="{{ calDays }}" as="d" hint-placeholder-count="35">
+                        <button onClick="{{ d.pick }}" disabled="{{ d.off }}" aria-pressed="{{ d.on }}" aria-label="{{ d.aria }}" style="aspect-ratio:1;min-width:40px;border:0;border-radius:50%;font-family:inherit;font-size:15px;font-weight:{{ d.fw }};background:{{ d.bg }};color:{{ d.fg }};box-shadow:{{ d.ring }};text-decoration:{{ d.deco }};cursor:{{ d.cursor }};visibility:{{ d.vis }}">{{ d.label }}</button>
+                      </sc-for>
+                    </div>
+                    <span style="font-size:14px;line-height:1.5;color:{{ calStatusColor }}">{{ calStatus }}</span>
+                    <sc-if value="{{ leasingMsg }}" hint-placeholder-val="{{ false }}">
+                      <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Notice" tone="info" hint-size="100%,80px"><span style="font-size:15px">Vozidla na leasing objednáváme v jarní sezóně až od 15. 3. 2027, tak to určují leasingové společnosti.</span></x-import>
+                    </sc-if>
+                    <sc-if value="{{ seasonMsg }}" hint-placeholder-val="{{ false }}">
+                      <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Notice" hint-size="100%,80px"><span style="font-size:15px">{{ seasonMsg }}</span></x-import>
+                    </sc-if>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:12px">
+                    <span style="font-weight:800;font-size:15px">Volné termíny <span style="font-weight:400;color:var(--text-muted)">{{ dayLabel }}</span></span>
+                    <sc-if value="{{ hasSlots }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px">
+                        <sc-for list="{{ slots }}" as="t" hint-placeholder-count="6">
+                          <button onClick="{{ t.pick }}" aria-pressed="{{ t.on }}" style="border:1.5px solid {{ t.bd }};background:{{ t.bg }};color:{{ t.fg }};border-radius:999px;padding:10px 8px;min-height:44px;font-family:inherit;font-weight:800;font-size:15px;cursor:{{ t.cursor }}">{{ t.label }}</button>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                    <span style="font-size:14px;line-height:1.5;color:{{ slotStatusColor }}">{{ slotStatus }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:16px">
+                <div style="display:flex;align-items:center;gap:14px"><x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.NumberBadge" n="3" tone="accent" hint-size="44px,44px"></x-import><h2 style="margin:0;font:var(--type-item-title);font-size:22px;text-transform:uppercase">Vaše údaje</h2></div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:16px 20px">
+                  <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Field" label="Jméno nebo firma" error="{{ err.name }}" hint-size="100%,76px">
+                    <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Input" value="{{ f.name }}" on-change="{{ on.name }}" error="{{ errB.name }}" autocomplete="name" hint-size="100%,50px"></x-import>
+                  </x-import>
+                  <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Field" label="Telefon" error="{{ err.phone }}" hint-size="100%,76px">
+                    <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Input" type="tel" value="{{ f.phone }}" on-change="{{ on.phone }}" error="{{ errB.phone }}" autocomplete="tel" hint-size="100%,50px"></x-import>
+                  </x-import>
+                  <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Field" label="E‑mail" error="{{ err.email }}" hint-size="100%,76px">
+                    <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Input" type="email" value="{{ f.email }}" on-change="{{ on.email }}" error="{{ errB.email }}" autocomplete="email" hint-size="100%,50px"></x-import>
+                  </x-import>
+                  <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Field" label="SPZ" error="{{ err.spz }}" hint-size="100%,76px">
+                    <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Input" value="{{ f.spz }}" on-change="{{ on.spz }}" error="{{ errB.spz }}" style="{{ upperStyle }}" hint-size="100%,50px"></x-import>
+                  </x-import>
+                  <div style="grid-column:1/-1">
+                    <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Field" label="Značka a model" optional="{{ true }}" hint-size="100%,76px">
+                      <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Input" value="{{ f.car }}" on-change="{{ on.car }}" hint-size="100%,50px"></x-import>
+                    </x-import>
+                  </div>
+                  <div style="grid-column:1/-1;display:flex;flex-direction:column;gap:6px">
+                    <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Field" label="Poznámka" optional="{{ true }}" hint-size="100%,120px">
+                      <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Textarea" rows="3" value="{{ f.note }}" on-change="{{ on.note }}" hint-size="100%,96px"></x-import>
+                    </x-import>
+                    <span style="font-size:14px;color:var(--text-muted)">Další přání, která mezi službami nenajdete, napište sem.</span>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:12px;padding-top:8px;border-top:1px solid var(--border-divider)">
+                  <div style="padding-top:12px;display:flex;flex-direction:column;gap:4px">
+                    <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Checkbox" checked="{{ f.remember }}" on-change="{{ toggleRemember }}" hint-size="100%,24px">Zapamatovat údaje na tomto zařízení. Uloží se jen v tomto prohlížeči, příště je nebudete vyplňovat znovu.</x-import>
+                    <sc-if value="{{ saved }}" hint-placeholder-val="{{ false }}">
+                      <button onClick="{{ clearSaved }}" style="align-self:flex-start;margin-left:30px;border:0;background:transparent;padding:4px 0;font-family:inherit;font-weight:800;font-size:15px;color:var(--brand-primary);text-decoration:underline;text-underline-offset:3px;cursor:pointer">Smazat uložené údaje</button>
+                    </sc-if>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:4px">
+                    <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Checkbox" checked="{{ f.consent }}" on-change="{{ toggleConsent }}" hint-size="100%,24px">Souhlasím se zpracováním osobních údajů pro vyřízení rezervace. <a href="#/ochrana-osobnich-udaju" style="font-weight:700">Zásady ochrany osobních údajů</a></x-import>
+                    <sc-if value="{{ err.consent }}" hint-placeholder-val="{{ false }}">
+                      <span style="color:var(--danger);font-size:14px;font-weight:700;padding-left:30px">{{ err.consent }}</span>
+                    </sc-if>
+                  </div>
+                  <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Checkbox" checked="{{ f.reminder }}" on-change="{{ toggleReminder }}" hint-size="100%,40px">Připomeňte mi před každou sezónou, že je čas přezout (nepovinné). Přijde e‑mailem dvakrát do roka, odhlásit se jde jedním kliknutím v každé připomínce.</x-import>
+                </div>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <sc-if value="{{ mob }}" hint-placeholder-val="{{ false }}">
+                  <div style="background:var(--surface-dark);color:#fff;border-radius:var(--radius-md);padding:16px 18px;display:flex;flex-direction:column;gap:6px;font-size:15px">
+                    <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Eyebrow" tone="accent" hint-size="140px,20px">Vaše rezervace</x-import>
+                    <sc-for list="{{ summary }}" as="s" hint-placeholder-count="1"><div style="display:flex;justify-content:space-between;gap:12px"><span>{{ s.name }}</span><span style="opacity:.7;white-space:nowrap">{{ s.dur }}</span></div></sc-for>
+                    <div style="display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--border-on-dark);padding-top:8px;margin-top:2px"><span style="opacity:.7">Termín</span><strong style="color:var(--brand-accent);text-align:right">{{ termLabel }}</strong></div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ formError }}" hint-placeholder-val="{{ false }}">
+                  <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Notice" tone="danger" hint-size="100%,56px">{{ formError }}</x-import>
+                </sc-if>
+                <sc-if value="{{ notSending }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Button" variant="accent" glow="{{ true }}" onClick="{{ submit }}" hint-size="200px,54px">Rezervovat</x-import></sc-if>
+                <sc-if value="{{ sending }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"><x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Button" variant="disabled" aria-busy="true" hint-size="220px,54px">Odesílám rezervaci…</x-import><span style="font-size:14px;color:var(--text-muted)">Stránku prosím nezavírejte.</span></div></sc-if>
+              </div>
+            </div>
+          </div>
+
+          <aside style="position:sticky;top:24px;display:flex;flex-direction:column;gap:16px">
+            <sc-if value="{{ notMob }}" hint-placeholder-val="{{ true }}">
+            <div style="background:var(--surface-dark);color:#fff;border-radius:var(--radius-lg);padding:26px;display:flex;flex-direction:column;gap:14px">
+              <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Eyebrow" tone="accent" hint-size="140px,20px">Vaše rezervace</x-import>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ summary }}" as="s" hint-placeholder-count="1">
+                  <div style="display:flex;justify-content:space-between;gap:12px;font-size:15px"><span>{{ s.name }}</span><span style="opacity:.7;white-space:nowrap">{{ s.dur }}</span></div>
+                </sc-for>
+                <sc-if value="{{ noSummary }}" hint-placeholder-val="{{ true }}">
+                  <span style="font-size:15px;opacity:.7">Zatím není vybraná žádná služba.</span>
+                </sc-if>
+              </div>
+              <div style="border-top:1px solid var(--border-on-dark);padding-top:14px;display:flex;flex-direction:column;gap:6px;font-size:15px">
+                <div style="display:flex;justify-content:space-between;gap:12px"><span style="opacity:.7">Délka</span><strong>{{ totalLabel }}</strong></div>
+                <div style="display:flex;justify-content:space-between;gap:12px"><span style="opacity:.7">Termín</span><strong style="color:var(--brand-accent);text-align:right">{{ termLabel }}</strong></div>
+              </div>
+            </div>
+            </sc-if>
+            <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Card" tone="muted" padding="{{ 24 }}" gap="{{ 8 }}" hint-size="100%,120px">
+              <span style="font:900 17px var(--font-display);text-transform:uppercase">Raději zavoláte?</span>
+              <span style="font-size:15px;color:var(--text-muted)">Objednáme Vás i telefonicky, Po–Pá 8:00–12:00, 13:00–17:00.</span>
+              <a href="tel:+420777000000" style="font:900 20px var(--font-display);color:var(--brand-primary)">☎ 777 000 000</a>
+            </x-import>
+          </aside>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <!-- POTVRZENÍ -->
+  <sc-if value="{{ isConf }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Potvrzení" style="background:var(--gradient-hero)">
+      <div style="max-width:640px;margin:0 auto;padding:64px 24px 96px">
+        <div style="background:#fff;border-radius:var(--radius-xl);box-shadow:var(--shadow-float);padding:clamp(24px,5vw,44px);display:flex;flex-direction:column;gap:20px;align-items:flex-start">
+          <span style="width:64px;height:64px;border-radius:50%;background:var(--brand-accent);display:grid;place-items:center;font:900 30px var(--font-display)">✓</span>
+          <h1 style="margin:0;font:var(--type-h2);text-transform:uppercase">Rezervace přijata</h1>
+          <p style="margin:0;font-size:18px;line-height:1.6;color:var(--text-muted)">Děkujeme, těšíme se na vás. Potvrzení jsme poslali také e‑mailem.</p>
+          <div style="width:100%;display:flex;flex-direction:column">
+            <sc-for list="{{ confRows }}" as="c" hint-placeholder-count="3">
+              <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 20px;padding:14px 0;border-bottom:1px solid var(--border-divider);font-size:16px">
+                <span style="color:var(--text-muted)">{{ c.k }}</span>
+                <strong style="text-align:right">{{ c.v }}</strong>
+              </div>
+            </sc-for>
+          </div>
+          <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.ArrowLink" href="#/" back="{{ true }}" hint-size="140px,24px">Zpět na úvod</x-import>
+        </div>
+      </div>
+    </section>
+  </sc-if>
+
+  <!-- KONTAKT -->
+  <sc-if value="{{ isContact }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Kontakt">
+      <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.PageHero" title="Kontakt" lead="Máte otázku? Zavolejte nám, nebo se rovnou objednejte online." hint-size="100%,220px"></x-import>
+      <div style="max-width:var(--container);margin:0 auto;padding:24px 24px 80px;display:flex;flex-direction:column;gap:56px">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:24px;align-items:start">
+          <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Card" padding="{{ 32 }}" gap="{{ 14 }}" hint-size="100%,300px">
+            <h2 style="margin:0 0 6px;font:var(--type-h2-sub);font-size:24px;text-transform:uppercase">Adresa a spojení</h2>
+            <span style="font-size:17px;line-height:1.6"><strong>Pneuservis a autoservis Jan Kárník</strong><br>[Ulice 000]<br>669 02 Znojmo</span>
+            <a href="tel:+420777000000" style="font:900 22px var(--font-display)">☎ 777 000 000</a>
+            <a href="mailto:info@pneukarnik.cz" style="font-size:17px;font-weight:700">info@pneukarnik.cz</a>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+              <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Button" variant="accent" size="md" href="#/rezervace" hint-size="130px,44px">Rezervovat</x-import>
+            </div>
+          </x-import>
+          <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Card" padding="{{ 32 }}" gap="{{ 14 }}" hint-size="100%,300px">
+            <h2 style="margin:0 0 6px;font:var(--type-h2-sub);font-size:24px;text-transform:uppercase">Otevírací doba</h2>
+            <div style="display:flex;flex-direction:column;gap:2px;margin:0 -12px">
+              <sc-for list="{{ hours }}" as="h" hint-placeholder-count="7">
+                <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 16px;padding:10px 12px;border-radius:12px;background:{{ h.bg }};font-weight:{{ h.fw }};font-size:16px">
+                  <span>{{ h.label }} <span style="color:var(--text-muted);font-weight:400">{{ h.date }}</span></span>
+                  <span>{{ h.value }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </x-import>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:40px;align-items:start">
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <h2 style="margin:0;font:var(--type-h2-sub);text-transform:uppercase">Jak k nám</h2>
+            <p style="margin:0;font-size:17px;line-height:1.65;color:var(--text-soft)">[Popis příjezdu: odkud odbočit, jak poznat vjezd do areálu.]</p>
+            <p style="margin:0;font-size:17px;line-height:1.65;color:var(--text-soft)">[Parkování: kde nechat auto před dílnou a kde počkat.]</p>
+            <h2 style="margin:24px 0 0;font:var(--type-h2-sub);font-size:24px;text-transform:uppercase">Fakturační údaje</h2>
+            <span style="font-size:16px;line-height:1.7">Jan Kárník<br>[Ulice 000], 669 02 Znojmo<br>IČ: [00000000]<br>DIČ: [CZ0000000000]</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <h2 style="margin:0;font:var(--type-h2-sub);text-transform:uppercase">Mapa</h2>
+            <sc-if value="{{ mapOn }}" hint-placeholder-val="{{ false }}">
+              <iframe title="Mapa" src="https://www.google.com/maps?q=Znojmo&amp;output=embed" style="width:100%;aspect-ratio:4/3;border:0;border-radius:var(--radius-lg)"></iframe>
+            </sc-if>
+            <sc-if value="{{ mapOff }}" hint-placeholder-val="{{ true }}">
+              <div style="aspect-ratio:4/3;border-radius:var(--radius-lg);background:var(--surface-muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center">
+                <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Button" variant="dark" size="md" onClick="{{ showMap }}" hint-size="160px,44px">Zobrazit mapu</x-import>
+                <span style="font-size:14px;color:var(--text-muted)">Mapa se načte z Google Maps až po kliknutí.</span>
+              </div>
+            </sc-if>
+            <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.ArrowLink" href="https://maps.google.com/?q=Znojmo" hint-size="200px,24px">Otevřít v Google Maps</x-import>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- O NÁS -->
+  <sc-if value="{{ isAbout }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="O nás">
+      <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.PageHero" title="O nás" lead="[Jednou větou, kdo jsme a od kdy servis ve Znojmě provozujeme.]" hint-size="100%,220px"></x-import>
+      <div style="max-width:var(--container-narrow);margin:0 auto;padding:24px 24px 80px;display:flex;flex-direction:column;gap:48px">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <h2 style="margin:0;font:var(--type-h2-sub);text-transform:uppercase">Historie</h2>
+          <p style="margin:0;font-size:17px;line-height:1.65;color:var(--text-soft)">[Text doplní Provozovatel.]</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <h2 style="margin:0;font:var(--type-h2-sub);text-transform:uppercase">Tým</h2>
+          <p style="margin:0;font-size:17px;line-height:1.65;color:var(--text-soft)">[Text doplní Provozovatel.]</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;background:var(--surface-muted);border-radius:var(--radius-lg);padding:28px">
+          <h2 style="margin:0;font:var(--type-h2-sub);text-transform:uppercase">BestDrive a Barum</h2>
+          <p style="margin:0;font-size:17px;line-height:1.65;color:var(--text-soft)">[Vztah k BestDrive a Barum a jak funguje věrnostní karta BestDrive.]</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <h2 style="margin:0;font:var(--type-h2-sub);text-transform:uppercase">Galerie</h2>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
+            <sc-for list="{{ gallery }}" as="g" hint-placeholder-count="6">
+              <div style="aspect-ratio:4/3;border-radius:var(--radius-md);background:var(--surface-muted);display:grid;place-items:center;font-size:14px;color:var(--text-muted)">{{ g }}</div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ZRUŠENÍ REZERVACE -->
+  <sc-if value="{{ isCancel }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Zrušení rezervace" style="background:var(--gradient-hero)">
+      <div style="max-width:640px;margin:0 auto;padding:64px 24px 96px">
+        <div style="background:#fff;border-radius:var(--radius-xl);box-shadow:var(--shadow-float);padding:clamp(24px,5vw,44px);display:flex;flex-direction:column;gap:20px;align-items:flex-start">
+          <sc-if value="{{ zr.ok }}" hint-placeholder-val="{{ false }}"><span style="width:64px;height:64px;border-radius:50%;background:var(--brand-accent);display:grid;place-items:center;font:900 30px var(--font-display)">✓</span></sc-if>
+          <h1 style="margin:0;font:var(--type-h2);text-transform:uppercase">Zrušení rezervace</h1>
+          <sc-if value="{{ zr.summary }}" hint-placeholder-val="{{ true }}">
+            <div style="width:100%;display:flex;flex-direction:column">
+              <sc-for list="{{ zrRows }}" as="c" hint-placeholder-count="3">
+                <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 20px;padding:14px 0;border-bottom:1px solid var(--border-divider);font-size:16px">
+                  <span style="color:var(--text-muted)">{{ c.k }}</span>
+                  <strong style="text-align:right">{{ c.v }}</strong>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ zr.plain }}" hint-placeholder-val="{{ true }}">
+            <p style="margin:0;font-size:17px;line-height:1.6;text-wrap:pretty">{{ zr.text }}</p>
+          </sc-if>
+          <sc-if value="{{ zr.notice }}" hint-placeholder-val="{{ false }}">
+            <div style="width:100%"><x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Notice" tone="{{ zr.tone }}" hint-size="100%,72px">{{ zr.text }}</x-import></div>
+          </sc-if>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;padding-top:4px">
+            <sc-if value="{{ zr.cancel }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ doCancel }}" style="font-family:var(--font-body);font-weight:800;font-size:17px;padding:15px 28px;border-radius:999px;border:2px solid var(--danger);background:#fff;color:var(--danger);cursor:pointer" style-hover="background:var(--danger);color:#fff">Zrušit rezervaci</button>
+            </sc-if>
+            <sc-if value="{{ zr.call }}" hint-placeholder-val="{{ false }}">
+              <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Button" variant="dark" href="tel:+420777000000" hint-size="220px,54px">Zavolat 777 000 000</x-import>
+            </sc-if>
+            <sc-if value="{{ zr.againMain }}" hint-placeholder-val="{{ false }}">
+              <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Button" variant="accent" href="#/rezervace?znovu=1" hint-size="180px,54px">Objednat znovu</x-import>
+            </sc-if>
+            <sc-if value="{{ zr.againSec }}" hint-placeholder-val="{{ false }}">
+              <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Button" variant="secondary" href="#/rezervace?znovu=1" hint-size="180px,54px">Objednat znovu</x-import>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+    </section>
+  </sc-if>
+
+  <!-- ODHLÁŠENÍ -->
+  <sc-if value="{{ isUnsub }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Odhlášení z e-mailů" style="background:var(--gradient-hero)">
+      <div style="max-width:640px;margin:0 auto;padding:64px 24px 96px">
+        <div style="background:#fff;border-radius:var(--radius-xl);box-shadow:var(--shadow-float);padding:clamp(24px,5vw,44px);display:flex;flex-direction:column;gap:20px;align-items:flex-start">
+          <sc-if value="{{ unsubOk }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:20px;align-items:flex-start">
+              <span style="width:64px;height:64px;border-radius:50%;background:var(--brand-accent);display:grid;place-items:center;font:900 30px var(--font-display)">✓</span>
+              <h1 style="margin:0;font:var(--type-h2);text-transform:uppercase">Odhlášeno</h1>
+              <p style="margin:0;font-size:18px;line-height:1.6">Hotovo, Připomínky přezutí vám už posílat nebudeme.</p>
+              <p style="margin:0;font-size:16px;line-height:1.6;color:var(--text-muted)">Kdybyste si to rozmysleli, stačí při příští rezervaci zaškrtnout souhlas s připomínkou.</p>
+            </div>
+          </sc-if>
+          <sc-if value="{{ unsubFail }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:20px;align-items:flex-start;width:100%">
+              <h1 style="margin:0;font:var(--type-h2);text-transform:uppercase">Odhlášení se nepovedlo</h1>
+              <div style="width:100%"><x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Notice" tone="danger" hint-size="100%,56px">Odkaz pro odhlášení je neplatný nebo už vypršel.</x-import></div>
+              <p style="margin:0;font-size:16px;line-height:1.6;color:var(--text-muted)">Odhlásíme vás i sami, stačí zavolat nebo napsat.</p>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <a href="tel:+420777000000" style="font:900 20px var(--font-display)">☎ 777 000 000</a>
+                <a href="mailto:info@pneukarnik.cz" style="font-size:17px;font-weight:700">info@pneukarnik.cz</a>
+              </div>
+            </div>
+          </sc-if>
+          <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.ArrowLink" href="#/" back="{{ true }}" hint-size="140px,24px">Zpět na úvod</x-import>
+        </div>
+      </div>
+    </section>
+  </sc-if>
+
+  <!-- PRŮVODCE -->
+  <sc-if value="{{ isGuide }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Průvodce">
+      <section style="background:var(--gradient-hero)">
+        <div style="max-width:var(--container-narrow);margin:0 auto;padding:56px 24px 40px;display:flex;flex-direction:column;gap:16px">
+          <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Eyebrow" hint-size="100px,20px">Průvodce</x-import>
+          <h1 style="margin:0;font:var(--type-h1);text-transform:uppercase;text-wrap:balance">Kdy přezout na zimní a letní pneumatiky</h1>
+          <p style="margin:0;font-size:19px;line-height:1.6;color:var(--text-muted);text-wrap:pretty">Kdy je čas přezout, co říká zákon a jak poznat, že pneumatika už dosloužila.</p>
+        </div>
+      </section>
+      <article style="max-width:var(--container-narrow);margin:0 auto;padding:24px 24px 64px;display:flex;flex-direction:column;gap:18px">
+        <p style="margin:0;font-size:17px;line-height:1.7;color:var(--text-soft);text-wrap:pretty">Zimní a letní pneumatiky se liší složením směsi i dezénem. Letní směs v chladu tvrdne a hůř drží na silnici, zimní se v teple rychle sjíždí. Proto se vyplatí přezouvat podle teploty, ne podle kalendáře.</p>
+        <h2 style="margin:24px 0 0;font:var(--type-h2-sub);font-size:26px;text-transform:uppercase">Pravidlo 7 °C</h2>
+        <p style="margin:0;font-size:17px;line-height:1.7;color:var(--text-soft);text-wrap:pretty">Jakmile průměrná denní teplota klesne pod <strong style="color:var(--text-body)">7 °C</strong>, je čas na zimní pneumatiky. Na jaře naopak přezujte na letní, až teploty nad 7 °C vydrží. [V našem kraji to bývá zpravidla v říjnu a v dubnu.]</p>
+        <h2 style="margin:24px 0 0;font:var(--type-h2-sub);font-size:26px;text-transform:uppercase">Co říká zákon</h2>
+        <p style="margin:0;font-size:17px;line-height:1.7;color:var(--text-soft);text-wrap:pretty">Zimní pneumatiky jsou povinné <strong style="color:var(--text-body)">od 1. 11. do 31. 3.</strong>, pokud na silnici panují zimní podmínky. [Upřesnění, co se za zimní podmínky považuje.]</p>
+        <ul style="margin:0;padding-left:24px;display:flex;flex-direction:column;gap:6px">
+          <li style="font-size:17px;line-height:1.7;color:var(--text-soft);padding-left:4px">souvislá vrstva sněhu, ledu nebo námrazy,</li>
+          <li style="font-size:17px;line-height:1.7;color:var(--text-soft);padding-left:4px">[další podmínka podle zákona],</li>
+          <li style="font-size:17px;line-height:1.7;color:var(--text-soft);padding-left:4px">povinnost platí i tam, kde je umístěna dopravní značka Zimní výbava.</li>
+        </ul>
+        <h3 style="margin:12px 0 0;font:900 19px/1.3 var(--font-display);text-transform:uppercase">Minimální hloubka dezénu</h3>
+        <p style="margin:0;font-size:17px;line-height:1.7;color:var(--text-soft);text-wrap:pretty">Zákon určuje nejmenší hloubku dezénu. Pro bezpečnou jízdu doporučujeme pneumatiku vyměnit dřív. [Hodnoty ověří Provozovatel.]</p>
+        <div style="overflow-x:auto;border-radius:var(--radius-md);background:var(--surface-muted)">
+          <table style="width:100%;border-collapse:collapse;font-size:16px;min-width:420px">
+            <thead><tr><th style="padding:12px 16px;border-bottom:1px solid var(--border-divider);text-align:left;font-weight:800">Pneumatiky</th><th style="padding:12px 16px;border-bottom:1px solid var(--border-divider);text-align:left;font-weight:800">Zákonné minimum</th><th style="padding:12px 16px;border-bottom:1px solid var(--border-divider);text-align:left;font-weight:800">Doporučujeme</th></tr></thead>
+            <tbody>
+              <tr><td style="padding:12px 16px;border-bottom:1px solid var(--border-divider);text-align:left">Zimní (osobní auta)</td><td style="padding:12px 16px;border-bottom:1px solid var(--border-divider);text-align:left">[4 mm]</td><td style="padding:12px 16px;border-bottom:1px solid var(--border-divider);text-align:left">[5 mm]</td></tr>
+              <tr><td style="padding:12px 16px;border-bottom:1px solid var(--border-divider);text-align:left;border-bottom:0">Letní (osobní auta)</td><td style="padding:12px 16px;border-bottom:1px solid var(--border-divider);text-align:left;border-bottom:0">[1,6 mm]</td><td style="padding:12px 16px;border-bottom:1px solid var(--border-divider);text-align:left;border-bottom:0">[3 mm]</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <figure style="margin:8px 0;display:flex;flex-direction:column;gap:10px">
+          <div style="aspect-ratio:16/9;border-radius:var(--radius-lg);background:var(--surface-muted);display:grid;place-items:center;font-size:14px;color:var(--text-muted)">[Foto: měření hloubky dezénu]</div>
+          <figcaption style="font-size:14px;line-height:1.5;color:var(--text-muted)">[Popisek obrázku: hloubku dezénu změříme při každém přezutí.]</figcaption>
+        </figure>
+        <h3 style="margin:12px 0 0;font:900 19px/1.3 var(--font-display);text-transform:uppercase">Jak postupovat při přezutí</h3>
+        <ol style="margin:0;padding-left:24px;display:flex;flex-direction:column;gap:6px">
+          <li style="font-size:17px;line-height:1.7;color:var(--text-soft);padding-left:4px">Objednejte se včas, v sezóně jsou Termíny rychle pryč.</li>
+          <li style="font-size:17px;line-height:1.7;color:var(--text-soft);padding-left:4px">Vezměte s sebou klíč k pojistným šroubům kol.</li>
+          <li style="font-size:17px;line-height:1.7;color:var(--text-soft);padding-left:4px">Kola můžete nechat u nás, viz <a href="#/pneuservis/uskladneni" style="font-weight:700;text-decoration:underline;text-underline-offset:3px">Sezónní uskladnění</a>.</li>
+        </ol>
+        <div style="margin-top:32px;background:var(--surface-dark);color:#fff;border-radius:var(--radius-xl);padding:clamp(24px,5vw,40px);display:flex;flex-direction:column;gap:14px;align-items:flex-start">
+          <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Eyebrow" tone="accent" hint-size="120px,20px">Objednejte se</x-import>
+          <span style="font:900 28px/1.15 var(--font-display);text-transform:uppercase">Přezutí pneu</span>
+          <a href="#/pneuservis/prezuti" style="color:var(--brand-accent);font-weight:800">Co Služba zahrnuje a kolik stojí →</a>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;padding-top:6px">
+            <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Button" variant="accent" href="#/rezervace?sluzba=prezuti" hint-size="150px,54px">Rezervovat</x-import>
+            <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Button" variant="secondary" href="tel:+420777000000" hint-size="220px,54px">Zavolat 777 000 000</x-import>
+          </div>
+        </div>
+      </article>
+    </div>
+  </sc-if>
+
+  <!-- OCHRANA OSOBNÍCH ÚDAJŮ -->
+  <sc-if value="{{ isPrivacy }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Ochrana osobních údajů">
+      <section style="background:var(--gradient-hero)">
+        <div style="max-width:var(--container-narrow);margin:0 auto;padding:56px 24px 40px;display:flex;flex-direction:column;gap:16px">
+          
+          <h1 style="margin:0;font:var(--type-h1);text-transform:uppercase;text-wrap:balance">Ochrana osobních údajů</h1>
+          <p style="margin:0;font-size:19px;line-height:1.6;color:var(--text-muted);text-wrap:pretty">[Jednou větou: jak zacházíme s údaji, které nám svěříte při rezervaci.]</p>
+        </div>
+      </section>
+      <article style="max-width:var(--container-narrow);margin:0 auto;padding:24px 24px 80px;display:flex;flex-direction:column;gap:18px">
+        <h2 style="margin:24px 0 0;font:var(--type-h2-sub);font-size:26px;text-transform:uppercase;margin-top:0">Správce</h2>
+        <div style="background:var(--surface-muted);border-radius:var(--radius-md);padding:20px 24px;display:grid;grid-template-columns:auto 1fr;gap:8px 24px;font-size:16px;line-height:1.5">
+          <span style="color:var(--text-muted)">Firma</span><strong>Jan Kárník</strong>
+          <span style="color:var(--text-muted)">Adresa</span><span>[Ulice 000], 669 02 Znojmo</span>
+          <span style="color:var(--text-muted)">IČ</span><span>[00000000]</span>
+          <span style="color:var(--text-muted)">E‑mail</span><a href="mailto:info@pneukarnik.cz" style="font-weight:700">info@pneukarnik.cz</a>
+        </div>
+        <h2 style="margin:24px 0 0;font:var(--type-h2-sub);font-size:26px;text-transform:uppercase">Jaké údaje a proč</h2>
+        <p style="margin:0;font-size:17px;line-height:1.7;color:var(--text-soft);text-wrap:pretty">[Jméno, telefon, e‑mail, SPZ a údaje o vozidle zpracováváme kvůli vyřízení Rezervace.]</p>
+        <ul style="margin:0;padding-left:24px;display:flex;flex-direction:column;gap:6px">
+          <li style="font-size:17px;line-height:1.7;color:var(--text-soft);padding-left:4px">[Rezervace: právní základ, účel]</li>
+          <li style="font-size:17px;line-height:1.7;color:var(--text-soft);padding-left:4px">[Připomínky přezutí: souhlas, odvolatelný jedním kliknutím]</li>
+        </ul>
+        <h2 style="margin:24px 0 0;font:var(--type-h2-sub);font-size:26px;text-transform:uppercase">Jak dlouho</h2>
+        <p style="margin:0;font-size:17px;line-height:1.7;color:var(--text-soft);text-wrap:pretty">[Doba uchování údajů.]</p>
+        <h2 style="margin:24px 0 0;font:var(--type-h2-sub);font-size:26px;text-transform:uppercase">Cookies a měření návštěvnosti</h2>
+        <p style="margin:0;font-size:17px;line-height:1.7;color:var(--text-soft);text-wrap:pretty">[Web nepoužívá sledovací cookies ani služby třetích stran. Mapa Google se načte až po kliknutí.]</p>
+        <h2 style="margin:24px 0 0;font:var(--type-h2-sub);font-size:26px;text-transform:uppercase">Vaše práva</h2>
+        <p style="margin:0;font-size:17px;line-height:1.7;color:var(--text-soft);text-wrap:pretty">[Přístup, oprava, výmaz, námitka, stížnost u ÚOOÚ.]</p>
+      </article>
+    </div>
+  </sc-if>
+
+  <!-- 404 -->
+  <sc-if value="{{ isNotFound }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="404" style="background:var(--gradient-hero)">
+      <div style="max-width:var(--container-narrow);margin:0 auto;padding:88px 24px 112px;display:flex;flex-direction:column;gap:20px;align-items:flex-start">
+        <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Eyebrow" hint-size="60px,20px">Chyba 404</x-import>
+        <h1 style="margin:0;font:var(--type-h1);text-transform:uppercase">Stránka nenalezena</h1>
+        <p style="margin:0;font-size:18px;line-height:1.6;color:var(--text-muted);max-width:520px">Adresa je možná překlepnutá, nebo stránka už neexistuje.</p>
+        <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Button" variant="accent" href="#/" hint-size="160px,54px">Zpět na úvod</x-import>
+        <div style="display:flex;flex-wrap:wrap;gap:10px 28px;padding-top:20px;margin-top:8px;border-top:1px solid var(--border-divider);width:100%">
+          <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.ArrowLink" href="#/sluzby" hint-size="80px,24px">Služby</x-import>
+          <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.ArrowLink" href="#/rezervace" hint-size="110px,24px">Rezervace</x-import>
+          <a href="tel:+420777000000" style="font-weight:800">☎ 777 000 000</a>
+        </div>
+      </div>
+    </section>
+  </sc-if>
+
+  <!-- E-MAILY -->
+  <sc-if value="{{ isEmails }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="E-maily" style="background:var(--surface-muted)">
+      <div style="max-width:var(--container);margin:0 auto;padding:56px 24px 24px;display:flex;flex-direction:column;gap:12px">
+        <h1 style="margin:0;font:var(--type-h2);text-transform:uppercase">Šablona e‑mailů</h1>
+        <p style="margin:0;font-size:17px;line-height:1.6;color:var(--text-muted);max-width:760px">Jedna šablona pro všech šest e‑mailů: šířka 600 px, rozvržení tabulkami, inline styly, písmo s náhradou Arial/Helvetica, tlačítko jako tabulka s barvou pozadí, logo jako obrázek s alt textem. Stejnou stavbu mají i Zrušení rezervace, Nový odkaz ke zrušení a Zrušená rezervace (pro Provozovatele).</p>
+      </div>
+      <div style="max-width:1340px;margin:0 auto;padding:24px 24px 80px;display:flex;flex-wrap:wrap;gap:40px;justify-content:center;align-items:flex-start">
+        <div style="display:flex;flex-direction:column;gap:10px;width:600px;max-width:100%">
+          <span style="font-size:14px;color:var(--text-muted)"><strong style="color:var(--text-body)">Předmět:</strong> Potvrzení rezervace na pondělí 1. 3. 2027</span>
+          <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:100%;background:#ffffff;border-collapse:collapse;box-shadow:var(--shadow-card)">
+            <tr><td style="padding:24px 32px 12px;border-top:4px solid #F5A400"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding-right:12px"><img src="assets/logo-jvk.png" width="48" height="48" alt="Pneuservis Kárník" style="display:block;border:0"></td><td style="font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:17px;line-height:20px;font-weight:900;text-transform:uppercase;color:#232323">Pneuservis Kárník</td></tr></table></td></tr>
+            <tr><td style="padding:8px 32px 16px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;line-height:32px;font-weight:900;text-transform:uppercase;color:#232323">Rezervace přijata</td></tr><tr><td style="padding:0 32px 14px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:#232323">Dobrý den, děkujeme za rezervaci. Těšíme se na vás.</td></tr><tr><td style="padding:4px 32px 18px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;background:#F5F7F9;border-radius:12px"><tr><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#555555;width:150px;vertical-align:top;">Termín</td><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:700;color:#232323;">pondělí 1. 3. 2027, 8:30–9:00</td></tr><tr><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#555555;width:150px;vertical-align:top;border-top:1px solid #E3E7EB">Služby</td><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:700;color:#232323;border-top:1px solid #E3E7EB">Přezutí pneu, Geometrie</td></tr><tr><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#555555;width:150px;vertical-align:top;border-top:1px solid #E3E7EB">SPZ</td><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:700;color:#232323;border-top:1px solid #E3E7EB">1B2 3456</td></tr><tr><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#555555;width:150px;vertical-align:top;border-top:1px solid #E3E7EB">Vozidlo</td><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:700;color:#232323;border-top:1px solid #E3E7EB">Škoda Octavia</td></tr><tr><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#555555;width:150px;vertical-align:top;border-top:1px solid #E3E7EB">Leasing</td><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:700;color:#232323;border-top:1px solid #E3E7EB">ČSOB Leasing</td></tr><tr><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#555555;width:150px;vertical-align:top;border-top:1px solid #E3E7EB">Uskladněná kola</td><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:700;color:#232323;border-top:1px solid #E3E7EB">ano, u nás</td></tr><tr><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#555555;width:150px;vertical-align:top;border-top:1px solid #E3E7EB">Adresa</td><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:700;color:#232323;border-top:1px solid #E3E7EB">[Ulice 000], 669 02 Znojmo</td></tr></table></td></tr><tr><td style="padding:10px 32px 8px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:15px;line-height:20px;font-weight:900;text-transform:uppercase;color:#232323">Co si vzít s sebou</td></tr><tr><td style="padding:0 32px 14px"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:2px 10px 2px 0;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;font-weight:900;color:#9A6200;vertical-align:top">✓</td><td style="padding:2px 0;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:#232323">Technický průkaz vozidla</td></tr><tr><td style="padding:2px 10px 2px 0;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;font-weight:900;color:#9A6200;vertical-align:top">✓</td><td style="padding:2px 0;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:#232323">Klíč k pojistným šroubům kol</td></tr></table></td></tr><tr><td style="padding:0 32px 14px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:#232323">Rezervaci můžete zrušit online nejpozději 28. 2. 2027 v 8:30. Změnu Termínu s vámi domluvíme na 777 000 000.</td></tr><tr><td style="padding:10px 32px 18px"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="background:#ffffff;border:2px solid #C0392B;border-radius:999px"><a href="#/rezervace/zruseni" style="display:inline-block;padding:14px 28px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:16px;line-height:20px;font-weight:800;color:#C0392B;text-decoration:none">Zrušit rezervaci</a></td></tr></table></td></tr><tr><td style="padding:0 32px 14px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px"><a href="#/rezervace?znovu=1" style="color:#1F2933;font-weight:700;text-decoration:underline">Objednat znovu</a></td></tr><tr><td style="padding:12px 32px 28px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#555555">S pozdravem,<br><strong style="color:#232323">Pneuservis a autoservis Jan Kárník</strong><br>[Ulice 000], 669 02 Znojmo<br><a href="#" style="color:#1F2933;font-weight:700">777 000 000</a> · <a href="#" style="color:#1F2933;font-weight:700">info@pneukarnik.cz</a></td></tr>
+          </table>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;width:600px;max-width:100%">
+          <span style="font-size:14px;color:var(--text-muted)"><strong style="color:var(--text-body)">Předmět:</strong> Je čas přezout: jarní sezóna začíná 15. 3. 2027</span>
+          <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:100%;background:#ffffff;border-collapse:collapse;box-shadow:var(--shadow-card)">
+            <tr><td style="padding:24px 32px 12px;border-top:4px solid #F5A400"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding-right:12px"><img src="assets/logo-jvk.png" width="48" height="48" alt="Pneuservis Kárník" style="display:block;border:0"></td><td style="font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:17px;line-height:20px;font-weight:900;text-transform:uppercase;color:#232323">Pneuservis Kárník</td></tr></table></td></tr>
+            <tr><td style="padding:8px 32px 16px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;line-height:32px;font-weight:900;text-transform:uppercase;color:#232323">Je čas přezout</td></tr><tr><td style="padding:0 32px 14px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:#232323">Dobrý den, blíží se sezóna přezouvání a o termíny bývá velký zájem.</td></tr><tr><td style="padding:0 32px 14px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:#232323">Naše jarní sezóna přezouvání začíná 15. 3. 2027. Objednejte se včas, [doplnění textu].</td></tr><tr><td style="padding:10px 32px 18px"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="background:#F5A400;border-radius:999px"><a href="#/rezervace?sluzba=prezuti" style="display:inline-block;padding:14px 28px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:16px;line-height:20px;font-weight:800;color:#232323;text-decoration:none">Objednat přezutí</a></td></tr></table></td></tr><tr><td style="padding:0 32px 14px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:#232323">Raději zavoláte? Jsme na <a href="#" style="color:#1F2933;font-weight:700">777 000 000</a>.</td></tr><tr><td style="padding:12px 32px 28px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#555555">S pozdravem,<br><strong style="color:#232323">Pneuservis a autoservis Jan Kárník</strong><br>[Ulice 000], 669 02 Znojmo<br><a href="#" style="color:#1F2933;font-weight:700">777 000 000</a> · <a href="#" style="color:#1F2933;font-weight:700">info@pneukarnik.cz</a></td></tr><tr><td style="padding:16px 32px;background:#F5F7F9;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:13px;line-height:19px;color:#555555">Tento e‑mail vám posíláme, protože jste při rezervaci zaškrtli souhlas s Připomínkou přezutí. <a href="#/odhlaseni" style="color:#1F2933;font-weight:700;text-decoration:underline">Odhlásit Připomínky přezutí</a></td></tr>
+          </table>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;width:600px;max-width:100%">
+          <span style="font-size:14px;color:var(--text-muted)"><strong style="color:var(--text-body)">Předmět:</strong> Nová rezervace: pondělí 1. 3. 2027 v 8:30, 1B2 3456</span>
+          <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:100%;background:#ffffff;border-collapse:collapse;box-shadow:var(--shadow-card)">
+            <tr><td style="padding:24px 32px 12px;border-top:4px solid #F5A400"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding-right:12px"><img src="assets/logo-jvk.png" width="48" height="48" alt="Pneuservis Kárník" style="display:block;border:0"></td><td style="font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:17px;line-height:20px;font-weight:900;text-transform:uppercase;color:#232323">Pneuservis Kárník</td></tr></table></td></tr>
+            <tr><td style="padding:8px 32px 16px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;line-height:32px;font-weight:900;text-transform:uppercase;color:#232323">Nová rezervace</td></tr><tr><td style="padding:4px 32px 18px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;background:#F5F7F9;border-radius:12px"><tr><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#555555;width:150px;vertical-align:top;">Termín</td><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:700;color:#232323;">pondělí 1. 3. 2027, 8:30–9:00</td></tr><tr><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#555555;width:150px;vertical-align:top;border-top:1px solid #E3E7EB">Služby</td><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:700;color:#232323;border-top:1px solid #E3E7EB">Přezutí pneu, Geometrie</td></tr><tr><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#555555;width:150px;vertical-align:top;border-top:1px solid #E3E7EB">SPZ</td><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:700;color:#232323;border-top:1px solid #E3E7EB">1B2 3456</td></tr><tr><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#555555;width:150px;vertical-align:top;border-top:1px solid #E3E7EB">Vozidlo</td><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:700;color:#232323;border-top:1px solid #E3E7EB">Škoda Octavia</td></tr><tr><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#555555;width:150px;vertical-align:top;border-top:1px solid #E3E7EB">Leasing</td><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:700;color:#232323;border-top:1px solid #E3E7EB">ČSOB Leasing</td></tr><tr><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#555555;width:150px;vertical-align:top;border-top:1px solid #E3E7EB">Uskladněná kola</td><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:700;color:#232323;border-top:1px solid #E3E7EB">ano</td></tr></table></td></tr><tr><td style="padding:10px 32px 8px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:15px;line-height:20px;font-weight:900;text-transform:uppercase;color:#232323">Zákazník</td></tr><tr><td style="padding:4px 32px 18px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;background:#F5F7F9;border-radius:12px"><tr><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#555555;width:150px;vertical-align:top;">Jméno</td><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:700;color:#232323;">Jan Novák</td></tr><tr><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#555555;width:150px;vertical-align:top;border-top:1px solid #E3E7EB">Telefon</td><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:700;color:#232323;border-top:1px solid #E3E7EB"><a href="#" style="color:#1F2933">777 123 456</a></td></tr><tr><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#555555;width:150px;vertical-align:top;border-top:1px solid #E3E7EB">E‑mail</td><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:700;color:#232323;border-top:1px solid #E3E7EB"><a href="#" style="color:#1F2933">jan.novak@example.cz</a></td></tr><tr><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#555555;width:150px;vertical-align:top;border-top:1px solid #E3E7EB">Připomínky</td><td style="padding:10px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:700;color:#232323;border-top:1px solid #E3E7EB">ano</td></tr></table></td></tr><tr><td style="padding:10px 32px 8px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:15px;line-height:20px;font-weight:900;text-transform:uppercase;color:#232323">Poznámka</td></tr><tr><td style="padding:0 32px 14px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:#232323">[Text poznámky od Zákazníka.]</td></tr><tr><td style="padding:10px 32px 18px"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="background:#1F2933;border-radius:999px"><a href="#" style="display:inline-block;padding:14px 28px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:16px;line-height:20px;font-weight:800;color:#ffffff;text-decoration:none">Otevřít v administraci</a></td></tr></table></td></tr><tr><td style="padding:0 0 12px"></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- PŘEHLED -->
+  <sc-if value="{{ isIndex }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Přehled obrazovek">
+      <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.PageHero" title="Přehled obrazovek" lead="Všechny obrazovky návrhu a přepínače stavů v sekci „Obsah podle nastavení“. Šířku mobilu přepnete v sekci „Náhled“." width="var(--container-narrow)" hint-size="100%,220px"></x-import>
+      <div style="max-width:var(--container-narrow);margin:0 auto;padding:24px 24px 80px;display:flex;flex-direction:column">
+        <a href="#/" style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 20px;padding:14px 4px;border-bottom:1px solid var(--border-divider);color:var(--text-body)"><span style="font-weight:800;font-size:17px">Úvod <span style="font-weight:400;font-size:14px;color:var(--text-muted)">/</span></span><span style="font-size:14px;color:var(--text-muted)">pohotovost, oznameni, akce, nejzadanejsi, recenze, rokZalozeni</span></a>
+        <a href="#/sluzby" style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 20px;padding:14px 4px;border-bottom:1px solid var(--border-divider);color:var(--text-body)"><span style="font-weight:800;font-size:17px">Služby <span style="font-weight:400;font-size:14px;color:var(--text-muted)">/sluzby</span></span><span style="font-size:14px;color:var(--text-muted)">autoservisPrazdny</span></a>
+        <a href="#/pneuservis" style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 20px;padding:14px 4px;border-bottom:1px solid var(--border-divider);color:var(--text-body)"><span style="font-weight:800;font-size:17px">Služby: Pneuservis <span style="font-weight:400;font-size:14px;color:var(--text-muted)">/pneuservis</span></span><span style="font-size:14px;color:var(--text-muted)"></span></a>
+        <a href="#/autoservis" style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 20px;padding:14px 4px;border-bottom:1px solid var(--border-divider);color:var(--text-body)"><span style="font-weight:800;font-size:17px">Služby: Autoservis <span style="font-weight:400;font-size:14px;color:var(--text-muted)">/autoservis</span></span><span style="font-size:14px;color:var(--text-muted)"></span></a>
+        <a href="#/pneuservis/prezuti" style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 20px;padding:14px 4px;border-bottom:1px solid var(--border-divider);color:var(--text-body)"><span style="font-weight:800;font-size:17px">Detail Služby (plný) <span style="font-weight:400;font-size:14px;color:var(--text-muted)">/pneuservis/prezuti</span></span><span style="font-size:14px;color:var(--text-muted)">akce</span></a>
+        <a href="#/pneuservis/prodej" style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 20px;padding:14px 4px;border-bottom:1px solid var(--border-divider);color:var(--text-body)"><span style="font-weight:800;font-size:17px">Detail Služby (jen telefonicky) <span style="font-weight:400;font-size:14px;color:var(--text-muted)">/pneuservis/prodej</span></span><span style="font-size:14px;color:var(--text-muted)"></span></a>
+        <a href="#/rezervace" style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 20px;padding:14px 4px;border-bottom:1px solid var(--border-divider);color:var(--text-body)"><span style="font-weight:800;font-size:17px">Rezervace <span style="font-weight:400;font-size:14px;color:var(--text-muted)">/rezervace</span></span><span style="font-size:14px;color:var(--text-muted)">rezervaceOnline, rezervaceStav</span></a>
+        <a href="#/rezervace/potvrzeni" style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 20px;padding:14px 4px;border-bottom:1px solid var(--border-divider);color:var(--text-body)"><span style="font-weight:800;font-size:17px">Potvrzení <span style="font-weight:400;font-size:14px;color:var(--text-muted)">/rezervace/potvrzeni</span></span><span style="font-size:14px;color:var(--text-muted)"></span></a>
+        <a href="#/rezervace/zruseni" style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 20px;padding:14px 4px;border-bottom:1px solid var(--border-divider);color:var(--text-body)"><span style="font-weight:800;font-size:17px">Zrušení rezervace <span style="font-weight:400;font-size:14px;color:var(--text-muted)">/rezervace/zruseni</span></span><span style="font-size:14px;color:var(--text-muted)">zruseniStav</span></a>
+        <a href="#/pruvodce/kdy-prezout" style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 20px;padding:14px 4px;border-bottom:1px solid var(--border-divider);color:var(--text-body)"><span style="font-weight:800;font-size:17px">Průvodce <span style="font-weight:400;font-size:14px;color:var(--text-muted)">/pruvodce/kdy-prezout</span></span><span style="font-size:14px;color:var(--text-muted)"></span></a>
+        <a href="#/odhlaseni" style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 20px;padding:14px 4px;border-bottom:1px solid var(--border-divider);color:var(--text-body)"><span style="font-weight:800;font-size:17px">Odhlášení z e‑mailů <span style="font-weight:400;font-size:14px;color:var(--text-muted)">/odhlaseni</span></span><span style="font-size:14px;color:var(--text-muted)">odhlaseniStav</span></a>
+        <a href="#/ochrana-osobnich-udaju" style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 20px;padding:14px 4px;border-bottom:1px solid var(--border-divider);color:var(--text-body)"><span style="font-weight:800;font-size:17px">Ochrana osobních údajů <span style="font-weight:400;font-size:14px;color:var(--text-muted)">/ochrana-osobnich-udaju</span></span><span style="font-size:14px;color:var(--text-muted)"></span></a>
+        <a href="#/kontakt" style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 20px;padding:14px 4px;border-bottom:1px solid var(--border-divider);color:var(--text-body)"><span style="font-weight:800;font-size:17px">Kontakt <span style="font-weight:400;font-size:14px;color:var(--text-muted)">/kontakt</span></span><span style="font-size:14px;color:var(--text-muted)"></span></a>
+        <a href="#/o-nas" style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 20px;padding:14px 4px;border-bottom:1px solid var(--border-divider);color:var(--text-body)"><span style="font-weight:800;font-size:17px">O nás <span style="font-weight:400;font-size:14px;color:var(--text-muted)">/o-nas</span></span><span style="font-size:14px;color:var(--text-muted)"></span></a>
+        <a href="#/neexistuje" style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 20px;padding:14px 4px;border-bottom:1px solid var(--border-divider);color:var(--text-body)"><span style="font-weight:800;font-size:17px">Stránka nenalezena (404) <span style="font-weight:400;font-size:14px;color:var(--text-muted)">/neexistuje</span></span><span style="font-size:14px;color:var(--text-muted)"></span></a>
+        <a href="#/emaily" style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 20px;padding:14px 4px;border-bottom:1px solid var(--border-divider);color:var(--text-body)"><span style="font-weight:800;font-size:17px">E‑maily <span style="font-weight:400;font-size:14px;color:var(--text-muted)">/emaily</span></span><span style="font-size:14px;color:var(--text-muted)"></span></a>
+        <a href="#/ikony" style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 20px;padding:14px 4px;border-bottom:1px solid var(--border-divider);color:var(--text-body)"><span style="font-weight:800;font-size:17px">Sada ikon a favikona <span style="font-weight:400;font-size:14px;color:var(--text-muted)">/ikony</span></span><span style="font-size:14px;color:var(--text-muted)"></span></a>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- SADA IKON (podklad pro administraci) -->
+  <sc-if value="{{ isIcons }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Sada ikon">
+      <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.PageHero" title="Sada ikon Služeb" lead="Pevná sada z Lucide, tah 2 px. Provozovatel vybírá ikonu ke Službě, ikona je nepovinná. Soubory jsou v assets/icons a nahrají se na vlastní server." hint-size="100%,220px"></x-import>
+      <div style="max-width:var(--container);margin:0 auto;padding:24px 24px 80px;display:flex;flex-direction:column;gap:56px">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:12px">
+          <sc-for list="{{ iconSet }}" as="i" hint-placeholder-count="20">
+            <div style="display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:var(--radius-md);background:var(--surface-muted)">
+              <span style="width:52px;height:52px;border-radius:50%;background:#fff;display:grid;place-items:center;flex:none"><img src="{{ i.src }}" alt="" width="26" height="26"></span>
+              <span style="display:flex;flex-direction:column;gap:2px;min-width:0"><strong style="font-size:15px;line-height:1.35">{{ i.label }}</strong><span style="font-size:13px;color:var(--text-muted)">{{ i.name }}</span></span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:20px">
+          <h2 style="margin:0;font:var(--type-h2-sub);text-transform:uppercase">Favikona a ikona webu</h2>
+          <div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-end">
+            <div style="display:flex;flex-direction:column;gap:8px;align-items:center"><img src="assets/favicon-16.svg" width="16" height="16" alt="Favikona 16 px"><span style="font-size:13px;color:var(--text-muted)">16 px</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px;align-items:center"><img src="assets/favicon.svg" width="32" height="32" alt="Favikona 32 px"><span style="font-size:13px;color:var(--text-muted)">32 px</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px;align-items:center"><img src="assets/favicon.svg" width="64" height="64" alt="Favikona zvětšená"><span style="font-size:13px;color:var(--text-muted)">32 px, zvětšeno 2×</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px;align-items:center"><img src="assets/apple-touch-icon.svg" width="180" height="180" alt="Ikona pro telefon" style="border-radius:40px"><span style="font-size:13px;color:var(--text-muted)">180 px, telefon (zaoblení dělá systém)</span></div>
+            <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:10px 10px 0 0;background:#fff;box-shadow:var(--shadow-card);font-size:13px"><img src="assets/favicon-16.svg" width="16" height="16" alt=""><span>Pneuservis a autoservis Jan Kárník</span></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:20px">
+          <h2 style="margin:0;font:var(--type-h2-sub);text-transform:uppercase">Karta s ikonou a bez ikony</h2>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:20px">
+            <sc-for list="{{ iconDemo }}" as="s" hint-placeholder-count="3">
+                <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Card" href="{{ s.href }}" padding="{{ 26 }}" hint-size="100%,210px">
+                  <sc-if value="{{ s.hasHead }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:4px">
+                    <sc-if value="{{ s.hasIcon }}" hint-placeholder-val="{{ true }}">
+                      <span style="width:52px;height:52px;border-radius:50%;background:var(--brand-primary-tint);display:grid;place-items:center;flex:none"><img src="{{ s.icon }}" alt="" width="26" height="26"></span>
+                    </sc-if>
+                    <sc-if value="{{ s.hasAkce }}" hint-placeholder-val="{{ false }}">
+                      <span style="margin-left:auto;display:flex"><x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.Pill" tone="accent" hint-size="60px,30px">Akce</x-import></span>
+                    </sc-if>
+                  </div>
+                  </sc-if>
+                  <span style="font:900 20px var(--font-display);color:var(--text-body)">{{ s.name }}</span>
+                  <span style="font-size:15px;line-height:1.55;color:var(--text-muted);text-wrap:pretty">{{ s.perex }}</span>
+                  <span style="margin-top:auto;padding-top:6px;display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+                    <span style="font:900 18px var(--font-display);color:var(--brand-primary)">{{ s.price }}</span>
+                    <span style="font-size:13px;font-weight:700;color:var(--text-muted)">{{ s.mode }}</span>
+                  </span>
+                </x-import>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  </main>
+
+  <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.SiteFooter" brand-prefix="Pneuservis" brand-name="Kárník" tagline="Pneuservis a autoservis Jan Kárník, Znojmo" columns="{{ footerColumns }}" copyright="© 2026 Jan Kárník" bottom-links="{{ footerBottom }}" hint-size="100%,320px"></x-import>
+  <sc-if value="{{ showBar }}" hint-placeholder-val="{{ false }}">
+    <div style="position:sticky;bottom:0;z-index:20">
+      <x-import component-from-global-scope="SimpleWebDesignSystem_2e6a6c.MobileActionBar" fixed="{{ false }}" call-label="Zavolat" call-href="tel:+420777000000" cta-label="Rezervovat" cta-href="{{ barHref }}" hint-size="100%,72px"></x-import>
+    </div>
+  </sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;sirka&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Podle okna&quot;,&quot;Mobil 375 px&quot;],&quot;default&quot;:&quot;Podle okna&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Náhled&quot;},&quot;pohotovost&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Obsah podle nastavení&quot;},&quot;oznameni&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Obsah podle nastavení&quot;},&quot;akce&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Obsah podle nastavení&quot;},&quot;rezervaceOnline&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Obsah podle nastavení&quot;},&quot;rokZalozeni&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Obsah podle nastavení&quot;},&quot;nejzadanejsi&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Obsah podle nastavení&quot;},&quot;zruseniStav&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Před Lhůtou&quot;,&quot;Zrušeno&quot;,&quot;Po Lhůtě&quot;,&quot;Už zrušená&quot;,&quot;Příliš pokusů&quot;,&quot;Neplatný odkaz&quot;],&quot;default&quot;:&quot;Před Lhůtou&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Obsah podle nastavení&quot;},&quot;rezervaceStav&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Formulář&quot;,&quot;Načítání&quot;,&quot;Leasing&quot;,&quot;Uložené údaje&quot;,&quot;Objednat znovu&quot;,&quot;Chyba: termín obsazen&quot;,&quot;Chyba: termín zmizel&quot;,&quot;Chyba: příliš rezervací&quot;,&quot;Chyba: odeslání&quot;,&quot;Odesílání&quot;,&quot;10 Služeb&quot;,&quot;Žádná Služba online&quot;,&quot;Bez JavaScriptu&quot;],&quot;default&quot;:&quot;Formulář&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Obsah podle nastavení&quot;},&quot;recenze&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Obsah podle nastavení&quot;},&quot;autoservisPrazdny&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Obsah podle nastavení&quot;},&quot;odhlaseniStav&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Úspěch&quot;,&quot;Neúspěch&quot;],&quot;default&quot;:&quot;Úspěch&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Obsah podle nastavení&quot;}}">
+const pad = n => String(n).padStart(2, '0');
+const iso = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const fmt = d => d.getDate() + '. ' + (d.getMonth() + 1) + '. ' + d.getFullYear();
+const HOL = ['01-01', '05-01', '05-08', '07-05', '07-06', '09-28', '10-28', '11-17', '12-24', '12-25', '12-26'];
+const EASTER = { '2026-04-03': 1, '2026-04-06': 1, '2027-03-26': 1, '2027-03-29': 1 };
+const isHol = d => HOL.includes(iso(d).slice(5)) || !!EASTER[iso(d)];
+const DAYS = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'];
+const DAYS_CAP = ['Neděle', 'Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota'];
+const MONTHS = ['Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen', 'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec'];
+const hash = s => { let h = 7; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
+const BLOCKS = [[480, 720], [780, 1020]];
+const tm = m => Math.floor(m / 60) + ':' + pad(m % 60);
+const SEASON = { start: '2026-10-01', end: '2026-11-30', od: '1. 10.', do: '30. 11.' };
+
+const S = [
+  { id: 'prezuti', cat: 'pneu', name: 'Přezutí pneu', perex: 'Sezónní přezutí kol s vyvážením a kontrolou tlaku.', price: 'od 600 Kč', dur: 30, online: true, seasonal: true, top: true, wheels: true,
+    akce: { name: 'Jarní přezutí za akční cenu', price: '500 Kč', until: '31. 3. 2027', text: '[Popis akce: pro jaká vozidla a velikosti kol platí.]' },
+    includes: ['Demontáž a montáž kol', 'Vyvážení všech čtyř kol', 'Kontrola a doplnění tlaku', 'Kontrola stavu a hloubky dezénu', 'Dotažení kol momentovým klíčem'],
+    process: ['Přijeďte v domluvený Termín. Auto převezmeme hned u dílny, počkat můžete u nás.', 'Kola přezujeme, vyvážíme a zkontrolujeme. Když na pneu najdeme něco podezřelého, ukážeme Vám to a domluvíme se, co dál.'],
+    duration: 'zhruba 30 minut', priceNote: 'přezutí a vyvážení 4 kol do 16". Větší kola a SUV dle ceníku.',
+    bring: ['Technický průkaz vozidla', 'Klíč k pojistným šroubům kol'],
+    faq: [{ q: 'Kdy přezout na zimní pneumatiky?', a: 'Obvykle když průměrná denní teplota klesne pod 7 °C, v našem kraji zpravidla během října.' }, { q: 'Můžu u vás nechat letní kola?', a: 'Ano, nabízíme sezónní uskladnění. Při rezervaci zaškrtněte, že kola máte uskladněná u nás.' }, { q: 'Musím mít kola na discích?', a: '[Odpověď doplní Provozovatel.]' }],
+    related: ['uskladneni', 'geometrie', 'prodej'] },
+  { id: 'uskladneni', cat: 'pneu', name: 'Sezónní uskladnění', perex: 'Kola uložíme do suchého skladu do příští sezóny.', price: 'od 800 Kč', dur: 15, online: true, seasonal: true, top: true, wheels: true, includes: ['Označení a uložení sady kol', 'Kontrola stavu při naskladnění'], related: ['prezuti'] },
+  { id: 'prodej', cat: 'pneu', name: 'Prodej pneu', perex: 'Pneumatiky Barum a dalších značek na objednávku, včetně montáže.', price: 'Cena dle vozu', dur: 0, online: false, seasonal: true, related: ['prezuti'] },
+  { id: 'geometrie', cat: 'pneu', name: 'Geometrie', perex: 'Seřízení sbíhavosti a odklonu, aby auto jelo rovně a pneu se nesjížděly.', price: '900 Kč', dur: 60, online: true, seasonal: true, top: true, includes: ['Měření geometrie', 'Seřízení sbíhavosti', 'Protokol o měření'] },
+  { id: 'kolobezky', cat: 'pneu', name: 'Oprava defektu kol na elektrokoloběžkách', perex: 'Výměna duše nebo pláště u elektrokoloběžky.', price: 'od 250 Kč', dur: 30, online: true },
+  { id: 'stk', cat: 'auto', name: 'Příprava na STK', perex: 'Projdeme auto před technickou a opravíme, co by neprošlo.', price: 'od 900 Kč', dur: 60, online: true },
+  { id: 'klima', cat: 'auto', name: 'Doplnění klimatizace', perex: 'Odsátí, kontrola těsnosti a doplnění chladiva.', price: 'od 1 200 Kč', dur: 45, online: true, top: false },
+  { id: 'brzdy', cat: 'auto', name: 'Výměna brzdových destiček', perex: 'Výměna destiček a kontrola kotoučů.', price: 'od 800 Kč', dur: 60, online: true },
+  { id: 'olej', cat: 'auto', name: 'Výměna oleje', perex: 'Olej a filtr podle předpisu výrobce vozu.', price: 'od 500 Kč', dur: 30, online: true },
+  { id: 'diagnostika', cat: 'auto', name: 'Autodiagnostika', perex: 'Načtení a vysvětlení chybových hlášení řídicí jednotky.', price: '600 Kč', dur: 30, online: true },
+  { id: 'baterie', cat: 'auto', name: 'Výměna autobaterie', perex: 'Test stávající baterie a výměna za novou.', price: 'od 300 Kč', dur: 30, online: true },
+  { id: 'skla', cat: 'auto', name: 'Oprava čelních skel', perex: 'Oprava drobných prasklin a výměna čelního skla.', price: 'Cena dle vozu', dur: 0, online: false },
+  { id: 'ozon', cat: 'auto', name: 'Dezinfekce vozidla ozonem', perex: 'Odstraní pachy a bakterie z interiéru i klimatizace.', price: '500 Kč', dur: 30, online: true },
+  { id: 'vyfuk', cat: 'auto', name: 'Výměna výfuku', perex: '[Perex Služby.]', price: 'od [000] Kč', dur: 60, online: true },
+  { id: 'tlumice', cat: 'auto', name: 'Výměna tlumičů', perex: '[Perex Služby.]', price: 'od [000] Kč', dur: 90, online: true },
+  { id: 'zarovky', cat: 'auto', name: 'Výměna žárovek', perex: '[Perex Služby.]', price: 'od [000] Kč', dur: 15, online: true },
+  { id: 'podvozek', cat: 'auto', name: 'Nástřik podvozku proti korozi', perex: '[Perex Služby.]', price: 'od [000] Kč', dur: 120, online: false },
+  { id: 'dekarbonizace', cat: 'auto', name: 'Dekarbonizace', perex: '[Perex Služby.]', price: 'od [000] Kč', dur: 60, online: true },
+  { id: 'dovolena', cat: 'auto', name: 'Servisní prohlídka před dovolenou', perex: '[Perex Služby. Ukázka karty bez ikony.]', price: 'od [000] Kč', dur: 45, online: true, noIcon: true }
+];
+const byId = id => S.find(s => s.id === id);
+const ICONSET = [['prezuti','circle-dot','Přezutí pneu'],['uskladneni','warehouse','Sezónní uskladnění'],['prodej','shopping-cart','Prodej pneu'],['geometrie','crosshair','Geometrie'],['stk','clipboard-check','Příprava na STK'],['skla','car-front','Oprava čelních skel'],['klima','snowflake','Doplnění klimatizace'],['brzdy','disc-3','Výměna brzdových destiček'],['vyfuk','cloud-fog','Výměna výfuku'],['olej','droplet','Výměna oleje'],['tlumice','move-vertical','Výměna tlumičů'],['zarovky','lightbulb','Výměna žárovek'],['baterie','battery-charging','Výměna autobaterie'],['diagnostika','activity','Autodiagnostika'],['podvozek','shield-check','Nástřik podvozku proti korozi'],['dekarbonizace','flame','Dekarbonizace'],['ozon','wind','Dezinfekce vozidla ozonem'],['kolobezky','bike','Oprava defektu kol na elektrokoloběžkách'],['dovolena','luggage','Servisní prohlídka před dovolenou'],[null,'wrench','Obecná náhradní ikona']];
+const ICON = Object.fromEntries(ICONSET.filter(x => x[0]).map(x => [x[0], x[1]]));
+const CAT = { pneu: { name: 'Pneuservis', href: '#/pneuservis', lead: 'Přezutí, uskladnění, prodej pneumatik a geometrie.' }, auto: { name: 'Autoservis', href: '#/autoservis', lead: 'Běžný servis a opravy osobních aut a dodávek.' } };
+const href = s => (s.cat === 'pneu' ? '#/pneuservis/' : '#/autoservis/') + s.id;
+
+const EMPTY_F = { wheels: false, leasing: false, leasingCo: '', name: '', phone: '', email: '', spz: '', car: '', note: '', remember: false, consent: false, reminder: false };
+const FILLED = { name: 'Jan Novák', phone: '777 123 456', email: 'jan.novak@example.cz', spz: '1B2 3456', car: 'Škoda Octavia' };
+const ERRS = { 'Chyba: termín obsazen': 'Vybraný termín si mezitím rezervoval někdo jiný. Vyberte prosím jiný.', 'Chyba: termín zmizel': 'Vybraný termín už není v nabídce. Vyberte prosím jiný.', 'Chyba: příliš rezervací': 'Odeslali jste příliš mnoho rezervací. Zavolejte nám prosím na 777 000 000.', 'Chyba: odeslání': 'Rezervaci se nepodařilo odeslat. Zkuste to znovu.' };
+function preset(stav) {
+  const b = { rows: ['prezuti'], f: { ...EMPTY_F }, day: null, slot: null, err: {}, formError: '', saved: false, sending: false, prefilled: false };
+  if (stav === 'Leasing') return { ...b, rows: ['prezuti', 'stk'], f: { ...EMPTY_F, leasing: true, leasingCo: 'ČSOB Leasing' } };
+  if (stav === 'Uložené údaje') return { ...b, f: { ...EMPTY_F, ...FILLED, remember: true }, saved: true };
+  if (stav === 'Objednat znovu') return { ...b, rows: ['prezuti', 'geometrie'], f: { ...EMPTY_F, ...FILLED, wheels: true }, prefilled: true };
+  if (ERRS[stav]) return { ...b, f: { ...EMPTY_F, ...FILLED, consent: true }, formError: ERRS[stav] };
+  if (stav === 'Odesílání') return { ...b, f: { ...EMPTY_F, ...FILLED, consent: true }, sending: true };
+  if (stav === '10 Služeb') return { ...b, rows: ['prezuti', 'uskladneni', 'geometrie', 'stk', 'klima', 'brzdy', 'olej', 'diagnostika', 'baterie', 'ozon'] };
+  return b;
+}
+function parse(h) {
+  const [path, q] = (h || '').replace(/^#\/?/, '').split('?');
+  const p = path.split('/').filter(Boolean);
+  const qs = {}; (q || '').split('&').forEach(kv => { const [k, v] = kv.split('='); if (k) qs[k] = v; });
+  if (p[0] === 'sluzby') return { page: 'cat', cat: null };
+  if (p[0] === 'pneuservis' || p[0] === 'autoservis') { const cat = p[0] === 'pneuservis' ? 'pneu' : 'auto'; return p[1] && byId(p[1]) ? { page: 'detail', cat, id: p[1] } : { page: 'cat', cat }; }
+  if (p[0] === 'rezervace') return p[1] === 'potvrzeni' ? { page: 'conf' } : p[1] === 'zruseni' ? { page: 'cancel' } : { page: 'res', pre: qs.sluzba, znovu: qs.znovu };
+  if (p[0] === 'pruvodce') return { page: 'guide' };
+  if (p[0] === 'odhlaseni') return { page: 'unsub' };
+  if (p[0] === 'ochrana-osobnich-udaju') return { page: 'privacy' };
+  if (p[0] === 'ikony') return { page: 'icons' };
+  if (p[0] === 'emaily') return { page: 'emails' };
+  if (p[0] === 'prehled') return { page: 'index' };
+  if (p[0] === 'kontakt') return { page: 'contact' };
+  if (p[0] === 'o-nas') return { page: 'about' };
+  return p.length ? { page: '404' } : { page: 'home' };
+}
+
+class Component extends DCLogic {
+  state = {
+    route: parse(window.location.hash), oznClosed: false, mapOn: false,
+    ...preset(this.props.rezervaceStav), month: null, conf: null
+  };
+  componentDidMount() {
+    this._r = () => { const w = window.innerWidth; this.setState({ narrow: w < 1180, vw: w }); }; this._r(); window.addEventListener('resize', this._r);
+    this._h = () => {
+      const route = parse(window.location.hash);
+      const patch = { route };
+      if (route.page === 'res' && route.znovu) Object.assign(patch, preset('Objednat znovu'));
+      else if (route.page === 'res' && route.pre && byId(route.pre)) Object.assign(patch, { rows: [route.pre], day: null, slot: null });
+      patch.menu = false; this.setState(patch); window.scrollTo(0, 0);
+    };
+    window.addEventListener('hashchange', this._h);
+    if (this.state.route.page === 'res' && this.state.route.pre && byId(this.state.route.pre)) this.setState({ rows: [this.state.route.pre] });
+  }
+  componentDidUpdate(pp) { if (pp.rezervaceStav !== this.props.rezervaceStav) this.setState(preset(this.props.rezervaceStav)); }
+  componentWillUnmount() { window.removeEventListener('resize', this._r); window.removeEventListener('hashchange', this._h); }
+  setF(k, v) { this.setState(s => ({ f: { ...s.f, [k]: v }, err: { ...s.err, [k]: undefined } })); }
+
+  renderVals() {
+    const p = this.props, st = this.state, r = st.route;
+    const showPohotovost = p.pohotovost ?? true, showOznameni = p.oznameni ?? false, showAkce = p.akce ?? true, resEnabled = p.rezervaceOnline ?? true;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const navDefs = [['Služby', '#/sluzby', r.page === 'cat' || r.page === 'detail'], ['O nás', '#/o-nas', r.page === 'about'], ['Kontakt', '#/kontakt', r.page === 'contact'], ['Rezervace', '#/rezervace', r.page === 'res' || r.page === 'conf']];
+    const nav = navDefs.map(([label, h, a]) => ({ label, href: h, color: a ? 'var(--brand-primary)' : 'var(--text-body)', line: a ? 'var(--brand-accent)' : 'transparent' }));
+
+    const hoursOf = d => isHol(d) ? 'Zavřeno (Státní svátek)' : (d.getDay() === 0 || d.getDay() === 6) ? 'Zavřeno' : '8:00–12:00, 13:00–17:00';
+    const hours = Array.from({ length: 7 }, (_, i) => { const d = new Date(today); d.setDate(d.getDate() + i); return { label: i === 0 ? 'Dnes' : i === 1 ? 'Zítra' : DAYS_CAP[d.getDay()], date: d.getDate() + '. ' + (d.getMonth() + 1) + '.', value: hoursOf(d), bg: i === 0 ? 'var(--brand-primary-tint)' : 'transparent', fw: i === 0 ? 800 : 400 }; });
+
+    const card = s => { const hasIcon = !s.noIcon, hasAkce = !!(showAkce && s.akce); return { hasIcon, hasHead: hasIcon || hasAkce, icon: window.__icon(ICON[s.id] || 'wrench'), name: s.name, perex: s.perex, price: s.price, href: href(s), hasAkce, mode: s.online ? 'Online i telefonem' : 'Jen telefonicky' }; };
+    const showRok = p.rokZalozeni ?? true, showTop = p.nejzadanejsi ?? true;
+
+    // detail
+    const sv = r.page === 'detail' ? byId(r.id) : null;
+    const svc = sv ? {
+      ...sv, catName: CAT[sv.cat].name, catHref: CAT[sv.cat].href, akce: sv.akce || {},
+      hasIncludes: !!sv.includes, includes: sv.includes || [], hasProcess: !!sv.process, process: sv.process || [],
+      hasBring: !!sv.bring, bring: sv.bring || [], hasFaq: !!sv.faq, faq: sv.faq || [], hasPriceNote: !!sv.priceNote,
+      hasRelated: !!sv.related, relatedLinks: (sv.related || []).map(byId).map(x => ({ name: x.name, href: href(x) })),
+      phoneOnly: !sv.online, resHref: '#/rezervace?sluzba=' + sv.id
+    } : { akce: {} };
+
+    // reservation
+    const sel = st.rows.map(byId).filter(Boolean);
+    const total = sel.reduce((a, s) => a + s.dur, 0);
+    const nonSeasonal = sel.some(s => !s.seasonal);
+    const max = new Date(today); max.setDate(max.getDate() + 60);
+    const inSeason = d => iso(d) >= SEASON.start && iso(d) <= SEASON.end;
+    const avail = d => sel.length > 0 && d > today && d <= max && d.getDay() > 0 && d.getDay() < 6 && !isHol(d) && hash(iso(d)) % 7 !== 0 && !(nonSeasonal && inSeason(d));
+    const m0 = st.month || { y: today.getFullYear(), m: today.getMonth() };
+    const first = new Date(m0.y, m0.m, 1), dim = new Date(m0.y, m0.m + 1, 0).getDate(), off = (first.getDay() + 6) % 7;
+    const calDays = []; let anyAvail = false;
+    for (let i = 0; i < off; i++) calDays.push({ on: false, aria: '', ring: 'none', deco: 'none', label: '', off: true, vis: 'hidden', bg: 'transparent', fg: 'inherit', cursor: 'default', fw: 400, pick: null });
+    for (let n = 1; n <= dim; n++) {
+      const d = new Date(m0.y, m0.m, n), a = avail(d), k = iso(d), on = st.day === k; if (a) anyAvail = true;
+      calDays.push({ label: n, on, aria: n + '. ' + (m0.m + 1) + '.' + (a ? '' : ', bez volného termínu'), ring: on ? '0 0 0 2px #fff, 0 0 0 4px var(--brand-primary)' : 'none', deco: 'none', off: !a, vis: 'visible', fw: on ? 900 : a ? 800 : 400, bg: on ? 'var(--brand-primary)' : a ? 'var(--brand-primary-tint)' : 'transparent', fg: on ? '#fff' : a ? 'var(--text-body)' : '#80868D', cursor: a ? 'pointer' : 'default', pick: a ? () => this.setState({ day: k, slot: null, err: { ...st.err, day: undefined } }) : null });
+    }
+    const shift = dm => { const nm = new Date(m0.y, m0.m + dm, 1); this.setState({ month: { y: nm.getFullYear(), m: nm.getMonth() } }); };
+    const rStav = p.rezervaceStav ?? 'Formulář', loading = rStav === 'Načítání';
+    if (loading) calDays.forEach(d => { if (d.vis === 'visible') Object.assign(d, { off: true, bg: 'var(--surface-muted)', fg: 'transparent', cursor: 'default', pick: null }); });
+    const calStatus = loading ? 'Načítám volné dny…' : st.err.day ? st.err.day : !sel.length ? 'Nejdřív vyberte službu, pak uvidíte volné dny.' : !anyAvail ? 'V tomto měsíci nejsou volné termíny. Zkuste další měsíc.' : 'Zašedlé dny nemají volný termín.';
+    let slots = [];
+    if (st.day && total > 0) {
+      for (const [a, b] of BLOCKS) for (let s = a; s + total <= b; s += 30) if (hash(st.day + s) % 4 !== 0) { const k = s; const on = st.slot === k; slots.push({ on, label: (on ? '✓ ' : '') + tm(s) + '–' + tm(s + total), bd: on ? 'var(--brand-primary)' : 'var(--border-input)', bg: on ? 'var(--brand-primary)' : '#fff', fg: on ? '#fff' : 'var(--text-body)', pick: () => this.setState({ slot: k, err: { ...this.state.err, slot: undefined } }) }); }
+    }
+    slots.forEach(t => t.cursor = 'pointer');
+    if (loading) slots = Array.from({ length: 6 }, () => ({ on: false, label: '\u00a0', bd: 'var(--surface-muted)', bg: 'var(--surface-muted)', fg: 'transparent', cursor: 'default', pick: null }));
+    const dayDate = st.day ? new Date(st.day + 'T00:00') : null;
+    const slotStatus = loading ? 'Načítám volné termíny…' : st.err.slot ? st.err.slot : !st.day ? 'Termíny se ukážou po výběru dne.' : !slots.length ? 'V tento den nejsou volné termíny. Zkuste prosím jiný den.' : '';
+    const opts = [{ value: '', label: 'Vyberte službu' }].concat(S.filter(s => s.online).map(s => ({ value: s.id, label: s.name + ' (' + s.price + ')' })));
+    const rows = st.rows.map((v, i) => ({
+      label: i === 0 ? 'Služba' : 'Další služba', value: v, error: i === 0 ? st.err.svc : undefined, hasError: i === 0 && !!st.err.svc, canRemove: i > 0, selProps: { value: v, onChange: e => { const rr = [...this.state.rows]; rr[i] = e.target.value; this.setState({ rows: rr, slot: null, err: { ...this.state.err, svc: undefined } }); } },
+      onChange: e => { const rr = [...this.state.rows]; rr[i] = e.target.value; this.setState({ rows: rr, slot: null, err: { ...this.state.err, svc: undefined } }); },
+      remove: () => this.setState({ rows: this.state.rows.filter((_, j) => j !== i), slot: null })
+    }));
+    const err = st.err, errB = {}; Object.keys(err).forEach(k => errB[k] = !!err[k]);
+    const on = {}; ['name', 'phone', 'email', 'spz', 'car', 'note'].forEach(k => on[k] = e => this.setF(k, e.target.value));
+    const termLabel = dayDate && st.slot != null ? DAYS[dayDate.getDay()] + ' ' + fmt(dayDate) + ' v ' + tm(st.slot) : dayDate ? fmt(dayDate) : '—';
+
+    const submit = () => {
+      const f = this.state.f, e = {};
+      if (!sel.length) e.svc = 'Vyberte službu.';
+      if (!st.day) e.day = 'Vyberte den.';
+      else if (st.slot == null) e.slot = 'Vyberte termín.';
+      if (!f.name.trim()) e.name = 'Vyplňte prosím toto pole.';
+      if (f.phone.replace(/\D/g, '').length < 9) e.phone = 'Zadejte telefon, například 777 123 456.';
+      if (!/^\S+@\S+\.\S+$/.test(f.email)) e.email = 'Zkontrolujte prosím e-mail, něco v něm chybí.';
+      if (!f.spz.trim()) e.spz = 'Vyplňte prosím toto pole.'; else if (/[^A-Za-z0-9 ]/.test(f.spz)) e.spz = 'SPZ může obsahovat jen písmena a číslice.';
+      if (!f.consent) e.consent = 'Bez souhlasu nemůžeme rezervaci přijmout.';
+      if (Object.keys(e).length) { this.setState({ err: e, formError: 'Rezervaci jsme neodeslali. Zkontrolujte prosím zvýrazněná pole.' }); return; }
+      const conf = [{ k: 'Termín', v: termLabel }, { k: sel.length > 1 ? 'Služby' : 'Služba', v: sel.map(s => s.name).join(', ') }, { k: 'SPZ', v: f.spz.toUpperCase() }];
+      if (f.leasing) conf.push({ k: 'Leasing', v: f.leasingCo || 'ano' });
+      if (f.wheels && sel.some(s => s.wheels)) conf.push({ k: 'Kola', v: 'uskladněná u nás' });
+      this.setState({ conf, err: {}, formError: '' }); window.location.hash = '#/rezervace/potvrzeni';
+    };
+
+
+    const zStav = p.zruseniStav ?? 'Před Lhůtou';
+    const zEff = st.zrDone === zStav ? 'Zrušeno' : zStav;
+    const ZR = {
+      'Před Lhůtou': { plain: true, text: 'Rezervaci můžete zrušit nejpozději 28. 2. 2027 v 8:30. Termín se tím uvolní pro ostatní.', cancel: true },
+      'Zrušeno': { ok: true, plain: true, text: 'Rezervace je zrušená a termín jsme uvolnili. Potvrzení jsme vám poslali e‑mailem.', againMain: true },
+      'Po Lhůtě': { notice: true, text: 'Online šlo rezervaci zrušit nejpozději 28. 2. 2027 v 8:30. Zavolejte nám prosím na 777 000 000.', call: true, againSec: true },
+      'Už zrušená': { notice: true, tone: 'info', text: 'Tato rezervace už je zrušená.', againMain: true },
+      'Příliš pokusů': { notice: true, text: 'Z vašeho připojení přišlo příliš mnoho pokusů o zrušení. Rezervace zůstává, zkuste to prosím za hodinu.', call: true, againSec: true },
+      'Neplatný odkaz': { notice: true, tone: 'danger', noSummary: true, text: 'Odkaz pro zrušení je neplatný nebo už vypršel.', call: true, againSec: true }
+    };
+    const zr0 = ZR[zEff] || ZR['Před Lhůtou'];
+    const zr = { ok: false, plain: false, notice: false, cancel: false, call: false, againMain: false, againSec: false, tone: undefined, ...zr0, summary: !zr0.noSummary };
+    const unsubOk = (p.odhlaseniStav ?? 'Úspěch') === 'Úspěch';
+    const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+    const frame = (p.sirka ?? 'Podle okna') === 'Mobil 375 px', vw = frame ? 375 : (st.vw || 1280);
+    const mob = vw < 720, headMob = vw < 900;
+    const barPages = ['home', 'cat', 'detail', 'contact', 'about', 'guide', '404'];
+    return {
+      mob, notMob: !mob, headMob, headDesk: !headMob, menuOpen: !!st.menu, menuLabel: st.menu ? 'Zavřít' : 'Menu',
+      toggleMenu: () => this.setState({ menu: !this.state.menu }), closeMenu: () => this.setState({ menu: false }),
+      frameW: frame ? '375px' : 'none', frameShadow: frame ? '0 0 0 1px var(--border-divider), 0 10px 40px rgba(35,35,35,.12)' : 'none', deskBg: frame ? 'var(--surface-muted)' : '#fff',
+      heroPos: mob ? '72% center' : '65% 60%', heroPad: mob ? '56px 20px 60px' : '96px 24px 104px',
+      heroOverlay: mob ? 'linear-gradient(180deg,rgba(20,24,28,.62) 0%,rgba(20,24,28,.82) 55%,rgba(20,24,28,.9) 100%)' : 'linear-gradient(90deg,rgba(20,24,28,.88) 0%,rgba(20,24,28,.7) 40%,rgba(20,24,28,.1) 75%)',
+      pagePad: mob ? '24px 16px 48px' : '24px 24px 80px', formPad: mob ? '20px 14px' : 'clamp(20px,4vw,36px)', calGap: mob ? '2px' : '4px',
+      showBar: mob && barPages.includes(r.page), barHref: r.page === 'detail' && sv && sv.online ? '#/rezervace?sluzba=' + sv.id : '#/rezervace',
+      showPohotovost, showOznameni, showOznameniBar: showOznameni && !st.oznClosed && r.page !== 'res', showAkce,
+      closeOznameni: () => this.setState({ oznClosed: true }),
+      nav, navOrder: st.narrow ? 3 : 1, navBasis: st.narrow ? '100%' : 'auto', navJustify: st.narrow ? 'flex-start' : 'flex-end', hours, todayHours: hoursOf(today), tomorrowHours: hoursOf(tomorrow),
+      isHome: r.page === 'home', isCat: r.page === 'cat', isDetail: r.page === 'detail', isRes: r.page === 'res', isConf: r.page === 'conf', isContact: r.page === 'contact', isAbout: r.page === 'about',
+      topServices: showTop ? S.filter(s => s.top).map(card) : [], hasTop: showTop && S.some(s => s.top), hasRok: showRok, noRok: !showRok,
+      isIcons: r.page === 'icons', isEmails: r.page === 'emails', isIndex: r.page === 'index', isCancel: r.page === 'cancel', isGuide: r.page === 'guide', isUnsub: r.page === 'unsub', isPrivacy: r.page === 'privacy', isNotFound: r.page === '404',
+      zr, zrRows: [{ k: 'Termín', v: 'pondělí 1. 3. 2027 v 8:30' }, { k: 'Služby', v: 'Přezutí pneu, Geometrie' }, { k: 'SPZ', v: '1B2 3456' }],
+      doCancel: () => this.setState({ zrDone: zStav }), unsubOk, unsubFail: !unsubOk, iconSet: ICONSET.map(x => ({ src: window.__icon(x[1]), label: x[2], name: x[1] })), iconDemo: ['prezuti', 'dovolena', 'podvozek'].map(byId).map(card),
+      akce: S.filter(s => s.akce).map(s => ({ name: s.akce.name, href: href(s), line: s.name + ': ' + s.akce.price, until: s.akce.until })),
+      reviews: [
+        { stars: '★★★★★', text: '[Ukázka recenze: rychlé přezutí, Termín seděl na minutu, cena podle ceníku.]', author: '[Jméno autora]', date: '12. 9. 2026' },
+        { stars: '★★★★★', text: '[Ukázka recenze: ochotní a vysvětlí, co je potřeba opravit a co počká.]', author: '[Jméno autora]', date: '28. 8. 2026' },
+        { stars: '★★★★☆', text: '[Ukázka recenze: geometrie hotová za hodinu, auto konečně jede rovně.]', author: '[Jméno autora]', date: '3. 8. 2026' }
+      ],
+      mapOn: st.mapOn, mapOff: !st.mapOn, showMap: () => this.setState({ mapOn: true }),
+      catGroups: ['pneu', 'auto'].filter(c => !r.cat || r.cat === c).map(c => { const items = (c === 'auto' && p.autoservisPrazdny) ? [] : S.filter(s => s.cat === c).map(card); return { name: CAT[c].name, items, empty: !items.length }; }),
+      filterOptions: ['Vše', 'Pneuservis', 'Autoservis'], filterValue: r.cat ? CAT[r.cat].name : 'Vše',
+      setFilter: v => { window.location.hash = v === 'Pneuservis' ? '#/pneuservis' : v === 'Autoservis' ? '#/autoservis' : '#/sluzby'; },
+      svc, svcAkceOn: !!(showAkce && sv && sv.akce),
+      resOn: resEnabled && rStav !== 'Žádná Služba online' && rStav !== 'Bez JavaScriptu', resOff: !resEnabled || rStav === 'Žádná Služba online' || rStav === 'Bez JavaScriptu',
+      resOffText: rStav === 'Žádná Služba online' ? 'Online teď nejde objednat žádná služba. Zavolejte nám na 777 000 000.' : rStav === 'Bez JavaScriptu' ? 'Rezervace potřebuje zapnutý JavaScript. Objednat se můžete i telefonicky na 777 000 000.' : 'Online rezervace je teď vypnutá. [Zpráva Provozovatele.] Objednat se můžete telefonicky.',
+      prefilled: st.prefilled, saved: st.saved && st.f.remember, clearSaved: () => this.setState({ f: { ...EMPTY_F }, saved: false }),
+      sending: st.sending, notSending: !st.sending, leasingMsg: st.f.leasing, showReviews: p.recenze ?? true,
+      rows, serviceOptions: opts, canAddRow: st.rows.length < 10,
+      addRow: () => this.setState({ rows: [...this.state.rows, ''] }),
+      askWheels: sel.some(s => s.wheels), f: st.f,
+      toggleWheels: () => this.setF('wheels', !this.state.f.wheels), toggleLeasing: () => this.setF('leasing', !this.state.f.leasing),
+      toggleRemember: () => this.setF('remember', !this.state.f.remember), toggleConsent: () => this.setF('consent', !this.state.f.consent),
+      toggleReminder: () => this.setF('reminder', !this.state.f.reminder), onLeasingCo: e => this.setF('leasingCo', e.target.value),
+      weekdays: ['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'], calDays, monthLabel: MONTHS[m0.m] + ' ' + m0.y,
+      prevDisabled: m0.y === today.getFullYear() && m0.m === today.getMonth(), nextDisabled: new Date(m0.y, m0.m + 1, 1) > max,
+      prevMonth: () => shift(-1), nextMonth: () => shift(1),
+      calStatus, calStatusColor: st.err.day ? 'var(--danger)' : 'var(--text-muted)',
+      seasonMsg: nonSeasonal ? 'Od ' + SEASON.od + ' do ' + SEASON.do + ' je sezóna přezouvání a online jde objednat jen přezutí a související služby. Ostatní služby v tu dobu objednáváme telefonicky na 777 000 000.' : '',
+      dayLabel: dayDate ? '· ' + DAYS[dayDate.getDay()] + ' ' + fmt(dayDate) : '', hasSlots: slots.length > 0, slots,
+      slotStatus, slotStatusColor: st.err.slot ? 'var(--danger)' : 'var(--text-muted)',
+      err, errB, on, upperStyle: { textTransform: 'uppercase' },
+      formError: st.formError, submit,
+      summary: sel.map(s => ({ name: s.name, dur: s.dur + ' min' })), noSummary: !sel.length,
+      totalLabel: total ? total + ' min' : '—', termLabel,
+      confRows: st.conf || [{ k: 'Termín', v: 'pondělí 1. 3. 2027 v 8:30' }, { k: 'Služby', v: 'Přezutí pneu, Geometrie, Sezónní uskladnění' }, { k: 'SPZ', v: '1B2 3456' }, { k: 'Leasing', v: 'ČSOB Leasing' }, { k: 'Kola', v: 'uskladněná u nás' }],
+      gallery: ['[Foto dílny]', '[Foto týmu]', '[Foto dílny]', '[Foto skladu]', '[Foto vybavení]', '[Foto areálu]'],
+      footerColumns: [
+        { title: 'Kontakt', links: [{ label: '[Ulice 000], 669 02 Znojmo' }, { label: '777 000 000', href: 'tel:+420777000000' }, { label: 'info@pneukarnik.cz', href: 'mailto:info@pneukarnik.cz' }, { label: 'IČ: [00000000] · DIČ: [CZ0000000000]', muted: true }] },
+        { title: 'Průvodci', links: [{ label: 'Kdy přezout na zimní a letní pneumatiky', href: '#/pruvodce/kdy-prezout' }, { label: 'Uskladnění pneumatik u nás', href: '#/pruvodce/uskladneni' }, { label: 'Kdy pneumatiky vyměnit', href: '#/pruvodce/kdy-vymenit' }] },
+        { title: 'Odkazy', links: [{ label: 'O nás', href: '#/o-nas' }, { label: 'Kontakt', href: '#/kontakt' }, { label: 'Ochrana osobních údajů', href: '#/ochrana-osobnich-udaju' }, { label: 'Přehled obrazovek návrhu', href: '#/prehled', muted: true }] }
+      ],
+      footerBottom: []
+    };
+  }
+}
+</script>
+</body>
+</html>

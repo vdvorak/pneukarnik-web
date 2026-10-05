@@ -1,0 +1,37 @@
+:root{
+  /* Spacing — values used in source (not a strict 4/8 grid) */
+  --space-1:4px; --space-2:6px; --space-3:8px; --space-4:10px; --space-5:12px; --space-6:14px; --space-7:16px;
+  --space-8:20px; --space-9:22px; --space-10:24px; --space-11:28px; --space-12:32px; --space-13:40px; --space-14:48px; --space-15:56px; --space-16:80px;
+
+  /* Layout */
+  --container:1200px;        /* default page width */
+  --container-narrow:960px;  /* price list, detail pages (860–1100 used) */
+  --gutter:24px;             /* horizontal page padding */
+  --section-y:80px;          /* vertical section padding */
+
+  /* Radii */
+  --radius-input:10px;
+  --radius-sm:14px;
+  --radius-md:16px;   /* FAQ items, notices, small tiles */
+  --radius-lg:20px;   /* cards — the default */
+  --radius-xl:24px;   /* large dark feature panel */
+  --radius-pill:999px;/* all buttons, chips */
+  --radius-round:50%;
+
+  /* Shadows — soft, ink-tinted rgba(35,35,35,…) */
+  --shadow-xs:0 1px 6px rgba(35,35,35,.08);      /* pills */
+  --shadow-sm:0 2px 12px rgba(35,35,35,.1);      /* secondary button */
+  --shadow-header:0 2px 16px rgba(35,35,35,.08);
+  --shadow-card:0 4px 24px rgba(35,35,35,.08);   /* default card */
+  --shadow-float:0 10px 40px rgba(35,35,35,.12); /* overlapping hero card */
+  --shadow-card-hover:0 12px 36px color-mix(in srgb,var(--brand-primary) 18%,transparent); /* brand-tinted lift on hover (source: rgba(31,95,214,.18)) */
+  --shadow-tile-hover:0 8px 28px color-mix(in srgb,var(--brand-primary) 15%,transparent);
+  --shadow-cta:0 6px 18px color-mix(in srgb,var(--brand-accent) 35%,transparent);   /* glow under hero CTA */
+  --shadow-modal:0 20px 50px rgba(0,0,0,.3);     /* form card on dark */
+  --shadow-bar:0 -4px 20px rgba(35,35,35,.12);   /* mobile sticky bar */
+
+  /* Motion — source uses instant hover swaps; keep transitions short if added */
+  --ease:cubic-bezier(.2,.7,.3,1); /* @kind other */
+  --dur-fast:120ms; /* @kind other */
+  --dur:200ms; /* @kind other */
+}

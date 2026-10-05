@@ -1,0 +1,46 @@
+/* Colors. Brand tokens (--brand-*) are the ONLY values meant to change per website.
+   Default theme = sample site "Autoškola U Bouráka". Override --brand-* on :root (or any wrapper) to rebrand. */
+:root{
+  /* Brand — swap per site */
+  --brand-primary:#1F5FD6;        /* links, active nav, header CTA, numbers */
+  --brand-primary-hover:#174AA8;
+  --brand-primary-tint:#EAF5FD;   /* hero gradient top, info boxes, icon chips */
+  --brand-accent:#F4B200;         /* main CTA, highlights on dark, active underline */
+  --brand-accent-hover:#E3A500;
+  --brand-accent-strong:#C48F00;  /* accent used as text on accent tint */
+  --brand-accent-tint:#FFF6DB;    /* notice background */
+
+  /* Neutrals */
+  --neutral-0:#FFFFFF;
+  --neutral-50:#F5F7F9;   /* muted section / card bg */
+  --neutral-100:#EEF0F2;  /* row dividers */
+  --neutral-200:#D5D9DE;  /* input borders */
+  --neutral-500:#777777;
+  --neutral-600:#555555;  /* secondary text */
+  --neutral-700:#444444;  /* long-form body on light */
+  --neutral-900:#232323;  /* ink, dark panels, top bar */
+  --neutral-950:#1A1A1A;  /* footer */
+
+  /* Semantic */
+  --danger:#C8321E;
+
+  /* Aliases */
+  --text-body:var(--neutral-900);
+  --text-muted:var(--neutral-600);
+  --text-soft:var(--neutral-700);
+  --text-on-dark:#FFFFFF;
+  --text-on-primary:#FFFFFF;
+  --text-on-accent:var(--neutral-900);
+  --text-link:var(--brand-primary);
+  --text-link-hover:var(--brand-primary-hover);
+  --surface-page:#FFFFFF;
+  --surface-card:#FFFFFF;
+  --surface-muted:var(--neutral-50);
+  --surface-tint:var(--brand-primary-tint);
+  --surface-dark:var(--neutral-900);
+  --surface-footer:var(--neutral-950);
+  --border-divider:var(--neutral-100);
+  --border-input:var(--neutral-200);
+  --border-on-dark:rgba(255,255,255,.15);
+  --gradient-hero:linear-gradient(180deg,var(--brand-primary-tint) 0%,#fff 100%);
+}

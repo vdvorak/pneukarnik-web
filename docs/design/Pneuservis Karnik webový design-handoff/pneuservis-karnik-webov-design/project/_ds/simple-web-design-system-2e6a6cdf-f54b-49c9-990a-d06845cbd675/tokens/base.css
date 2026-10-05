@@ -1,0 +1,6 @@
+/* Minimal base reset matching the sample site */
+body{margin:0;background:var(--surface-page);color:var(--text-body);font-family:var(--font-body);-webkit-font-smoothing:antialiased}
+a{color:var(--text-link);text-decoration:none}
+a:hover{color:var(--text-link-hover)}
+input,select,textarea,button{font-family:inherit}
+*,*::before,*::after{box-sizing:border-box}
