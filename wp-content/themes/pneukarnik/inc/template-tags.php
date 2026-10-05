@@ -280,6 +280,53 @@ function pneukarnik_hours_label( ?array $hours ): string {
 }
 
 /**
+ * Otevírací doba jednoho dne z Pneukarnik_Working_Hours::upcoming() s důvodem Výjimky nebo svátku,
+ * např. „Zavřeno (Den české státnosti)“.
+ *
+ * @param array{hours:list<array{from:string,to:string}>|null,note:string} $day
+ */
+function pneukarnik_day_hours_label( array $day ): string {
+	return pneukarnik_hours_label( $day['hours'] ) . ( '' !== $day['note'] ? ' (' . $day['note'] . ')' : '' );
+}
+
+/**
+ * Otevírací doba Dnes a Zítra v hero Úvodu (stejná pravidla jako tabulka na 7 dní).
+ */
+function pneukarnik_today_tomorrow_hours(): void {
+	[ $today, $tomorrow ] = Pneukarnik_Working_Hours::upcoming( 2 );
+	?>
+	<p class="uvod__dnes">
+		<span><span class="uvod__dnes-den"><?php esc_html_e( 'Dnes:', 'pneukarnik' ); ?></span> <strong class="uvod__dnes-doba"><?php echo esc_html( pneukarnik_day_hours_label( $today ) ); ?></strong></span>
+		<span><span class="uvod__dnes-den"><?php esc_html_e( 'Zítra:', 'pneukarnik' ); ?></span> <strong><?php echo esc_html( pneukarnik_day_hours_label( $tomorrow ) ); ?></strong></span>
+	</p>
+	<?php
+}
+
+/**
+ * Fotka provozovny do hero Úvodu: WebP v několika šířkách, prohlížeč si vybere podle šířky okna.
+ * Zdroj je v návrhu (assets/foto-provozovna.jpg), zmenšené verze jsou v assets/img.
+ */
+function pneukarnik_hero_photo(): void {
+	$widths = [ 640, 960, 1280, 1920, 2560 ];
+	$url    = static fn( int $width ): string => get_theme_file_uri( "assets/img/foto-provozovna-{$width}.webp" );
+	$srcset = implode( ', ', array_map( static fn( int $width ): string => esc_url( $url( $width ) ) . " {$width}w", $widths ) );
+	?>
+	<img class="uvod__foto" src="<?php echo esc_url( $url( 1280 ) ); ?>" srcset="<?php echo $srcset; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- adresy esc_url výše. ?>" sizes="100vw" width="2560" height="1706" alt="" fetchpriority="high">
+	<?php
+}
+
+/**
+ * Krátký popis Kategorie na dlaždici Úvodu, prázdný = bez popisu.
+ */
+function pneukarnik_category_lead( string $category ): string {
+	$leads = [
+		Pneukarnik_Service::PNEUSERVIS => __( 'Přezutí, uskladnění, prodej pneu, geometrie a opravy defektů.', 'pneukarnik' ),
+		Pneukarnik_Service::AUTOSERVIS => __( 'Příprava na STK, klimatizace, brzdy, olej, diagnostika a další.', 'pneukarnik' ),
+	];
+	return $leads[ $category ] ?? '';
+}
+
+/**
  * Otevírací doba na 7 dní od dneška včetně Výjimek a svátků (stejná pravidla jako Termíny).
  */
 function pneukarnik_upcoming_hours(): void {
@@ -366,33 +413,38 @@ function pneukarnik_service_cta( Pneukarnik_Service $service ): void {
  */
 function pneukarnik_reviews( array $summary ): void {
 	$rating = number_format( $summary['rating'], 1, ',', '' );
+	$stars  = static fn( int $count ): string => str_repeat( '★', $count ) . str_repeat( '☆', 5 - $count );
 	?>
 	<p class="recenze__souhrn">
-		<?php
-		/* translators: 1: průměrné hodnocení, např. 4,8, 2: počet hodnocení */
-		echo esc_html( sprintf( __( '%1$s z 5 (%2$s hodnocení)', 'pneukarnik' ), $rating, number_format_i18n( $summary['count'] ) ) );
-		?>
+		<strong class="recenze__prumer"><?php echo esc_html( $rating ); ?></strong>
+		<span class="recenze__hvezdy" aria-hidden="true"><?php echo esc_html( $stars( max( 0, min( 5, (int) round( $summary['rating'] ) ) ) ) ); ?></span>
+		<span class="recenze__pocet">
+			<?php
+			/* translators: %s: počet hodnocení */
+			echo esc_html( sprintf( __( 'z 5 (%s hodnocení)', 'pneukarnik' ), number_format_i18n( $summary['count'] ) ) );
+			?>
+		</span>
 	</p>
 	<?php if ( $summary['reviews'] ) : ?>
 		<ul class="recenze">
 			<?php foreach ( $summary['reviews'] as $review ) : ?>
-				<li class="recenze__polozka">
-					<p class="recenze__hvezdy" aria-label="<?php echo esc_attr( sprintf( /* translators: %d: počet hvězdiček */ __( '%d z 5 hvězdiček', 'pneukarnik' ), $review['rating'] ) ); ?>"><?php echo esc_html( str_repeat( '★', $review['rating'] ) . str_repeat( '☆', 5 - $review['rating'] ) ); ?></p>
-					<blockquote><?php echo wp_kses_post( wpautop( esc_html( $review['text'] ) ) ); ?></blockquote>
+				<li class="card recenze__polozka">
+					<p class="recenze__hvezdy" aria-label="<?php echo esc_attr( sprintf( /* translators: %d: počet hvězdiček */ __( '%d z 5 hvězdiček', 'pneukarnik' ), $review['rating'] ) ); ?>"><?php echo esc_html( $stars( $review['rating'] ) ); ?></p>
+					<blockquote class="recenze__text"><?php echo wp_kses_post( wpautop( esc_html( $review['text'] ) ) ); ?></blockquote>
 					<p class="recenze__autor">
 						<?php if ( '' !== $review['author_url'] ) : ?>
-							<a href="<?php echo esc_url( $review['author_url'] ); ?>" rel="noopener nofollow" target="_blank"><?php echo esc_html( $review['author'] ); ?></a>,
+							<a href="<?php echo esc_url( $review['author_url'] ); ?>" rel="noopener nofollow" target="_blank"><?php echo esc_html( $review['author'] ); ?></a>
 						<?php else : ?>
-							<?php echo esc_html( $review['author'] ); ?>,
+							<?php echo esc_html( $review['author'] ); ?>
 						<?php endif; ?>
-						<?php echo esc_html( Pneukarnik_Clock::at( $review['date'] )->format( 'j. n. Y' ) ); ?>
+						· <?php echo esc_html( Pneukarnik_Clock::at( $review['date'] )->format( 'j. n. Y' ) ); ?>
 					</p>
 				</li>
 			<?php endforeach; ?>
 		</ul>
 	<?php endif; ?>
 	<?php if ( '' !== $summary['url'] ) : ?>
-		<p><a class="recenze__vse" href="<?php echo esc_url( $summary['url'] ); ?>" rel="noopener" target="_blank"><?php esc_html_e( 'Všechna hodnocení na Google', 'pneukarnik' ); ?></a></p>
+		<p class="recenze__vse"><a class="arrow-link" href="<?php echo esc_url( $summary['url'] ); ?>" rel="noopener" target="_blank"><?php esc_html_e( 'Všechna hodnocení na Google', 'pneukarnik' ); ?></a></p>
 	<?php endif; ?>
 	<?php
 }

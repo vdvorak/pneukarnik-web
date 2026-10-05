@@ -58,6 +58,19 @@ class HomeInfoTest extends Pneukarnik_REST_Test_Case {
 		$this->assertSame( [ '10:00', '11:00' ], $this->free_starts( $service, $tomorrow['date'] ) );
 	}
 
+	public function test_hero_shows_today_and_tomorrow_with_exceptions_and_holidays(): void {
+		require_once dirname( __DIR__, 2 ) . '/wp-content/themes/pneukarnik/inc/template-tags.php';
+		Pneukarnik_Clock::freeze( '2027-09-27 16:30' ); // Pondělí, 28. 9. je svátek.
+		Pneukarnik_Working_Hours::save( array_fill_keys( [ 'mon', 'tue', 'wed', 'thu', 'fri' ], self::TWO_PARTS ) );
+		$this->assertNull( Pneukarnik_Day_Exceptions::add( '2027-09-27', '2027-09-27', false, self::MORNING, 'Školení' ) );
+
+		ob_start();
+		pneukarnik_today_tomorrow_hours();
+		$html = wp_strip_all_tags( (string) ob_get_clean() );
+
+		$this->assertSame( 'Dnes: 8:00–12:00 (Školení) Zítra: Zavřeno (Den české státnosti)', trim( (string) preg_replace( '/\s+/u', ' ', $html ) ) );
+	}
+
 	public function test_contact_comes_from_settings_with_default_company(): void {
 		update_option( 'pneukarnik_phone', ' +420 775 565 326 ' );
 		update_option( 'pneukarnik_email', 'servis@example.test' );
@@ -164,5 +177,67 @@ class HomeInfoTest extends Pneukarnik_REST_Test_Case {
 
 		$this->assertSame( [ $first, $second ], array_map( static fn( Pneukarnik_Service $s ): int => $s->id, Pneukarnik_Service::featured() ) );
 		$this->assertNotContains( $plain, array_map( static fn( Pneukarnik_Service $s ): int => $s->id, Pneukarnik_Service::featured() ) );
+	}
+
+	public function test_why_us_lines_are_title_with_optional_text(): void {
+		update_option( 'pneukarnik_why_us', "Partner sítě BestDrive | Věrnostní karta platí i u nás.\r\n\n  Ve Znojmě od roku 1991  \n| Termín online, bez registrace\nVybavení dílny |  \nCena | od 600 Kč | s DPH\n  |  " );
+
+		$this->assertSame(
+			[
+				[
+					'title' => 'Partner sítě BestDrive',
+					'text'  => 'Věrnostní karta platí i u nás.',
+				],
+				[
+					'title' => 'Ve Znojmě od roku 1991',
+					'text'  => '',
+				],
+				[
+					'title' => 'Termín online, bez registrace',
+					'text'  => '',
+				],
+				[
+					'title' => 'Vybavení dílny',
+					'text'  => '',
+				],
+				[
+					'title' => 'Cena',
+					'text'  => 'od 600 Kč | s DPH',
+				],
+			],
+			pneukarnik_why_us()
+		);
+	}
+
+	public function test_why_us_without_titles_is_empty(): void {
+		update_option( 'pneukarnik_why_us', " \n | \n" );
+
+		$this->assertSame( [], pneukarnik_why_us() );
+	}
+
+	/**
+	 * @return array<string, array{string, int|null}>
+	 */
+	public static function founded_years(): array {
+		return [
+			'nezadaný'        => [ '', null ],
+			'rok'             => [ ' 1991 ', 1991 ],
+			'letošní'         => [ '2027', 2027 ],
+			'v budoucnu'      => [ '2028', null ],
+			'příliš starý'    => [ '1899', null ],
+			'není rok'        => [ 'od 1991', null ],
+			'dvouciferný'     => [ '91', null ],
+			'desetinné číslo' => [ '1991.5', null ],
+		];
+	}
+
+	/**
+	 * @dataProvider founded_years
+	 */
+	public function test_founded_year_is_given_out_only_when_it_makes_sense( string $saved, ?int $expected ): void {
+		Pneukarnik_Clock::freeze( '2027-03-01 08:00' );
+		update_option( 'pneukarnik_founded_year', $saved );
+
+		$this->assertSame( $expected, pneukarnik_founded_year() );
 	}
 }

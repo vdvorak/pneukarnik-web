@@ -2,10 +2,10 @@ import { expect, test } from '@playwright/test';
 import { dayFromToday, login, publishPromotion, publishService, uniqueTitle } from './support/admin';
 import { getJsonOption, getOption, setJsonOption, setOptions } from './support/wp';
 
-// Testy Úvodu a Kontaktu mění volby celého webu (adresa, Pohotovost, IČ/DIČ, „proč k nám“, recenze), jeden po druhém a nakonec je vrátí.
+// Testy Úvodu a Kontaktu mění volby celého webu (adresa, Pohotovost, IČ/DIČ, rok založení, „proč k nám“, recenze), jeden po druhém a nakonec je vrátí.
 test.describe.configure({ mode: 'serial' });
 
-const touched = ['pneukarnik_address', 'pneukarnik_maps_embed_url', 'pneukarnik_why_us', 'pneukarnik_ico', 'pneukarnik_dic', 'pneukarnik_emergency_enabled', 'pneukarnik_emergency_phone', 'pneukarnik_emergency_text', 'pneukarnik_reviews_enabled', 'pneukarnik_reviews_api_key', 'pneukarnik_reviews_place_id'];
+const touched = ['pneukarnik_address', 'pneukarnik_maps_embed_url', 'pneukarnik_why_us', 'pneukarnik_founded_year', 'pneukarnik_ico', 'pneukarnik_dic', 'pneukarnik_emergency_enabled', 'pneukarnik_emergency_phone', 'pneukarnik_emergency_text', 'pneukarnik_reviews_enabled', 'pneukarnik_reviews_api_key', 'pneukarnik_reviews_place_id'];
 let original: Record<string, string> = {};
 let originalReviews: unknown = null;
 
@@ -38,17 +38,22 @@ test('Úvod má sekce v pořadí ze zadání a otevírací dobu na 7 dní', asyn
 	await publishService(page, { title: service, category: 'Pneuservis', perex: 'Nejžádanější přezutí.', price: 600, duration: 60, featured: true });
 	const promotion = uniqueTitle('Akce úvod');
 	await publishPromotion(page, { title: promotion, service, price: 499, from: dayFromToday(-1), to: dayFromToday(1) });
-	setOptions({ pneukarnik_why_us: 'Ve Znojmě od roku 1991\nPartner sítě BestDrive' });
+	setOptions({ pneukarnik_why_us: 'Ve Znojmě od roku 1991\nPartner sítě BestDrive | Věrnostní karta BestDrive platí i u nás.' });
 
 	await page.goto('/');
 
 	await expect(page.locator('main h1')).toHaveText('Pneuservis a autoservis Jan Kárník');
+	await expect(page.locator('.uvod__dnes')).toContainText('Dnes:');
+	await expect(page.locator('.uvod__dnes')).toContainText('Zítra:');
 	await expect(page.locator('main h2')).toHaveText(['Co pro vás uděláme', 'Nejžádanější služby', 'Aktuální akce', 'Proč k nám', 'Otevírací doba', 'Kde nás najdete']);
 	await expect(page.locator('.uvod__kategorie').getByRole('link')).toHaveText(['Pneuservis', 'Autoservis']);
 	await expect(page.locator('.uvod__nejzadanejsi').getByRole('link', { name: service })).toBeVisible();
 	await expect(page.locator('.uvod__akce').getByRole('link', { name: promotion })).toBeVisible();
 	await expect(page.locator('.uvod__akce').getByText('499 Kč')).toBeVisible();
-	await expect(page.locator('.uvod__proc li')).toHaveText(['Ve Znojmě od roku 1991', 'Partner sítě BestDrive']);
+	const reasons = page.locator('.uvod__proc li');
+	await expect(reasons.locator('.duvod__nadpis')).toHaveText(['Ve Znojmě od roku 1991', 'Partner sítě BestDrive']);
+	await expect(reasons.first().locator('.duvod__text')).toHaveCount(0);
+	await expect(reasons.nth(1).locator('.duvod__text')).toHaveText('Věrnostní karta BestDrive platí i u nás.');
 	const days = page.locator('.oteviraci-doba tr');
 	await expect(days).toHaveCount(7);
 	await expect(days.first().locator('th')).toContainText('Dnes');
@@ -66,8 +71,38 @@ test('Telefon a Rezervovat jsou na mobilu vidět bez scrollování', async ({ pa
 		await expect(page.locator('.mobilni-lista').getByRole('link', { name: 'Rezervovat' })).toBeInViewport();
 	}
 	await page.goto('/');
-	await expect(page.locator('.uvod__cta').getByRole('link', { name: 'Rezervovat' })).toBeInViewport();
+	await expect(page.locator('.uvod__cta').getByRole('link', { name: 'Rezervovat termín' })).toBeInViewport();
+	await expect(page.locator('.uvod__cta').getByRole('link', { name: '+420 775 565 326' })).toHaveAttribute('href', 'tel:+420775565326');
 	await expect(page.locator('.uvod__cta').getByRole('link', { name: '+420 775 565 326' })).toBeInViewport();
+});
+
+test('Hero ukazuje rok založení jen zadaný a fotka je na mobilu malá', async ({ browser, request }) => {
+	const context = await browser.newContext({ viewport: { width: 360, height: 640 }, deviceScaleFactor: 3 });
+	const page = await context.newPage();
+	setOptions({ pneukarnik_founded_year: '1991' });
+
+	await page.goto('/');
+
+	await expect(page.locator('.uvod__hero .eyebrow')).toHaveText('Znojmo · od roku 1991');
+	const photo = page.locator('.uvod__foto');
+	await expect(photo).toHaveJSProperty('complete', true);
+	const src = await photo.evaluate((img: HTMLImageElement) => img.currentSrc);
+	expect(src).toMatch(/\.webp$/);
+	expect((await (await request.get(src)).body()).length).toBeLessThan(200_000);
+
+	setOptions({ pneukarnik_founded_year: '' });
+	await page.reload();
+
+	await expect(page.locator('.uvod__hero .eyebrow')).toHaveText('Znojmo');
+	await context.close();
+});
+
+test('Prázdné sekce Úvodu se nevykreslí', async ({ page }) => {
+	setOptions({ pneukarnik_why_us: '', pneukarnik_reviews_enabled: '0' });
+
+	await page.goto('/');
+
+	await expect(page.locator('.uvod__proc, .uvod__recenze')).toHaveCount(0);
 });
 
 test('Mapa nic nenačte od Googlu, dokud na ni Zákazník neklikne', async ({ page }) => {
@@ -128,7 +163,7 @@ test('Kontakt má adresu, otevírací dobu, příjezd, mapu po kliknutí a faktu
 
 test('Google recenze z cache serveru jsou na Úvodu bez klíče API v HTML a bez požadavků na Google', async ({ page, request }) => {
 	const key = 'AIza-E2E-tajny-klic';
-	setOptions({ pneukarnik_reviews_enabled: '1', pneukarnik_reviews_api_key: key, pneukarnik_reviews_place_id: 'ChIJ-e2e' });
+	setOptions({ pneukarnik_why_us: 'Partner sítě BestDrive', pneukarnik_reviews_enabled: '1', pneukarnik_reviews_api_key: key, pneukarnik_reviews_place_id: 'ChIJ-e2e' });
 	setJsonOption('pneukarnik_reviews_cache', {
 		updated_at: '2026-10-01 04:00',
 		data: {
@@ -147,7 +182,8 @@ test('Google recenze z cache serveru jsou na Úvodu bez klíče API v HTML a bez
 
 	await expect(page.locator('main h2')).toContainText(['Proč k nám', 'Hodnocení na Google', 'Otevírací doba']);
 	const reviews = page.locator('.uvod__recenze');
-	await expect(reviews).toContainText('4,8 z 5 (123 hodnocení)');
+	await expect(reviews.locator('.recenze__prumer')).toHaveText('4,8');
+	await expect(reviews.locator('.recenze__souhrn')).toContainText('z 5 (123 hodnocení)');
 	await expect(reviews).toContainText('Rychlé přezutí, milý personál.');
 	await expect(reviews.getByRole('link', { name: 'Všechna hodnocení na Google' })).toHaveAttribute('href', 'https://www.google.com/maps/place/?q=place_id:ChIJ-e2e');
 	await page.waitForLoadState('networkidle');

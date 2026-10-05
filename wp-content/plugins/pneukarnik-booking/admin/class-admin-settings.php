@@ -331,10 +331,17 @@ class Pneukarnik_Admin_Settings {
 				<h2><?php esc_html_e( 'Úvod', 'pneukarnik-booking' ); ?></h2>
 				<table class="form-table">
 					<tr>
+						<th><label for="pnk-founded-year"><?php esc_html_e( 'Rok založení', 'pneukarnik-booking' ); ?></label></th>
+						<td>
+							<input id="pnk-founded-year" type="number" name="founded_year" value="<?php echo esc_attr( (string) pneukarnik_founded_year() ); ?>" min="1900" max="<?php echo esc_attr( Pneukarnik_Clock::today()->format( 'Y' ) ); ?>" step="1" class="small-text">
+							<p class="description"><?php esc_html_e( 'Na Úvodu nad nadpisem „Znojmo · od roku …“. Prázdné = jen „Znojmo“.', 'pneukarnik-booking' ); ?></p>
+						</td>
+					</tr>
+					<tr>
 						<th><label for="pnk-why-us"><?php esc_html_e( 'Proč k nám', 'pneukarnik-booking' ); ?></label></th>
 						<td>
-							<textarea id="pnk-why-us" name="why_us" rows="4" class="large-text"><?php echo esc_textarea( (string) get_option( 'pneukarnik_why_us', '' ) ); ?></textarea>
-							<p class="description"><?php esc_html_e( 'Jeden důvod na řádek (rok založení, BestDrive, vybavení…). Prázdné = sekce se na Úvodu nezobrazí.', 'pneukarnik-booking' ); ?></p>
+							<textarea id="pnk-why-us" name="why_us" rows="5" class="large-text" placeholder="<?php esc_attr_e( 'Partner sítě BestDrive | Věrnostní karta BestDrive platí i u nás.', 'pneukarnik-booking' ); ?>"><?php echo esc_textarea( (string) get_option( 'pneukarnik_why_us', '' ) ); ?></textarea>
+							<p class="description"><?php esc_html_e( 'Jeden důvod na řádek ve tvaru „Nadpis | text“. Text za svislou čarou je nepovinný, řádek bez ní je jen nadpis. Prázdné = sekce se na Úvodu nezobrazí.', 'pneukarnik-booking' ); ?></p>
 						</td>
 					</tr>
 				</table>
@@ -506,6 +513,7 @@ class Pneukarnik_Admin_Settings {
 		update_option( Pneukarnik_Contact::OPTION_EMERGENCY_PHONE, sanitize_text_field( wp_unslash( $_POST['emergency_phone'] ?? '' ) ) );
 		update_option( Pneukarnik_Contact::OPTION_EMERGENCY_TEXT, sanitize_text_field( wp_unslash( $_POST['emergency_text'] ?? '' ) ) );
 		update_option( 'pneukarnik_why_us', sanitize_textarea_field( wp_unslash( $_POST['why_us'] ?? '' ) ) );
+		update_option( 'pneukarnik_founded_year', sanitize_text_field( wp_unslash( $_POST['founded_year'] ?? '' ) ) ); // Nesmyslný rok pneukarnik_founded_year() nevydá.
 		$social = (array) wp_unslash( $_POST['social'] ?? [] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitizuje esc_url_raw po položkách.
 		foreach ( array_keys( Pneukarnik_Contact::social_networks() ) as $network ) {
 			update_option( Pneukarnik_Contact::OPTION_SOCIAL_PREFIX . $network, esc_url_raw( (string) ( $social[ $network ] ?? '' ), [ 'http', 'https' ] ) );

@@ -236,13 +236,37 @@ function pneukarnik_phone(): string {
 }
 
 /**
- * Důvody „proč k nám“ pro Úvod z Nastavení, jeden na řádek.
+ * Důvody „proč k nám“ pro Úvod z Nastavení, jeden na řádek ve tvaru „Nadpis | text“. Text je
+ * nepovinný, řádek bez „|“ je jen nadpis. Řádek bez nadpisu použije text jako nadpis.
  *
- * @return list<string>
+ * @return list<array{title:string,text:string}>
  */
 function pneukarnik_why_us(): array {
-	$lines = array_map( 'trim', explode( "\n", (string) get_option( 'pneukarnik_why_us', '' ) ) );
-	return array_values( array_filter( $lines, static fn( string $line ): bool => '' !== $line ) );
+	$reasons = [];
+	foreach ( explode( "\n", (string) get_option( 'pneukarnik_why_us', '' ) ) as $line ) {
+		[ $title, $text ] = array_map( 'trim', explode( '|', $line, 2 ) ) + [ '', '' ];
+		if ( '' === $title ) {
+			[ $title, $text ] = [ $text, '' ];
+		}
+		if ( '' !== $title ) {
+			$reasons[] = [
+				'title' => $title,
+				'text'  => $text,
+			];
+		}
+	}
+	return $reasons;
+}
+
+/**
+ * Rok založení z Nastavení pro Úvod („Znojmo · od roku 1991“), null = nezadaný nebo nesmyslný.
+ */
+function pneukarnik_founded_year(): ?int {
+	$year = trim( (string) get_option( 'pneukarnik_founded_year', '' ) );
+	if ( ! preg_match( '/^\d{4}$/', $year ) ) {
+		return null;
+	}
+	return (int) $year >= 1900 && (int) $year <= (int) Pneukarnik_Clock::today()->format( 'Y' ) ? (int) $year : null;
 }
 
 function pneukarnik_format_date( string $ymd ): string {
