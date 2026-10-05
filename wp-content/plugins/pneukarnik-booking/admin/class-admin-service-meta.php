@@ -75,6 +75,25 @@ class Pneukarnik_Admin_Service_Meta {
 				</td>
 			</tr>
 			<tr>
+				<th><?php esc_html_e( 'Ikona', 'pneukarnik-booking' ); ?></th>
+				<td>
+					<fieldset style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:4px 16px">
+						<legend class="screen-reader-text"><?php esc_html_e( 'Ikona', 'pneukarnik-booking' ); ?></legend>
+						<label style="display:flex;align-items:center;gap:8px;min-height:32px"><input type="radio" name="_service_icon" value="" <?php checked( $service->icon, '' ); ?>> <?php esc_html_e( 'Bez ikony', 'pneukarnik-booking' ); ?></label>
+						<?php foreach ( Pneukarnik_Service::icons() as $name => $label ) : ?>
+							<label style="display:flex;align-items:center;gap:8px;min-height:32px">
+								<input type="radio" name="_service_icon" value="<?php echo esc_attr( $name ); ?>" <?php checked( $service->icon, $name ); ?>>
+								<?php if ( is_readable( get_theme_file_path( "assets/icons/{$name}.svg" ) ) ) : ?>
+									<img src="<?php echo esc_url( get_theme_file_uri( "assets/icons/{$name}.svg" ) ); ?>" alt="" width="24" height="24">
+								<?php endif; ?>
+								<?php echo esc_html( $label ); ?>
+							</label>
+						<?php endforeach; ?>
+					</fieldset>
+					<p class="description"><?php esc_html_e( 'Nepovinná ikona na kartě Služby, u ikony je Služba, ke které se hodí.', 'pneukarnik-booking' ); ?></p>
+				</td>
+			</tr>
+			<tr>
 				<th><label for="pnk-includes"><?php esc_html_e( 'Co zahrnuje', 'pneukarnik-booking' ); ?></label></th>
 				<td>
 					<textarea id="pnk-includes" name="_service_includes" rows="5" class="large-text"><?php echo esc_textarea( $text( '_service_includes' ) ); ?></textarea>
@@ -197,6 +216,8 @@ class Pneukarnik_Admin_Service_Meta {
 
 		$category = sanitize_key( wp_unslash( $_POST['_service_category'] ?? '' ) );
 		update_post_meta( $post_id, '_service_category', isset( Pneukarnik_Service::categories()[ $category ] ) ? $category : '' );
+		// Ikona jen ze sady, cokoli jiného = bez ikony.
+		update_post_meta( $post_id, '_service_icon', Pneukarnik_Service::valid_icon( sanitize_key( wp_unslash( $_POST['_service_icon'] ?? '' ) ) ) );
 
 		foreach ( [ '_service_perex', '_service_includes', '_service_process', '_service_bring' ] as $field ) {
 			update_post_meta( $post_id, $field, sanitize_textarea_field( wp_unslash( $_POST[ $field ] ?? '' ) ) );

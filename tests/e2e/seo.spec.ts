@@ -157,7 +157,7 @@ test('Sitemapa má stránky, Služby, rozcestníky a rezervaci, ale ne uživatel
 	const services = await (await request.get('/wp-sitemap-posts-pneukarnik_service-1.xml')).text();
 	expect(services).toContain(`<loc>${serviceUrl}</loc>`);
 	const pages = await (await request.get('/wp-sitemap-pneukarnik-1.xml')).text();
-	for (const path of ['/pneuservis/', '/autoservis/', '/rezervace/']) {
+	for (const path of ['/sluzby/', '/pneuservis/', '/autoservis/', '/rezervace/']) {
 		expect(pages).toContain(`${path}</loc>`);
 	}
 });

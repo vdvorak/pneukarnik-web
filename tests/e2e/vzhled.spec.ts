@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-const pages = ['/', '/pneuservis/', '/kontakt/', '/o-nas/', '/rezervace/', '/neexistujici-stranka/'];
+const pages = ['/', '/sluzby/', '/pneuservis/', '/kontakt/', '/o-nas/', '/rezervace/', '/neexistujici-stranka/'];
 
 test('Web nenačítá nic z cizích domén', async ({ page, baseURL }) => {
 	const own = new URL(baseURL ?? 'http://localhost:8080').host;
@@ -77,7 +77,7 @@ test('Stránka 404 vede zpět na Úvod, ke Službám, k rezervaci a na telefon',
 	await expect(page.getByText('Chyba 404')).toBeVisible();
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Stránka nenalezena');
 	const main = page.getByRole('main');
-	await expect(main.getByRole('link', { name: 'Služby' })).toBeVisible();
+	await expect(main.getByRole('link', { name: 'Služby' })).toHaveAttribute('href', /\/sluzby\/$/);
 	await expect(main.getByRole('link', { name: 'Rezervace' })).toHaveAttribute('href', /\/rezervace\/$/);
 	await expect(main.getByRole('link', { name: '+420 775 565 326' })).toHaveAttribute('href', 'tel:+420775565326');
 

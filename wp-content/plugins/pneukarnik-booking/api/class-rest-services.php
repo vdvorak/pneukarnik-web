@@ -48,10 +48,10 @@ class Pneukarnik_Rest_Services {
 		$seasonal_filter = $request->get_param( 'seasonal_only' );
 
 		// Cache only the unfiltered base list; filters are applied after
-		$all = get_transient( 'pneukarnik_services_v2' );
+		$all = get_transient( 'pneukarnik_services_v3' );
 		if ( false === $all ) {
 			$all = array_map( [ $this, 'hydrate' ], Pneukarnik_Service::published() );
-			set_transient( 'pneukarnik_services_v2', $all, 5 * MINUTE_IN_SECONDS );
+			set_transient( 'pneukarnik_services_v3', $all, 5 * MINUTE_IN_SECONDS );
 		}
 
 		$services = [];
@@ -71,7 +71,7 @@ class Pneukarnik_Rest_Services {
 	}
 
 	public static function invalidate_cache(): void {
-		delete_transient( 'pneukarnik_services_v2' );
+		delete_transient( 'pneukarnik_services_v3' );
 	}
 
 	public function get_service( WP_REST_Request $request ): WP_REST_Response {
@@ -107,6 +107,7 @@ class Pneukarnik_Rest_Services {
 			'price_by_vehicle' => $service->price_by_vehicle,
 			'bookable'         => $service->bookable,
 			'is_seasonal'      => $service->seasonal,
+			'icon'             => $service->icon,
 		];
 	}
 }

@@ -18,7 +18,15 @@ class ServicesEndpointTest extends Pneukarnik_REST_Test_Case {
 				'_service_price_from' => '1',
 			]
 		);
-		$tyres = $this->service( 'Přezutí', 'pneuservis', 1, [ '_service_bookable' => '1' ] );
+		$tyres = $this->service(
+			'Přezutí',
+			'pneuservis',
+			1,
+			[
+				'_service_bookable' => '1',
+				'_service_icon'     => 'circle-dot',
+			]
+		);
 		$this->service( 'Koncept', 'pneuservis', 0, [], 'draft' );
 
 		$response = $this->rest( 'GET', '/services' );
@@ -38,6 +46,7 @@ class ServicesEndpointTest extends Pneukarnik_REST_Test_Case {
 					'price_by_vehicle' => false,
 					'bookable'         => true,
 					'is_seasonal'      => false,
+					'icon'             => 'circle-dot',
 				],
 				[
 					'id'               => $oil,
@@ -51,6 +60,7 @@ class ServicesEndpointTest extends Pneukarnik_REST_Test_Case {
 					'price_by_vehicle' => false,
 					'bookable'         => false,
 					'is_seasonal'      => false,
+					'icon'             => '',
 				],
 			],
 			$response->get_data()

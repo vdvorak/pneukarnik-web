@@ -33,9 +33,9 @@ get_header();
 	<?php if ( $pneukarnik_featured ) : ?>
 		<section class="uvod__nejzadanejsi">
 			<h2><?php esc_html_e( 'Nejžádanější služby', 'pneukarnik' ); ?></h2>
-			<ul class="kategorie__sluzby">
+			<ul class="karty-sluzeb">
 				<?php foreach ( $pneukarnik_featured as $pneukarnik_service ) : ?>
-					<?php pneukarnik_service_card( $pneukarnik_service, isset( $pneukarnik_promotions[ $pneukarnik_service->id ] ), 'h3' ); ?>
+					<?php pneukarnik_service_card( $pneukarnik_service, isset( $pneukarnik_promotions[ $pneukarnik_service->id ] ) ); ?>
 				<?php endforeach; ?>
 			</ul>
 		</section>

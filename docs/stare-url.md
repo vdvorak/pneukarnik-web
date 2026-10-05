@@ -74,7 +74,7 @@ Playwright (`tests/e2e/stare-url.spec.ts`) projde obě tabulky. Cíle Služeb pl
 
 | Stará adresa | Cíl | Zdroj |
 |---|---|---|
-| `/#services` | `/#sluzby` | menu „Služby“ |
+| `/#services` | `/sluzby/` | menu „Služby“ |
 | `/#reservations` | `/rezervace/` | menu „Rezervace“, tlačítka |
 | `/#contacts` | `/kontakt/` | menu „Kontakty“ |
 | `/#about` | `/o-nas/` | menu „O nás“ |

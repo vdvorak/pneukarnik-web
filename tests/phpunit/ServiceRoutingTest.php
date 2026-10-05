@@ -1,6 +1,6 @@
 <?php
 /**
- * Adresy Služeb: rozcestník Kategorie a detail /{kategorie}/{služba}/.
+ * Adresy Služeb: stránka Služby /sluzby/, rozcestník Kategorie a detail /{kategorie}/{služba}/.
  */
 
 declare(strict_types=1);
@@ -22,6 +22,36 @@ class ServiceRoutingTest extends Pneukarnik_REST_Test_Case {
 
 		$this->assertFalse( is_404() );
 		$this->assertSame( [ $first, $second ], wp_list_pluck( $GLOBALS['wp_query']->posts, 'ID' ) );
+	}
+
+	public function test_services_page_lists_published_services_of_both_categories_in_set_order(): void {
+		$tyres = $this->service( 'Přezutí', 'pneuservis', 2 );
+		$oil   = $this->service( 'Výměna oleje', 'autoservis', 1 );
+		$this->service( 'Koncept', 'pneuservis', 0, 'draft' );
+		$this->service( 'Soukromá', 'autoservis', 0, 'private' );
+		$this->log_in_as( 'administrator' ); // Ani přihlášený Provozovatel nevidí nezveřejněné.
+
+		$this->go_to( home_url( '/sluzby/' ) );
+
+		$this->assertFalse( is_404() );
+		$this->assertTrue( is_post_type_archive( 'pneukarnik_service' ) );
+		$this->assertNull( Pneukarnik_Service_Type::shown_category() );
+		$this->assertSame( 'Služby', post_type_archive_title( '', false ) );
+		$this->assertSame( [ $oil, $tyres ], wp_list_pluck( $GLOBALS['wp_query']->posts, 'ID' ) );
+	}
+
+	public function test_category_is_the_services_page_with_one_category(): void {
+		$this->go_to( home_url( '/autoservis/' ) );
+
+		$this->assertTrue( is_post_type_archive( 'pneukarnik_service' ) );
+		$this->assertSame( 'autoservis', Pneukarnik_Service_Type::shown_category() );
+		$this->assertSame( home_url( '/sluzby/' ), get_post_type_archive_link( 'pneukarnik_service' ) );
+	}
+
+	public function test_unknown_category_is_404(): void {
+		$this->go_to( home_url( '/?post_type=pneukarnik_service&pnk_kategorie=pneu' ) );
+
+		$this->assertTrue( is_404() );
 	}
 
 	public function test_service_permalink_contains_its_category(): void {

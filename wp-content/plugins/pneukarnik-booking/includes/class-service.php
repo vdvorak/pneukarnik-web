@@ -45,6 +45,8 @@ final class Pneukarnik_Service {
 		public readonly bool $ask_stored_wheels,
 		public readonly bool $featured,
 		public readonly int $order,
+		/** Název ikony ze sady icons(), prázdný = bez ikony. */
+		public readonly string $icon,
 		/** Titulek pro vyhledávače od Provozovatele, prázdný = vygeneruje se z názvu. */
 		public readonly string $seo_title,
 		/** Popis pro vyhledávače od Provozovatele, prázdný = vygeneruje se z perexu a ceny. */
@@ -58,6 +60,36 @@ final class Pneukarnik_Service {
 		return [
 			self::PNEUSERVIS => __( 'Pneuservis', 'pneukarnik-booking' ),
 			self::AUTOSERVIS => __( 'Autoservis', 'pneukarnik-booking' ),
+		];
+	}
+
+	/**
+	 * Pevná sada ikon Služeb (Lucide, SVG v šabloně assets/icons) podle ICONSET v návrhu.
+	 *
+	 * @return array<string, string> název ikony => Služba, ke které se hodí (poslední je obecná náhradní).
+	 */
+	public static function icons(): array {
+		return [
+			'circle-dot'       => __( 'Přezutí pneu', 'pneukarnik-booking' ),
+			'warehouse'        => __( 'Sezónní uskladnění', 'pneukarnik-booking' ),
+			'shopping-cart'    => __( 'Prodej pneu', 'pneukarnik-booking' ),
+			'crosshair'        => __( 'Geometrie', 'pneukarnik-booking' ),
+			'clipboard-check'  => __( 'Příprava na STK', 'pneukarnik-booking' ),
+			'car-front'        => __( 'Oprava čelních skel', 'pneukarnik-booking' ),
+			'snowflake'        => __( 'Doplnění klimatizace', 'pneukarnik-booking' ),
+			'disc-3'           => __( 'Výměna brzdových destiček', 'pneukarnik-booking' ),
+			'cloud-fog'        => __( 'Výměna výfuku', 'pneukarnik-booking' ),
+			'droplet'          => __( 'Výměna oleje', 'pneukarnik-booking' ),
+			'move-vertical'    => __( 'Výměna tlumičů', 'pneukarnik-booking' ),
+			'lightbulb'        => __( 'Výměna žárovek', 'pneukarnik-booking' ),
+			'battery-charging' => __( 'Výměna autobaterie', 'pneukarnik-booking' ),
+			'activity'         => __( 'Autodiagnostika', 'pneukarnik-booking' ),
+			'shield-check'     => __( 'Nástřik podvozku proti korozi', 'pneukarnik-booking' ),
+			'flame'            => __( 'Dekarbonizace', 'pneukarnik-booking' ),
+			'wind'             => __( 'Dezinfekce vozidla ozonem', 'pneukarnik-booking' ),
+			'bike'             => __( 'Oprava defektu kol na elektrokoloběžkách', 'pneukarnik-booking' ),
+			'luggage'          => __( 'Servisní prohlídka před dovolenou', 'pneukarnik-booking' ),
+			'wrench'           => __( 'Obecná ikona', 'pneukarnik-booking' ),
 		];
 	}
 
@@ -95,6 +127,7 @@ final class Pneukarnik_Service {
 			ask_stored_wheels: '' !== $meta( '_service_ask_stored_wheels' ),
 			featured: '' !== $meta( '_service_featured' ),
 			order: $post->menu_order,
+			icon: self::valid_icon( $meta( '_service_icon' ) ),
 			seo_title: $meta( '_service_seo_title' ),
 			seo_description: $meta( '_service_seo_description' ),
 		);
@@ -189,6 +222,20 @@ final class Pneukarnik_Service {
 			$missing[] = __( 'Délka', 'pneukarnik-booking' );
 		}
 		return $missing;
+	}
+
+	/**
+	 * Ikona ze sady, cokoli jiného (i staré nebo ručně zapsané hodnoty) = bez ikony.
+	 */
+	public static function valid_icon( string $name ): string {
+		return isset( self::icons()[ $name ] ) ? $name : '';
+	}
+
+	/**
+	 * Adresa stránky Služby s oběma Kategoriemi.
+	 */
+	public static function services_url(): string {
+		return home_url( user_trailingslashit( 'sluzby' ) );
 	}
 
 	/**

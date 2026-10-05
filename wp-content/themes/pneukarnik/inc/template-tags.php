@@ -118,21 +118,68 @@ function pneukarnik_tel_href( string $phone ): string {
 }
 
 /**
- * Karta Služby v přehledu (rozcestník, Úvod): název s odkazem, perex, cena, štítek platné Akce.
+ * Karta Služby v přehledu (stránka Služby, Úvod): ikona a štítek platné Akce (horní řádek jen s nimi),
+ * název, perex, cena a jestli jde objednat online. Celá karta je odkazem (roztažený odkaz názvu).
  *
- * @param string $heading Úroveň nadpisu karty podle okolí (h2 v rozcestníku, h3 v sekci Úvodu).
+ * @param string $heading Úroveň nadpisu karty podle okolí.
  */
-function pneukarnik_service_card( Pneukarnik_Service $service, bool $has_promotion, string $heading = 'h2' ): void {
+function pneukarnik_service_card( Pneukarnik_Service $service, bool $has_promotion, string $heading = 'h3' ): void {
 	$heading = tag_escape( $heading );
+	$icon    = pneukarnik_service_icon( $service->icon );
 	?>
-	<li class="karta-sluzby">
-		<?php if ( $has_promotion ) : ?>
-			<p class="stitek-akce"><?php esc_html_e( 'Akce', 'pneukarnik' ); ?></p>
+	<li class="card karta-sluzby">
+		<?php if ( '' !== $icon || $has_promotion ) : ?>
+			<div class="karta-sluzby__hlava">
+				<?php if ( '' !== $icon ) : ?>
+					<span class="karta-sluzby__ikona"><?php echo $icon; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SVG ze šablony. ?></span>
+				<?php endif; ?>
+				<?php if ( $has_promotion ) : ?>
+					<span class="pill pill--accent karta-sluzby__akce"><?php esc_html_e( 'Akce', 'pneukarnik' ); ?></span>
+				<?php endif; ?>
+			</div>
 		<?php endif; ?>
-		<<?php echo $heading; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- tag_escape výše. ?>><a href="<?php echo esc_url( $service->url() ); ?>"><?php echo esc_html( $service->title ); ?></a></<?php echo $heading; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
-		<p><?php echo esc_html( $service->perex ); ?></p>
-		<p class="karta-sluzby__cena"><?php echo esc_html( pneukarnik_price_label( $service ) ); ?></p>
+		<<?php echo $heading; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- tag_escape výše. ?> class="karta-sluzby__nazev"><a class="karta-sluzby__odkaz" href="<?php echo esc_url( $service->url() ); ?>"><?php echo esc_html( $service->title ); ?></a></<?php echo $heading; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
+		<p class="karta-sluzby__perex"><?php echo esc_html( $service->perex ); ?></p>
+		<p class="karta-sluzby__spodek">
+			<span class="karta-sluzby__cena"><?php echo esc_html( pneukarnik_price_label( $service ) ); ?></span>
+			<span class="karta-sluzby__rezervace"><?php echo esc_html( $service->bookable ? __( 'Online i telefonem', 'pneukarnik' ) : __( 'Jen telefonicky', 'pneukarnik' ) ); ?></span>
+		</p>
 	</li>
+	<?php
+}
+
+/**
+ * Ikona Služby ze sady v assets/icons jako vložené SVG (barva textu), prázdný řetězec bez ikony.
+ */
+function pneukarnik_service_icon( string $name ): string {
+	static $cache = [];
+	if ( '' === $name || ! isset( Pneukarnik_Service::icons()[ $name ] ) ) {
+		return '';
+	}
+	if ( ! isset( $cache[ $name ] ) ) {
+		$file           = get_theme_file_path( "assets/icons/{$name}.svg" );
+		$svg            = is_readable( $file ) ? (string) file_get_contents( $file ) : ''; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- soubor šablony.
+		$cache[ $name ] = trim( str_replace( '<svg ', '<svg aria-hidden="true" focusable="false" ', $svg ) );
+	}
+	return $cache[ $name ];
+}
+
+/**
+ * Přepínač stránky Služby: Vše / Pneuservis / Autoservis jako odkazy (funguje bez JavaScriptu).
+ *
+ * @param string|null $current Zobrazená Kategorie, null = Vše.
+ */
+function pneukarnik_services_filter( ?string $current ): void {
+	$items = [ '' => [ __( 'Vše', 'pneukarnik' ), Pneukarnik_Service::services_url() ] ];
+	foreach ( Pneukarnik_Service::categories() as $category => $label ) {
+		$items[ $category ] = [ $label, Pneukarnik_Service::category_url( $category ) ];
+	}
+	?>
+	<nav class="choice-chips" aria-label="<?php esc_attr_e( 'Kategorie Služeb', 'pneukarnik' ); ?>">
+		<?php foreach ( $items as $category => [ $label, $url ] ) : ?>
+			<a class="choice-chips__chip" href="<?php echo esc_url( $url ); ?>"<?php echo (string) $category === (string) $current ? ' aria-current="page"' : ''; ?>><?php echo esc_html( $label ); ?></a>
+		<?php endforeach; ?>
+	</nav>
 	<?php
 }
 
@@ -317,13 +364,12 @@ function pneukarnik_brand(): array {
  * Odkazy hlavního menu, aktivní položka má aria-current (stránka sama „page“, stránka pod ní „true“).
  */
 function pneukarnik_nav_links(): void {
-	$items = [];
-	foreach ( Pneukarnik_Service::categories() as $category => $label ) {
-		$items[ $category ] = [ $label, Pneukarnik_Service::category_url( $category ) ];
-	}
-	$items['o-nas']     = [ __( 'O nás', 'pneukarnik' ), home_url( '/o-nas/' ) ];
-	$items['kontakt']   = [ __( 'Kontakt', 'pneukarnik' ), home_url( '/kontakt/' ) ];
-	$items['rezervace'] = [ __( 'Rezervace', 'pneukarnik' ), home_url( '/rezervace/' ) ];
+	$items = [
+		'sluzby'    => [ __( 'Služby', 'pneukarnik' ), Pneukarnik_Service::services_url() ],
+		'o-nas'     => [ __( 'O nás', 'pneukarnik' ), home_url( '/o-nas/' ) ],
+		'kontakt'   => [ __( 'Kontakt', 'pneukarnik' ), home_url( '/kontakt/' ) ],
+		'rezervace' => [ __( 'Rezervace', 'pneukarnik' ), home_url( '/rezervace/' ) ],
+	];
 
 	[ $active, $exact ] = pneukarnik_nav_active();
 	foreach ( $items as $key => [ $label, $url ] ) {
@@ -343,10 +389,10 @@ function pneukarnik_nav_links(): void {
  */
 function pneukarnik_nav_active(): array {
 	if ( is_post_type_archive( Pneukarnik_Service::POST_TYPE ) ) {
-		return [ (string) get_query_var( Pneukarnik_Service_Type::QUERY_VAR ), true ];
+		return [ 'sluzby', null === Pneukarnik_Service_Type::shown_category() ];
 	}
 	if ( is_singular( Pneukarnik_Service::POST_TYPE ) ) {
-		return [ Pneukarnik_Service::from_post( get_post() )->category, false ];
+		return [ 'sluzby', false ];
 	}
 	if ( is_page( [ 'o-nas', 'kontakt' ] ) ) {
 		return [ (string) get_post_field( 'post_name', get_queried_object_id() ), true ];
@@ -405,9 +451,10 @@ function pneukarnik_mobile_bar(): void {
 /**
  * Úvod stránky (PageHero): nadpis, nepovinný perex a drobeček zpět.
  *
- * @param array{0:string,1:string}|null $back popisek a adresa drobečku zpět
+ * @param array{0:string,1:string}|null $back     popisek a adresa drobečku zpět
+ * @param callable|null                 $children vypíše obsah pod perexem (např. přepínač)
  */
-function pneukarnik_page_hero( string $title, string $lead = '', ?array $back = null, bool $narrow = false ): void {
+function pneukarnik_page_hero( string $title, string $lead = '', ?array $back = null, bool $narrow = false, ?callable $children = null ): void {
 	?>
 	<section class="page-hero">
 		<div class="page-hero__inner<?php echo $narrow ? ' page-hero__inner--narrow' : ''; ?>">
@@ -418,6 +465,11 @@ function pneukarnik_page_hero( string $title, string $lead = '', ?array $back = 
 			<?php if ( '' !== $lead ) : ?>
 				<p class="page-hero__lead"><?php echo esc_html( $lead ); ?></p>
 			<?php endif; ?>
+			<?php
+			if ( $children ) {
+				$children();
+			}
+			?>
 		</div>
 	</section>
 	<?php

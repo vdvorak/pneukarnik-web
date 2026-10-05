@@ -77,6 +77,7 @@ class SeoTest extends Pneukarnik_REST_Test_Case {
 
 		$pages        = [
 			'Úvod'       => [ home_url( '/' ), self::COMPANY . ' – Znojmo' ],
+			'Služby'     => [ home_url( '/sluzby/' ), 'Služby – ' . self::COMPANY ],
 			'Pneuservis' => [ home_url( '/pneuservis/' ), 'Pneuservis – ' . self::COMPANY ],
 			'Autoservis' => [ home_url( '/autoservis/' ), 'Autoservis – ' . self::COMPANY ],
 			'Služba'     => [ get_permalink( $service ), 'Přezutí – ' . self::COMPANY ],
@@ -294,7 +295,7 @@ class SeoTest extends Pneukarnik_REST_Test_Case {
 
 		$this->assertSame( [ 'posts', 'pneukarnik' ], array_keys( $sitemaps->registry->get_providers() ) );
 		$this->assertSame( [ 'page', 'pneukarnik_service', 'pneukarnik_guide' ], array_keys( $sitemaps->registry->get_provider( 'posts' )->get_object_subtypes() ) );
-		foreach ( [ home_url( '/' ), get_permalink( $page ), get_permalink( $service ), get_permalink( $guide ), home_url( '/pneuservis/' ), home_url( '/autoservis/' ), home_url( '/rezervace/' ) ] as $expected ) {
+		foreach ( [ home_url( '/' ), get_permalink( $page ), get_permalink( $service ), get_permalink( $guide ), home_url( '/sluzby/' ), home_url( '/pneuservis/' ), home_url( '/autoservis/' ), home_url( '/rezervace/' ) ] as $expected ) {
 			$this->assertContains( $expected, $urls );
 		}
 		foreach ( [ get_permalink( $draft_page ), get_permalink( $draft_service ), get_permalink( $post ), get_permalink( $notice ) ] as $unexpected ) {

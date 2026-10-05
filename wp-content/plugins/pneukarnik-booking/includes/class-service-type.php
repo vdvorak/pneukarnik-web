@@ -9,15 +9,19 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Registrace Služeb ve WordPressu: typ obsahu, pole, adresy a pravidlo zveřejnění (Pneukarnik_Publish_Guard).
  *
  * Adresy:
- *   /{kategorie}/            rozcestník Kategorie (archiv typu s filtrem na Kategorii)
+ *   /sluzby/                 stránka Služby s oběma Kategoriemi (archiv typu, QUERY_VAR = ALL)
+ *   /{kategorie}/            rozcestník Kategorie, tatáž stránka s jednou Kategorií
  *   /{kategorie}/{služba}/   detail Služby; pod cizí Kategorií je 404
  */
 final class Pneukarnik_Service_Type {
 
 	public const QUERY_VAR = 'pnk_kategorie';
 
+	/** Hodnota QUERY_VAR pro stránku Služby se všemi Kategoriemi. */
+	public const ALL = 'vse';
+
 	/** Při změně adres pluginu (Služby, Průvodci i stránky rezervace) zvyšte, přegenerují se samy. */
-	private const REWRITE_VERSION = '5';
+	private const REWRITE_VERSION = '6';
 
 	public static function init(): void {
 		add_action( 'init', [ self::class, 'register' ] );
@@ -74,6 +78,7 @@ final class Pneukarnik_Service_Type {
 			'_service_is_seasonal'       => 'boolean',
 			'_service_ask_stored_wheels' => 'boolean',
 			'_service_featured'          => 'boolean',
+			'_service_icon'              => 'string',
 			'_service_seo_title'         => 'string',
 			'_service_seo_description'   => 'string',
 		];
@@ -105,6 +110,11 @@ final class Pneukarnik_Service_Type {
 		add_rewrite_rule(
 			"^({$categories})/?$",
 			'index.php?post_type=' . Pneukarnik_Service::POST_TYPE . '&' . self::QUERY_VAR . '=$matches[1]',
+			'top'
+		);
+		add_rewrite_rule(
+			'^sluzby/?$',
+			'index.php?post_type=' . Pneukarnik_Service::POST_TYPE . '&' . self::QUERY_VAR . '=' . self::ALL,
 			'top'
 		);
 	}
@@ -140,45 +150,59 @@ final class Pneukarnik_Service_Type {
 	}
 
 	/**
-	 * Archiv bez Kategorie neexistuje (jen rozcestníky), WordPress na něj tedy nemá odkazovat.
+	 * Archiv typu je stránka Služby /sluzby/.
 	 */
 	public static function archive_link( string|false $link, string $post_type ): string|false {
-		return Pneukarnik_Service::POST_TYPE === $post_type ? false : $link;
+		return Pneukarnik_Service::POST_TYPE === $post_type ? Pneukarnik_Service::services_url() : $link;
 	}
 
 	/**
-	 * Název rozcestníku je název Kategorie.
+	 * Název stránky Služby, rozcestníku název Kategorie.
 	 */
 	public static function archive_title( string $title, string $post_type ): string {
 		if ( Pneukarnik_Service::POST_TYPE !== $post_type ) {
 			return $title;
 		}
-		return Pneukarnik_Service::categories()[ (string) get_query_var( self::QUERY_VAR ) ] ?? $title;
+		$category = self::shown_category();
+		return null === $category ? __( 'Služby', 'pneukarnik-booking' ) : Pneukarnik_Service::categories()[ $category ];
 	}
 
 	/**
-	 * Rozcestník: jen Služby dané Kategorie, všechny najednou, v nastaveném pořadí.
+	 * Kategorie, kterou ukazuje stránka Služby: null = obě (/sluzby/), jinak rozcestník Kategorie.
+	 * Mimo stránku Služby null.
+	 */
+	public static function shown_category(): ?string {
+		$category = (string) get_query_var( self::QUERY_VAR );
+		return isset( Pneukarnik_Service::categories()[ $category ] ) ? $category : null;
+	}
+
+	/**
+	 * Stránka Služby: všechny Služby (v rozcestníku jen dané Kategorie) najednou, v nastaveném pořadí.
 	 */
 	public static function filter_category_archive( WP_Query $query ): void {
 		if ( ! $query->is_main_query() || ! $query->is_post_type_archive( Pneukarnik_Service::POST_TYPE ) ) {
 			return;
 		}
 		$category = (string) $query->get( self::QUERY_VAR );
-		if ( ! isset( Pneukarnik_Service::categories()[ $category ] ) ) {
+		if ( self::ALL !== $category && ! isset( Pneukarnik_Service::categories()[ $category ] ) ) {
 			return; // 404 pošle reject_foreign_category().
 		}
-		$query->set( 'meta_key', '_service_category' );
-		$query->set( 'meta_value', $category );
+		if ( self::ALL !== $category ) {
+			$query->set( 'meta_key', '_service_category' );
+			$query->set( 'meta_value', $category );
+		}
+		$query->set( 'post_status', 'publish' ); // Ani přihlášenému Provozovateli soukromé Služby.
 		$query->set( 'posts_per_page', -1 );
 		$query->set( 'orderby', Pneukarnik_Service::order_by() );
 	}
 
 	/**
-	 * Detail Služby je jen pod její vlastní Kategorií. Holý archiv typu bez Kategorie neexistuje.
+	 * Detail Služby je jen pod její vlastní Kategorií. Holý archiv typu bez /sluzby/ nebo Kategorie neexistuje.
 	 */
 	public static function reject_foreign_category(): void {
 		global $wp_query;
-		if ( $wp_query->is_post_type_archive( Pneukarnik_Service::POST_TYPE ) && ! isset( Pneukarnik_Service::categories()[ (string) get_query_var( self::QUERY_VAR ) ] ) ) {
+		$category = (string) get_query_var( self::QUERY_VAR );
+		if ( $wp_query->is_post_type_archive( Pneukarnik_Service::POST_TYPE ) && self::ALL !== $category && ! isset( Pneukarnik_Service::categories()[ $category ] ) ) {
 			self::send_404();
 			return;
 		}

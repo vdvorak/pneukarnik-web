@@ -16,7 +16,7 @@ get_header();
 		<p class="chyba__text"><?php esc_html_e( 'Adresa je možná překlepnutá, nebo stránka už neexistuje.', 'pneukarnik' ); ?></p>
 		<a class="button" href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'Zpět na úvod', 'pneukarnik' ); ?></a>
 		<p class="chyba__odkazy">
-			<a class="arrow-link" href="<?php echo esc_url( home_url( '/#sluzby' ) ); ?>"><?php esc_html_e( 'Služby', 'pneukarnik' ); ?></a>
+			<a class="arrow-link" href="<?php echo esc_url( Pneukarnik_Service::services_url() ); ?>"><?php esc_html_e( 'Služby', 'pneukarnik' ); ?></a>
 			<a class="arrow-link" href="<?php echo esc_url( home_url( '/rezervace/' ) ); ?>"><?php esc_html_e( 'Rezervace', 'pneukarnik' ); ?></a>
 			<?php if ( '' !== $pneukarnik_phone ) : ?>
 				<a href="<?php echo esc_url( pneukarnik_tel_href( $pneukarnik_phone ) ); ?>"><span aria-hidden="true">☎ </span><?php echo esc_html( $pneukarnik_phone ); ?></a>

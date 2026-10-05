@@ -74,9 +74,10 @@ final class Pneukarnik_Seo {
 		}
 
 		if ( is_post_type_archive( Pneukarnik_Service::POST_TYPE ) ) {
-			$category = (string) get_query_var( Pneukarnik_Service_Type::QUERY_VAR );
-			$label    = Pneukarnik_Service::categories()[ $category ] ?? '';
-			return '' === $label ? null : self::page( $label, self::category_description( $category ), Pneukarnik_Service::category_url( $category ) );
+			$category = Pneukarnik_Service_Type::shown_category();
+			return null === $category
+				? self::page( __( 'Služby', 'pneukarnik-booking' ), self::services_description(), Pneukarnik_Service::services_url() )
+				: self::page( Pneukarnik_Service::categories()[ $category ], self::category_description( $category ), Pneukarnik_Service::category_url( $category ) );
 		}
 
 		$post = get_queried_object();
@@ -273,13 +274,13 @@ final class Pneukarnik_Seo {
 	}
 
 	/**
-	 * Adresy stránek webu, které nejsou obsahem WordPressu: rozcestníky Kategorií a rezervace.
+	 * Adresy stránek webu, které nejsou obsahem WordPressu: Služby, rozcestníky Kategorií a rezervace.
 	 *
 	 * @return list<string>
 	 */
 	public static function plugin_page_urls(): array {
 		$urls = array_map( [ Pneukarnik_Service::class, 'category_url' ], array_keys( Pneukarnik_Service::categories() ) );
-		return [ ...$urls, home_url( '/rezervace/' ) ];
+		return [ Pneukarnik_Service::services_url(), ...$urls, home_url( '/rezervace/' ) ];
 	}
 
 	/**
@@ -375,6 +376,14 @@ final class Pneukarnik_Seo {
 		$services = array_map( static fn( Pneukarnik_Service $service ): string => $service->title, Pneukarnik_Service::in_category( $category ) );
 		return self::shorten(
 			Pneukarnik_Service::categories()[ $category ] . ( $services ? ': ' . implode( ', ', $services ) : '' ) . '. '
+			. __( 'Ceny, co která služba zahrnuje, a online rezervace termínu.', 'pneukarnik-booking' )
+		);
+	}
+
+	private static function services_description(): string {
+		$services = array_map( static fn( Pneukarnik_Service $service ): string => $service->title, Pneukarnik_Service::published() );
+		return self::shorten(
+			__( 'Pneuservis i autoservis pod jednou střechou', 'pneukarnik-booking' ) . ( $services ? ': ' . implode( ', ', $services ) : '' ) . '. '
 			. __( 'Ceny, co která služba zahrnuje, a online rezervace termínu.', 'pneukarnik-booking' )
 		);
 	}

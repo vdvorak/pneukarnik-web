@@ -34,7 +34,8 @@ test('Služba z administrace je na rozcestníku i v detailu se všemi částmi v
 	});
 
 	await page.goto('/pneuservis/');
-	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Pneuservis');
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Služby');
+	await expect(page.locator('main h2')).toHaveText(['Pneuservis']);
 	await page.getByRole('link', { name: title }).click();
 
 	await expect(page).toHaveURL(/\/pneuservis\/e2e-prezuti-\d+\/$/);
@@ -76,6 +77,40 @@ test('Služba jen na telefon s cenou dle vozu ukáže jen vyplněné části a Z
 	await expect(page.getByText('Cena dle vozu')).toBeVisible();
 	await expect(page.getByRole('main').getByRole('link', { name: 'Rezervovat' })).toHaveCount(0);
 	await expect(page.getByRole('link', { name: /Zavolat/ })).toBeVisible();
+});
+
+test('Stránka Služby ukáže obě Kategorie, přepínač bez JavaScriptu nechá jednu', async ({ page, browser }) => {
+	const tyres = uniqueTitle('Uskladnění');
+	await publishService(page, { title: tyres, category: 'Pneuservis', perex: 'Kola uschováme do další sezóny.', price: 800, duration: 30, bookable: true, icon: 'Sezónní uskladnění' });
+	const trip = uniqueTitle('Prohlídka');
+	await publishService(page, { title: trip, category: 'Autoservis', perex: 'Kontrola před cestou.', price: 900, duration: 60 });
+
+	const context = await browser.newContext({ javaScriptEnabled: false });
+	const visitor = await context.newPage();
+	await visitor.goto('/sluzby/');
+	const card = (title: string) => visitor.locator('.karta-sluzby').filter({ hasText: title });
+	const filter = visitor.getByRole('navigation', { name: 'Kategorie Služeb' });
+
+	await expect(visitor.getByRole('heading', { level: 1 })).toHaveText('Služby');
+	await expect(visitor.locator('main h2')).toHaveText(['Pneuservis', 'Autoservis']);
+	await expect(filter.getByRole('link', { name: 'Vše' })).toHaveAttribute('aria-current', 'page');
+	await expect(visitor.getByRole('navigation', { name: 'Hlavní menu' }).getByRole('link', { name: 'Služby' })).toHaveAttribute('aria-current', 'page');
+	await expect(card(tyres).locator('.karta-sluzby__ikona svg')).toBeVisible();
+	await expect(card(tyres)).toContainText('800 Kč');
+	await expect(card(tyres)).toContainText('Online i telefonem');
+	await expect(card(trip).locator('.karta-sluzby__hlava')).toHaveCount(0);
+	await expect(card(trip)).toContainText('Jen telefonicky');
+
+	await filter.getByRole('link', { name: 'Autoservis' }).click();
+	await expect(visitor).toHaveURL(/\/autoservis\/$/);
+	await expect(visitor.locator('main h2')).toHaveText(['Autoservis']);
+	await expect(filter.getByRole('link', { name: 'Autoservis' })).toHaveAttribute('aria-current', 'page');
+	await expect(card(tyres)).toHaveCount(0);
+	await expect(visitor.getByRole('navigation', { name: 'Hlavní menu' }).getByRole('link', { name: 'Služby' })).toHaveAttribute('aria-current', 'true');
+
+	await card(trip).click();
+	await expect(visitor.getByRole('heading', { level: 1 })).toHaveText(trip);
+	await context.close();
 });
 
 test('Službu bez perexu nejde zveřejnit', async ({ page }) => {

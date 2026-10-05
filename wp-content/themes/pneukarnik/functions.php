@@ -90,7 +90,7 @@ function pneukarnik_old_anchors(): void {
 	$contact = home_url( '/kontakt/' );
 	$about   = home_url( '/o-nas/' );
 	$targets = [
-		'services'     => home_url( '/#sluzby' ),
+		'services'     => Pneukarnik_Service::services_url(),
 		'reservations' => home_url( '/rezervace/' ),
 		'rezervace'    => home_url( '/rezervace/' ),
 		'contacts'     => $contact,
