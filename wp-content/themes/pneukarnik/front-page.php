@@ -9,6 +9,7 @@
 
 $pneukarnik_featured   = Pneukarnik_Service::featured();
 $pneukarnik_promotions = Pneukarnik_Promotion::current();
+$pneukarnik_guides     = $pneukarnik_featured ? Pneukarnik_Guide::by_service() : [];
 $pneukarnik_why_us     = pneukarnik_why_us();
 $pneukarnik_reviews    = Pneukarnik_Reviews::summary();
 $pneukarnik_year       = pneukarnik_founded_year();
@@ -67,7 +68,7 @@ get_header();
 				<h2 class="section__title"><?php esc_html_e( 'Nejžádanější služby', 'pneukarnik' ); ?></h2>
 				<ul class="karty-sluzeb">
 					<?php foreach ( $pneukarnik_featured as $pneukarnik_service ) : ?>
-						<?php pneukarnik_service_card( $pneukarnik_service, isset( $pneukarnik_promotions[ $pneukarnik_service->id ] ) ); ?>
+						<?php pneukarnik_service_card( $pneukarnik_service, isset( $pneukarnik_promotions[ $pneukarnik_service->id ] ), $pneukarnik_guides[ $pneukarnik_service->id ] ?? null ); ?>
 					<?php endforeach; ?>
 				</ul>
 			</div>

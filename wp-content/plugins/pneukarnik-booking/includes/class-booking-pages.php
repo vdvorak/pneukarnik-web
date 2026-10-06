@@ -222,7 +222,7 @@ final class Pneukarnik_Booking_Pages {
 	/**
 	 * Data pro rezervační formulář šablony.
 	 *
-	 * @return array{enabled:bool,disabled_message:string,services:list<array{id:int,slug:string,name:string,duration:int,ask_stored_wheels:bool}>,max_services:int,selected:int,min_date:string,max_date:string,api:string,nonce:string,phone:string,privacy_url:string}
+	 * @return array{enabled:bool,disabled_message:string,services:list<array{id:int,slug:string,name:string,duration:int,ask_stored_wheels:bool,guide:array{url:string,title:string}|null}>,max_services:int,selected:int,min_date:string,max_date:string,api:string,nonce:string,phone:string,privacy_url:string}
 	 */
 	public static function form_config(): array {
 		$services = array_values(
@@ -238,7 +238,8 @@ final class Pneukarnik_Booking_Pages {
 				$selected = $service->id;
 			}
 		}
-		$today = Pneukarnik_Clock::today();
+		$today  = Pneukarnik_Clock::today();
+		$guides = Pneukarnik_Guide::by_service();
 
 		return [
 			'enabled'          => Pneukarnik_Booking::online_enabled(),
@@ -250,6 +251,11 @@ final class Pneukarnik_Booking_Pages {
 					'name'              => $s->title,
 					'duration'          => $s->duration,
 					'ask_stored_wheels' => $s->ask_stored_wheels,
+					// Odkaz „Přečtěte si“ pod výběrem Služby.
+					'guide'             => isset( $guides[ $s->id ] ) ? [
+						'url'   => $guides[ $s->id ]->url(),
+						'title' => $guides[ $s->id ]->title,
+					] : null,
 				],
 				$services
 			),

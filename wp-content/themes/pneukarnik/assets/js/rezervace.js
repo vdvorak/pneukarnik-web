@@ -7,7 +7,7 @@
  */
 
 /**
- * @typedef {{ enabled: boolean, disabled_message: string, services: {id: number, slug: string, name: string, duration: number, ask_stored_wheels: boolean}[], max_services: number, selected: number, min_date: string, max_date: string, api: string, nonce: string, phone: string, privacy_url: string }} Config
+ * @typedef {{ enabled: boolean, disabled_message: string, services: {id: number, slug: string, name: string, duration: number, ask_stored_wheels: boolean, guide: {url: string, title: string} | null}[], max_services: number, selected: number, min_date: string, max_date: string, api: string, nonce: string, phone: string, privacy_url: string }} Config
  * @typedef {{ time_start: string, time_end: string }} Termin
  * @typedef {{ name: 'spring' | 'autumn', from: string, to: string, leasing_from: string | null }} Season
  * @typedef {{ code: string, data?: { status: number, errors?: Record<string, string>, season?: Season, disabled_message?: string } }} ApiError
@@ -233,6 +233,7 @@ function init() {
 		/** @type {HTMLInputElement} */ (form.elements.namedItem('stored_wheels')).checked = storedWheels;
 		syncServices();
 		syncStoredWheels();
+		syncGuides();
 		loadDays();
 		loadTerminy();
 		return true;
@@ -281,6 +282,18 @@ function init() {
 	/** „Kola mám uskladněná u vás“ jen u Služeb, kde se na to Provozovatel ptá. */
 	function syncStoredWheels() {
 		uskladnena.hidden = !serviceIds().some((id) => askStoredWheels.has(id));
+	}
+
+	/** Pod každou vybranou Službou s Průvodcem odkaz „Přečtěte si“, jinak nic. */
+	function syncGuides() {
+		for (const select of serviceSelects()) {
+			const box = /** @type {HTMLElement} */ (select.closest('.rezervace__sluzba')?.querySelector('.rezervace__pruvodce'));
+			const guide = servicesById.get(select.value)?.guide;
+			box.hidden = !guide;
+			if (!guide) continue;
+			/** @type {HTMLAnchorElement} */ (box.querySelector('a')).href = guide.url;
+			setText(/** @type {HTMLElement} */ (box.querySelector('[data-pruvodce-nazev]')), guide.title);
+		}
 	}
 
 	/** Službu vybranou v jednom řádku nejde vybrat v jiném. Přidat jde, dokud zbývá Služba. */
@@ -583,6 +596,7 @@ function init() {
 	sluzby.addEventListener('change', () => {
 		syncServices();
 		syncStoredWheels();
+		syncGuides();
 		loadDays();
 		loadTerminy();
 	});
@@ -621,6 +635,7 @@ function init() {
 	prefillFromLink();
 	syncServices();
 	syncStoredWheels();
+	syncGuides();
 	syncLeasing();
 	loadDays();
 	form.addEventListener('submit', send);

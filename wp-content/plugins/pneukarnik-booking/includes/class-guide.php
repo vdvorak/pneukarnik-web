@@ -68,6 +68,29 @@ final class Pneukarnik_Guide {
 	}
 
 	/**
+	 * Zveřejněný Průvodce ke každé Službě, která nějakého má (klíč ID Služby). Víc Průvodců u jedné
+	 * Služby: první v pořadí published(). Jeden dotaz pro celou stránku karet nebo formulář.
+	 *
+	 * @return array<int, self>
+	 */
+	public static function by_service(): array {
+		$guides = [];
+		foreach ( self::published() as $guide ) {
+			if ( $guide->service_id > 0 && ! isset( $guides[ $guide->service_id ] ) ) {
+				$guides[ $guide->service_id ] = $guide;
+			}
+		}
+		return $guides;
+	}
+
+	/**
+	 * Zveřejněný Průvodce ke Službě (viz by_service()), null když žádný není.
+	 */
+	public static function for_service( int $service_id ): ?self {
+		return self::by_service()[ $service_id ] ?? null;
+	}
+
+	/**
 	 * Služba pro odkaz na rezervaci, jen když je zveřejněná. Jinak null a web nabídne obecnou rezervaci.
 	 */
 	public function service(): ?Pneukarnik_Service {

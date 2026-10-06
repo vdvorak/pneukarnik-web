@@ -95,6 +95,14 @@ get_header();
 						<?php endforeach; ?>
 						<?php
 					};
+					// Odkaz na Průvodce vybrané Služby, adresu a název doplní rezervace.js (bez JavaScriptu se nezobrazí).
+					$pneukarnik_guide_link = static function (): void {
+						?>
+						<p class="rezervace__pruvodce" hidden>
+							<a href="" target="_blank" rel="noopener"><span class="ikona-info"><?php echo pneukarnik_icon( 'info' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SVG ze šablony. ?></span><span><?php esc_html_e( 'Přečtěte si:', 'pneukarnik' ); ?> <span data-pruvodce-nazev></span><span class="screen-reader-text"> <?php esc_html_e( '(otevře se v novém panelu)', 'pneukarnik' ); ?></span></span></a>
+						</p>
+						<?php
+					};
 	?>
 					<section class="rezervace__cast">
 						<h2 class="rezervace__nadpis"><span class="rezervace__cislo" aria-hidden="true">1</span> <?php esc_html_e( 'Služba', 'pneukarnik' ); ?></h2>
@@ -107,6 +115,7 @@ get_header();
 									</select>
 									<span class="pole__chyba" id="chyba-service_ids"></span>
 								</p>
+								<?php $pneukarnik_guide_link(); ?>
 							</div>
 						</div>
 						<template id="rez-sluzba-sablona">
@@ -118,6 +127,7 @@ get_header();
 									</select>
 								</p>
 								<button type="button" class="rezervace__odebrat"><?php esc_html_e( 'Odebrat', 'pneukarnik' ); ?></button>
+								<?php $pneukarnik_guide_link(); ?>
 							</div>
 						</template>
 						<button type="button" id="rez-pridat-sluzbu" class="rezervace__pridat" hidden><?php esc_html_e( '+ přidat další službu', 'pneukarnik' ); ?></button>

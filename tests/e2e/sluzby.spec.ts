@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { login, publishService, uniqueTitle } from './support/admin';
+import { createGuide, createService, deletePosts } from './support/wp';
 
 test.beforeEach(async ({ page }) => {
 	await login(page);
@@ -152,4 +153,40 @@ test('Službu bez perexu nejde zveřejnit', async ({ page }) => {
 test('Neexistující Služba vrací 404', async ({ page }) => {
 	const response = await page.goto('/autoservis/tahle-sluzba-neexistuje/');
 	expect(response?.status()).toBe(404);
+});
+
+test('Karta Služby se zveřejněným Průvodcem má „i“, které vede na Průvodce, zbytek karty na Službu', async ({ page }) => {
+	const stamp = Date.now();
+	const guided = uniqueTitle('Přezutí s průvodcem');
+	const drafted = uniqueTitle('Geometrie s konceptem');
+	const guidedId = createService(guided, `e2e-prezuti-s-pruvodcem-${stamp}`, 'pneuservis');
+	const draftedId = createService(drafted, `e2e-geometrie-s-konceptem-${stamp}`, 'pneuservis');
+	const guide = uniqueTitle('Kdy přezout');
+	const guides = [createGuide(guide, guidedId), createGuide(uniqueTitle('Koncept průvodce'), draftedId, 'draft')];
+	try {
+		await page.goto('/sluzby/');
+		const card = (title: string) => page.locator('.karta-sluzby').filter({ hasText: title });
+		const info = card(guided).getByRole('link', { name: `Průvodce: ${guide}` });
+
+		await expect(info).toHaveAttribute('title', `Průvodce: ${guide}`);
+		await expect(info.locator('svg')).toBeVisible();
+		await expect(card(drafted).locator('.karta-sluzby__hlava')).toHaveCount(0);
+		await expect(card(drafted).getByRole('link')).toHaveCount(1);
+
+		// Z klávesnice: „i“ je před názvem karty a má viditelný focus.
+		await card(guided).getByRole('link', { name: guided }).focus();
+		await page.keyboard.press('Shift+Tab');
+		await expect(info).toBeFocused();
+		await expect(info).toHaveCSS('outline-style', 'solid');
+
+		await info.click();
+		await expect(page).toHaveURL(/\/pruvodce\/e2e-kdy-prezout-\d+\/$/);
+		await expect(page.getByRole('heading', { level: 1 })).toHaveText(guide);
+
+		await page.goBack();
+		await card(guided).click();
+		await expect(page).toHaveURL(new RegExp(`/pneuservis/e2e-prezuti-s-pruvodcem-${stamp}/$`));
+	} finally {
+		deletePosts([...guides, guidedId, draftedId]);
+	}
 });

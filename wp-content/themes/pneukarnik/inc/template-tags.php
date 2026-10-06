@@ -162,23 +162,32 @@ function pneukarnik_tel_href( string $phone ): string {
 }
 
 /**
- * Karta Služby v přehledu (stránka Služby, Úvod): ikona a štítek platné Akce (horní řádek jen s nimi),
- * název, perex, cena a jestli jde objednat online. Celá karta je odkazem (roztažený odkaz názvu).
+ * Karta Služby v přehledu (stránka Služby, Úvod): ikona, štítek platné Akce a „i“ s odkazem na Průvodce
+ * (horní řádek jen s nimi), název, perex, cena a jestli jde objednat online. Celá karta je odkazem
+ * (roztažený odkaz názvu), „i“ leží nad ním.
  *
- * @param string $heading Úroveň nadpisu karty podle okolí.
+ * @param Pneukarnik_Guide|null $guide   Zveřejněný Průvodce ke Službě (Pneukarnik_Guide::by_service()).
+ * @param string                $heading Úroveň nadpisu karty podle okolí.
  */
-function pneukarnik_service_card( Pneukarnik_Service $service, bool $has_promotion, string $heading = 'h3' ): void {
+function pneukarnik_service_card( Pneukarnik_Service $service, bool $has_promotion, ?Pneukarnik_Guide $guide = null, string $heading = 'h3' ): void {
 	$heading = tag_escape( $heading );
 	$icon    = pneukarnik_service_icon( $service->icon );
 	?>
 	<li class="card karta-sluzby">
-		<?php if ( '' !== $icon || $has_promotion ) : ?>
+		<?php if ( '' !== $icon || $has_promotion || $guide ) : ?>
 			<div class="karta-sluzby__hlava">
 				<?php if ( '' !== $icon ) : ?>
 					<span class="karta-sluzby__ikona"><?php echo $icon; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SVG ze šablony. ?></span>
 				<?php endif; ?>
 				<?php if ( $has_promotion ) : ?>
 					<span class="pill pill--accent karta-sluzby__akce"><?php esc_html_e( 'Akce', 'pneukarnik' ); ?></span>
+				<?php endif; ?>
+				<?php if ( $guide ) : ?>
+					<?php
+					/* translators: %s: název Průvodce */
+					$label = sprintf( __( 'Průvodce: %s', 'pneukarnik' ), $guide->title );
+					?>
+					<a class="ikona-info karta-sluzby__pruvodce" href="<?php echo esc_url( $guide->url() ); ?>" title="<?php echo esc_attr( $label ); ?>"><?php echo pneukarnik_icon( 'info' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SVG ze šablony. ?><span class="screen-reader-text"><?php echo esc_html( $label ); ?></span></a>
 				<?php endif; ?>
 			</div>
 		<?php endif; ?>
@@ -196,10 +205,16 @@ function pneukarnik_service_card( Pneukarnik_Service $service, bool $has_promoti
  * Ikona Služby ze sady v assets/icons jako vložené SVG (barva textu), prázdný řetězec bez ikony.
  */
 function pneukarnik_service_icon( string $name ): string {
+	return '' !== $name && isset( Pneukarnik_Service::icons()[ $name ] ) ? pneukarnik_icon( $name ) : '';
+}
+
+/**
+ * Ikona ze sady v assets/icons jako vložené SVG (barva textu), skrytá pro čtečky.
+ *
+ * @param string $name Název souboru bez přípony, jen ze šablony (ne od uživatele).
+ */
+function pneukarnik_icon( string $name ): string {
 	static $cache = [];
-	if ( '' === $name || ! isset( Pneukarnik_Service::icons()[ $name ] ) ) {
-		return '';
-	}
 	if ( ! isset( $cache[ $name ] ) ) {
 		$file           = get_theme_file_path( "assets/icons/{$name}.svg" );
 		$svg            = is_readable( $file ) ? (string) file_get_contents( $file ) : ''; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- soubor šablony.

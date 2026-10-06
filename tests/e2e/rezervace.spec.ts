@@ -1,7 +1,7 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
 import { addClosedDay, E2E_PREFIX, login, pickDay, pickTime, publishService, saveAutumnSeason, saveBookingSettings, uniqueTitle, upcomingWeekday } from './support/admin';
 import { waitForMail } from './support/mailpit';
-import { createService, deletePosts, setPostStatus } from './support/wp';
+import { createGuide, createService, deletePosts, setPostStatus } from './support/wp';
 
 // Dílna je jedna, testy si tedy nesmí brát Termíny navzájem.
 test.describe.configure({ mode: 'serial' });
@@ -413,5 +413,40 @@ test('Služba, kterou už nejde objednat online, se z „Objednat znovu“ nepř
 		await expect(page.locator('#terminy button').first()).toBeVisible();
 	} finally {
 		deletePosts([retired]);
+	}
+});
+
+test('Pod Službou s Průvodcem je odkaz na něj, otevře se v novém panelu a vyplněné údaje zůstanou', async ({ page, context }) => {
+	const guided = createService(uniqueTitle('Přezutí s průvodcem'), `e2e-prezuti-s-pruvodcem-${Date.now()}`, 'pneuservis', { _service_bookable: '1' });
+	const guide = uniqueTitle('Kdy přezout');
+	const guideId = createGuide(guide, guided);
+	try {
+		await page.goto('/rezervace/');
+		const rows = page.locator('.rezervace__sluzba');
+		const guideLink = (row: number) => rows.nth(row).getByRole('link', { name: `Přečtěte si: ${guide} (otevře se v novém panelu)` });
+		await expect(page.getByRole('link', { name: /^Přečtěte si/ })).toHaveCount(0);
+
+		await page.getByLabel('Služba', { exact: true }).selectOption(String(guided));
+		await expect(guideLink(0)).toBeVisible();
+		await expect(guideLink(0)).toHaveAttribute('target', '_blank');
+		await page.getByLabel('Jméno nebo firma').fill(customer.name);
+		const [tab] = await Promise.all([context.waitForEvent('page'), guideLink(0).click()]);
+		await expect(tab).toHaveURL(/\/pruvodce\/e2e-kdy-prezout-\d+\/$/);
+		await expect(tab.getByRole('heading', { level: 1 })).toHaveText(guide);
+		await tab.close();
+		await expect(page.getByLabel('Jméno nebo firma')).toHaveValue(customer.name);
+		await expect(page.getByLabel('Služba', { exact: true })).toHaveValue(String(guided));
+
+		await page.getByLabel('Služba', { exact: true }).selectOption(String(serviceId));
+		await expect(page.getByRole('link', { name: /^Přečtěte si/ })).toHaveCount(0);
+
+		// I v přidané řádce.
+		await page.getByRole('button', { name: '+ přidat další službu' }).click();
+		await page.getByLabel('Další služba').selectOption(String(guided));
+		await expect(guideLink(1)).toBeVisible();
+		await page.getByLabel('Další služba').selectOption('');
+		await expect(page.getByRole('link', { name: /^Přečtěte si/ })).toHaveCount(0);
+	} finally {
+		deletePosts([guideId, guided]);
 	}
 });

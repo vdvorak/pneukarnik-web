@@ -2,7 +2,7 @@
 /**
  * Stránka Služby (/sluzby/) s přepínačem Vše / Pneuservis / Autoservis. Rozcestníky Kategorií
  * (/pneuservis/, /autoservis/) jsou tatáž stránka s jednou Kategorií. Zveřejněné Služby v nastaveném
- * pořadí, Služba s platnou Akcí má na kartě štítek.
+ * pořadí, Služba s platnou Akcí má na kartě štítek, Služba se zveřejněným Průvodcem „i“ s odkazem na něj.
  *
  * @package Pneukarnik
  */
@@ -12,6 +12,7 @@ $pneukarnik_categories = null === $pneukarnik_current
 	? Pneukarnik_Service::categories()
 	: [ $pneukarnik_current => Pneukarnik_Service::categories()[ $pneukarnik_current ] ];
 $pneukarnik_promotions = Pneukarnik_Promotion::current();
+$pneukarnik_guides     = Pneukarnik_Guide::by_service();
 
 // Hlavní dotaz už má jen zveřejněné Služby zobrazených Kategorií v nastaveném pořadí, tady se jen rozdělí.
 $pneukarnik_groups = array_fill_keys( array_keys( $pneukarnik_categories ), [] );
@@ -43,7 +44,7 @@ get_header();
 				<?php if ( $pneukarnik_services ) : ?>
 					<ul class="karty-sluzeb">
 						<?php foreach ( $pneukarnik_services as $pneukarnik_service ) : ?>
-							<?php pneukarnik_service_card( $pneukarnik_service, isset( $pneukarnik_promotions[ $pneukarnik_service->id ] ) ); ?>
+							<?php pneukarnik_service_card( $pneukarnik_service, isset( $pneukarnik_promotions[ $pneukarnik_service->id ] ), $pneukarnik_guides[ $pneukarnik_service->id ] ?? null ); ?>
 						<?php endforeach; ?>
 					</ul>
 				<?php else : ?>

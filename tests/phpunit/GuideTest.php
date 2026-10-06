@@ -61,6 +61,52 @@ class GuideTest extends Pneukarnik_REST_Test_Case {
 		$this->assertSame( [ $first, $second, $third ], array_map( static fn( Pneukarnik_Guide $guide ): int => $guide->id, Pneukarnik_Guide::published() ) );
 	}
 
+	public function test_service_offers_its_published_guide(): void {
+		$service = $this->create_service( 60 );
+		$guide   = $this->guide( 'Kdy přezout', $service );
+
+		$this->assertSame( $guide, Pneukarnik_Guide::for_service( $service )?->id );
+		$this->assertSame( [ $service ], array_keys( Pneukarnik_Guide::by_service() ) );
+	}
+
+	public function test_service_with_only_a_draft_guide_offers_none(): void {
+		$service = $this->create_service( 60 );
+		$this->guide( 'Koncept', $service, status: 'draft' );
+
+		$this->assertNull( Pneukarnik_Guide::for_service( $service ) );
+		$this->assertNull( Pneukarnik_Guide::for_service( $this->create_service( 60 ) ) );
+	}
+
+	public function test_service_with_more_guides_offers_the_first_in_footer_order(): void {
+		$service = $this->create_service( 60 );
+		$other   = $this->create_service( 60 );
+		$this->guide( 'Kdy pneumatiky vyměnit', $service, order: 2 );
+		$this->guide( 'Uskladnění pneumatik', $service, order: 1 );
+		$first = $this->guide( 'Kdy přezout', $service, order: 1 );
+		$this->guide( 'Dřívější koncept', $service, order: 0, status: 'draft' );
+		$own = $this->guide( 'Geometrie', $other, order: 0 );
+
+		$this->assertSame( $first, Pneukarnik_Guide::for_service( $service )?->id );
+		$this->assertSame( $own, Pneukarnik_Guide::for_service( $other )?->id );
+	}
+
+	public function test_booking_form_knows_the_guide_of_each_service(): void {
+		$service = $this->create_service( 60 );
+		$guide   = $this->guide( 'Kdy přezout', $service );
+		$without = $this->create_service( 60 );
+
+		$guides = array_column( Pneukarnik_Booking_Pages::form_config()['services'], 'guide', 'id' );
+
+		$this->assertSame(
+			[
+				'url'   => get_permalink( $guide ),
+				'title' => 'Kdy přezout',
+			],
+			$guides[ $service ]
+		);
+		$this->assertNull( $guides[ $without ] );
+	}
+
 	/**
 	 * @return array<string, array{0: array<string, mixed>}>
 	 */

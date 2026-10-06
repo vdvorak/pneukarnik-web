@@ -56,6 +56,19 @@ export function createService(title: string, slug: string, category: 'pneuservis
 	);
 }
 
+/**
+ * Průvodce se všemi povinnými částmi, který odkazuje na danou Službu, ve stavu `status` (výchozí zveřejněný).
+ * Název musí začínat E2E_PREFIX, aby ho smazal global-teardown. Vrací ID.
+ */
+export function createGuide(title: string, serviceId: number, status = 'publish'): number {
+	const meta = { _guide_perex: 'Perex.', _guide_service_id: String(serviceId) };
+	return Number(
+		wpCli([
+			'wp', 'post', 'create', '--post_type=pneukarnik_guide', `--post_status=${status}`, `--post_title=${title}`, '--post_content=<p>Text Průvodce.</p>', `--meta_input=${JSON.stringify(meta)}`, '--porcelain',
+		]).trim(),
+	);
+}
+
 /** Změní stav příspěvku (i Služby), např. na `draft`. */
 export function setPostStatus(id: number, status: string): void {
 	wpCli(['wp', 'post', 'update', String(id), `--post_status=${status}`, '--quiet']);
