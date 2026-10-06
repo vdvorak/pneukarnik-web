@@ -29,7 +29,7 @@ Jedna ze dvou skupin, do kterých patří každá Služba: **Pneuservis** nebo *
 _Avoid_: typ služby, sekce
 
 **Akce**:
-Časově omezená nabídka s platností od–do, vázaná na Službu (např. zaváděcí cena dekarbonizace). Když platnost skončí, Akce zmizí a Služba zůstane. Na webu ji nese karta a detail její Služby, která jde po dobu Akce napřed; vlastní sekci nemá.
+Časově omezená nabídka s platností od–do, vázaná na Službu: akční cena (např. zaváděcí cena dekarbonizace), nebo výhoda bez ceny (např. kontrola brzd zdarma ke geometrii). Když platnost skončí, Akce zmizí a Služba zůstane. Na webu ji nese karta a detail její Služby, která jde po dobu Akce napřed; vlastní sekci nemá.
 _Avoid_: sleva, novinka, promo
 
 **Délka**:

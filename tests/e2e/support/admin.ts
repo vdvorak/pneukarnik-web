@@ -74,7 +74,8 @@ export async function publishService(page: Page, s: ServiceFields): Promise<void
 export type PromotionFields = {
 	title: string;
 	service: string;
-	price: number;
+	/** Bez ceny = Akce bez ceny (např. kontrola zdarma). */
+	price?: number;
 	description?: string;
 	/** YYYY-MM-DD */
 	from: string;
@@ -86,7 +87,7 @@ export type PromotionFields = {
 export async function publishPromotion(page: Page, a: PromotionFields): Promise<void> {
 	await page.goto('/wp-admin/post-new.php?post_type=pneukarnik_promotion');
 	await page.getByLabel('Služba *').selectOption({ label: a.service });
-	await page.getByLabel('Akční cena (Kč) *').fill(String(a.price));
+	if (a.price !== undefined) await page.getByLabel('Akční cena (Kč)').fill(String(a.price));
 	if (a.description) await page.getByLabel('Popis').fill(a.description);
 	await page.getByLabel('Platí od *').fill(a.from);
 	await page.getByLabel('Platí do *').fill(a.to);

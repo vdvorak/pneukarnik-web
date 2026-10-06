@@ -7,6 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Formulář Akce v administraci (Služba, akční cena, popis, platnost) a sloupce v jejich přehledu.
+ * Akční cena je nepovinná: Akce bez ceny (např. kontrola brzd zdarma) ukáže na kartě Služby svůj název.
  */
 class Pneukarnik_Admin_Promotion_Meta {
 
@@ -54,7 +55,7 @@ class Pneukarnik_Admin_Promotion_Meta {
 				</td>
 			</tr>
 			<tr>
-				<th><label for="pnk-promotion-price"><?php esc_html_e( 'Akční cena (Kč) *', 'pneukarnik-booking' ); ?></label></th>
+				<th><label for="pnk-promotion-price"><?php esc_html_e( 'Akční cena (Kč)', 'pneukarnik-booking' ); ?></label></th>
 				<td><input id="pnk-promotion-price" type="number" name="_promotion_price" value="<?php echo esc_attr( (string) ( $promotion->price ?? '' ) ); ?>" min="1" step="1"></td>
 			</tr>
 			<tr>

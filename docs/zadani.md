@@ -46,7 +46,7 @@ První verzi textů napíše vývojář, Provozovatel je zkontroluje.
 ## Obsah spravovaný v administraci
 
 - **Služby** (strukturovaná pole, ne volný editor): Kategorie, Délka, cena, sezónní ano/ne, pořadí a pole detailu.
-- **Akce**: Služba, cena, platnost od–do. Zobrazení: štítek na kartě, blok v detailu. Vlastní sekci nemá: Služba s Akcí je napřed na Úvodu i ve své Kategorii na stránce Služby.
+- **Akce**: Služba, cena (nepovinná, Akce bez ceny je např. kontrola brzd zdarma), platnost od–do. Zobrazení: štítek na kartě, blok v detailu. Vlastní sekci nemá: Služba s Akcí je napřed na Úvodu i ve své Kategorii na stránce Služby.
 - **Oznámení**: text, platnost od–do, „zobrazit i u rezervace“. Může jich být víc, nahoře se ukazuje nejnovější.
 - **Pracovní doba** pro každý den v týdnu (0–2 bloky), **Výjimky** (zavřeno / jiná doba, opakovat každý rok), státní svátky ČR předvyplněné.
 - **Sezóny** jarní a podzimní (od–do, datum pro leasing).

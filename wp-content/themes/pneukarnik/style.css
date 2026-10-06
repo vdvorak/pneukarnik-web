@@ -369,6 +369,7 @@ a.card--muted:hover,a.card--tint:hover{box-shadow:var(--shadow-tile-hover)}
 .karta-sluzby__odkaz::after{content:"";position:absolute;inset:0;border-radius:var(--radius-lg)}
 .karta-sluzby__odkaz:focus-visible{outline:0;box-shadow:none}
 .karta-sluzby__odkaz:focus-visible::after{outline:3px solid var(--brand-accent);outline-offset:2px;box-shadow:0 0 0 2px var(--neutral-900)}
+.karta-sluzby__akce-nazev{font-weight:800;color:var(--brand-accent-ink)}
 .karta-sluzby__perex{font-size:15px;line-height:1.55;color:var(--text-muted);text-wrap:pretty}
 .karta-sluzby__spodek{margin-top:auto;padding-top:12px;border-top:1px solid var(--border-divider);display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 12px}
 .karta-sluzby__cena{font:900 18px var(--font-display);color:var(--brand-primary)}

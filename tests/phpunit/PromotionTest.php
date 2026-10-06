@@ -1,7 +1,8 @@
 <?php
 /**
  * Akce: zobrazení jen v platnosti (oba dny včetně, podle hodin pluginu), souběžné Akce,
- * skrytí s nezveřejněnou Službou, akční cena ve výběru Služby v rezervaci a pravidlo zveřejnění.
+ * skrytí s nezveřejněnou Službou, akční cena nebo název Akce ve výběru Služby v rezervaci a pravidlo
+ * zveřejnění (cena nepovinná).
  */
 
 declare(strict_types=1);
@@ -101,6 +102,10 @@ class PromotionTest extends Pneukarnik_REST_Test_Case {
 		$this->assertSame( "Dekarbonizace (akce 990\u{00A0}Kč, běžně 600\u{00A0}Kč)", pneukarnik_service_option_label( $service, $promotion ) );
 		$this->assertSame( "Dekarbonizace (600\u{00A0}Kč)", pneukarnik_service_option_label( $service, null ) );
 
+		update_post_meta( (int) $promotion?->id, '_promotion_price', '' );
+		$free = Pneukarnik_Promotion::current_for( $this->service );
+		$this->assertSame( "Dekarbonizace (600\u{00A0}Kč, akce: Zaváděcí cena)", pneukarnik_service_option_label( $service, $free ) );
+
 		update_post_meta( $this->service, '_service_price_by_vehicle', '1' );
 		$by_vehicle = Pneukarnik_Service::find( $this->service );
 		$this->assertNotNull( $by_vehicle );
@@ -152,6 +157,16 @@ class PromotionTest extends Pneukarnik_REST_Test_Case {
 		$this->assertSame( 'publish', get_post_status( $id ) );
 	}
 
+	public function test_promotion_without_price_is_published_and_has_no_price(): void {
+		$this->promotion( '2027-03-01', '2027-03-31', 'Kontrola brzd zdarma', 0 );
+		Pneukarnik_Clock::freeze( '2027-03-15 10:00' );
+
+		$promotion = Pneukarnik_Promotion::current_for( $this->service );
+
+		$this->assertNotNull( $promotion );
+		$this->assertNull( $promotion->price );
+	}
+
 	/**
 	 * @return array<string, array{array<string, mixed>}>
 	 */
@@ -160,8 +175,6 @@ class PromotionTest extends Pneukarnik_REST_Test_Case {
 			'bez názvu'           => [ [ 'post_title' => '' ] ],
 			'bez Služby'          => [ [ '_promotion_service_id' => '' ] ],
 			'neexistující Služba' => [ [ '_promotion_service_id' => '999999' ] ],
-			'bez ceny'            => [ [ '_promotion_price' => '' ] ],
-			'nulová cena'         => [ [ '_promotion_price' => '0' ] ],
 			'bez začátku'         => [ [ '_promotion_valid_from' => '' ] ],
 			'bez konce'           => [ [ '_promotion_valid_to' => '' ] ],
 			'neplatné datum'      => [ [ '_promotion_valid_to' => '2027-02-30' ] ],

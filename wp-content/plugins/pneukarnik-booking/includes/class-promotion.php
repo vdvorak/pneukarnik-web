@@ -107,9 +107,6 @@ final class Pneukarnik_Promotion {
 		if ( ! $this->service() ) {
 			$missing[] = __( 'Služba', 'pneukarnik-booking' );
 		}
-		if ( null === $this->price ) {
-			$missing[] = __( 'akční cena', 'pneukarnik-booking' );
-		}
 		return array_merge( $missing, Pneukarnik_Validity::missing( $this->valid_from, $this->valid_to ) );
 	}
 }

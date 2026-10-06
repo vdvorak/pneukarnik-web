@@ -22,10 +22,15 @@ function pneukarnik_price_label( Pneukarnik_Service $service ): string {
 /**
  * Položka Služby ve výběru rezervace: název a cena, s platnou Akcí akční cena a za ní běžná,
  * např. „Dekarbonizace (akce 1 290 Kč, běžně od 1 690 Kč)“. U „Cena dle vozu“ jen akční cena.
+ * Akce bez ceny přidá svůj název: „Geometrie (Cena dle vozu, akce: Kontrola brzd zdarma)“.
  */
 function pneukarnik_service_option_label( Pneukarnik_Service $service, ?Pneukarnik_Promotion $promotion ): string {
-	if ( null === $promotion || null === $promotion->price ) {
+	if ( null === $promotion ) {
 		return sprintf( '%s (%s)', $service->title, pneukarnik_price_label( $service ) );
+	}
+	if ( null === $promotion->price ) {
+		/* translators: 1: název Služby, 2: cena Služby, 3: název Akce */
+		return sprintf( __( '%1$s (%2$s, akce: %3$s)', 'pneukarnik' ), $service->title, pneukarnik_price_label( $service ), $promotion->title );
 	}
 	$by_vehicle = $service->price_by_vehicle || null === $service->price;
 	return $by_vehicle
@@ -43,7 +48,7 @@ function pneukarnik_amount( int $amount ): string {
 }
 
 /**
- * Blok platné Akce v detailu Služby (tmavý): štítek, název, akční cena, popis a do kdy platí.
+ * Blok platné Akce v detailu Služby (tmavý): štítek, název, akční cena (když ji Akce má), popis a do kdy platí.
  */
 function pneukarnik_promotion_block( Pneukarnik_Promotion $promotion ): void {
 	?>
@@ -51,7 +56,9 @@ function pneukarnik_promotion_block( Pneukarnik_Promotion $promotion ): void {
 		<p class="sluzba__akce-stitek"><?php esc_html_e( 'Akce', 'pneukarnik' ); ?></p>
 		<div class="sluzba__akce-hlava">
 			<h2><?php echo esc_html( $promotion->title ); ?></h2>
-			<p class="sluzba__akce-cena"><?php echo esc_html( pneukarnik_amount( (int) $promotion->price ) ); ?></p>
+			<?php if ( null !== $promotion->price ) : ?>
+				<p class="sluzba__akce-cena"><?php echo esc_html( pneukarnik_amount( $promotion->price ) ); ?></p>
+			<?php endif; ?>
 		</div>
 		<?php if ( '' !== $promotion->description ) : ?>
 			<div class="sluzba__akce-popis"><?php echo wp_kses_post( wpautop( esc_html( $promotion->description ) ) ); ?></div>
@@ -179,9 +186,9 @@ function pneukarnik_tel_href( string $phone ): string {
 
 /**
  * Karta Služby v přehledu (stránka Služby, Úvod): ikona, štítek platné Akce a „i“ s odkazem na Průvodce
- * (horní řádek jen s nimi), název, perex, cena (s Akcí akční a přeškrtnutá běžná) a Rezervovat s touto
- * Službou, u Služby jen na telefon Zavolat. Celá karta je odkazem na detail (roztažený odkaz názvu),
- * „i“ a Rezervovat/Zavolat leží nad ním.
+ * (horní řádek jen s nimi), název, u Akce bez ceny její název, perex, cena (s cenovou Akcí akční
+ * a přeškrtnutá běžná) a Rezervovat s touto Službou, u Služby jen na telefon Zavolat. Celá karta je
+ * odkazem na detail (roztažený odkaz názvu), „i“ a Rezervovat/Zavolat leží nad ním.
  *
  * @param Pneukarnik_Promotion|null $promotion Platná Akce Služby (Pneukarnik_Promotion::current()).
  * @param Pneukarnik_Guide|null     $guide     Zveřejněný Průvodce ke Službě (Pneukarnik_Guide::by_service()).
@@ -215,6 +222,9 @@ function pneukarnik_service_card( Pneukarnik_Service $service, ?Pneukarnik_Promo
 			</div>
 		<?php endif; ?>
 		<<?php echo $heading; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- tag_escape výše. ?> class="karta-sluzby__nazev"><a class="karta-sluzby__odkaz" href="<?php echo esc_url( $service->url() ); ?>"><?php echo esc_html( $service->title ); ?></a></<?php echo $heading; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
+		<?php if ( $promotion && null === $promotion->price ) : ?>
+			<p class="karta-sluzby__akce-nazev"><?php echo esc_html( $promotion->title ); ?></p>
+		<?php endif; ?>
 		<p class="karta-sluzby__perex"><?php echo esc_html( $service->perex ); ?></p>
 		<p class="karta-sluzby__spodek">
 			<span class="karta-sluzby__cena">
