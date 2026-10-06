@@ -17,13 +17,106 @@ make zkouska-down                   # po zkoušce smazat, jsou tam osobní údaj
 - **Kde připravit obsah.** Co Provozovatel nastaví na testovací kopii (perexy Služeb, Nastavení, Průvodci, stránky), se samo na ostrý web nepřenese. Doporučení: připravit vše na testovací kopii a při přepnutí její databázi nasadit na ostrý web, do ní nahrát čerstvou tabulku `hwjcw_reservations` ze živého webu a převod spustit znovu. Převod je opakovatelný, takže přidá jen Rezervace a souhlasy, které mezitím na starém webu přibyly.
 - **E‑mail s novým odkazem na Zrušení** převedeným budoucím Rezervacím: ano/ne (Provozovatel).
 
-## Testovací kopie (hosting)
+## Testovací kopie (hosting Webglobe)
 
-- [ ] Kopie živého webu na subdoméně za heslem, `noindex` (Nastavení → Čtení) a heslo na úrovni serveru.
-- [ ] Na kopii stejné kroky jako při přepnutí níže.
-- [ ] SMTP z adresy na doméně, SPF a DKIM. Testovací e‑mail z rezervace do Gmailu a Seznamu nespadne do spamu.
-- [ ] Provozovatel doplní Služby (viz Výsledek zkoušky), Nastavení (kontakty, Pracovní doba, Sezóny, Lhůta zrušení), stránky O nás, Kontakt, Ochrana osobních údajů a Průvodce.
-- [ ] Zkušební rezervace, Zrušení odkazem, PDF přehled a iCal.
+Kopie živého webu na `test.pneukarnik.cz` (název je na nás). Obsahuje osobní údaje zákazníků, proto je od prvního souboru za heslem a nesmí sama posílat e‑maily. Postup v administraci Webglobe je podle jejich nápovědy (poradna webglobe.cz), kroky ve WordPressu prošly zkouškou.
+
+Hosting má **jedinou databázi**, kopie proto bydlí ve stejné databázi jako živý web, jen s prefixem tabulek `tstpk_` (živý web má `hwjcw_`). Plugin bere prefix z `wp-config.php`, převod dat funguje stejně. Platí dvě pravidla:
+
+- **Nikdy nepoužívat installer Duplicatoru** (ani zálohu/obnovu Duplicatorem na kopii): jeho volby databáze mažou všechny tabulky, tedy i živý web.
+- **V `wp-config.php` kopie musí zůstat `$table_prefix = 'tstpk_';`.** S `hwjcw_` by kopie běžela nad daty živého webu (aktivace šablony by přepnula ostrý web).
+
+**Potřebuješ:** přístup do administrace Webglobe (hosting, DNS, e‑maily, phpMyAdmin), SFTP údaje k hostingu, čerstvou zálohu Duplicatoru z živého webu (`…_archive.zip`), Docker.
+
+### 1. Ověřit PHP živého webu
+
+- [ ] Živý web: Nástroje → Stav webu → Informace → Server: verze PHP (pro přepnutí).
+- Nový web potřebuje **PHP ≥ 8.1** (vyvíjí se na 8.3) a **WordPress 7.1** (živý web má 7.0.6). Webglobe nastavuje PHP zvlášť pro každou subdoménu, kopie tedy živý web neovlivní. Na živém webu se verze zvedá až při přepnutí.
+
+### 2. Subdoména a certifikát
+
+- [ ] Webglobe Admin → Hosting → Web → Subdomény → **Přidat subdoménu**: název `test`, adresář `test` (vlastní, ne adresář živého webu, ten je `www`), PHP nejnovější 8.x (ideálně 8.3) → Uložit. Za chvíli je aktivní.
+- [ ] Pokud DNS domény není u Webglobe, přidat záznam pro `test` (stejný A záznam jako `pneukarnik.cz`).
+- [ ] Hosting → SSL certifikát → Nový SSL certifikát → Let's Encrypt → Vygenerovat pro `test.pneukarnik.cz`, dokud je adresář prázdný (bez hesla). Doména musí mířit na hosting Webglobe. Certifikát se sám obnovuje, `.htaccess` kopie mu ověření pustí i za heslem.
+
+### 3. Připravit kopii lokálně
+
+- [ ] V repu:
+  ```sh
+  make kopie ZALOHA=~/Downloads/…_archive.zip   # volitelně URL=https://test.pneukarnik.cz PREFIX=tstpk_
+  ```
+  Za pár minut vznikne `kopie/` (v gitu ignorovaný, jsou v něm osobní údaje):
+  - `kopie/web/`: soubory ze zálohy bez záloh, cache W3 Total Cache, `/nova/` a statistik. Navíc:
+    - `wp-config.php`: prefix `tstpk_`, bez `WP_CACHE`, s `DISABLE_WP_CRON` (kopie sama nic nepošle) a `WP_DEBUG_LOG` (chyby do `wp-content/debug.log`). Přístupy k databázi zůstávají z živého webu, databáze je stejná.
+    - `.htaccess`: heslo a adresy WordPressu. Dokud se nedoplní cesta k `.htpasswd`, web nikoho nepustí.
+  - `kopie/kopie.sql`: všechny tabulky živého webu jako `tstpk_`, adresy přepsané na `https://test.pneukarnik.cz` (WP‑CLI, i v serializovaných datech), vyloučení z indexace zapnuté, W3 Total Cache vypnutý. Web je jinak ve stavu živého, přepnutí se nacvičuje až na hostingu (krok 7).
+- Databáze na hostingu je **Percona Server 5.7.44** (MySQL 5.7), `make kopie` proto pracuje s MySQL 5.7.44 a export jde do phpMyAdminu beze změn. Export z MariaDB hosting odmítne (`Unknown collation: 'utf8mb4_uca1400_ai_ci'`).
+- Skript sám zkontroluje, že `kopie.sql` vytváří a maže jen tabulky `tstpk_` a nikde v něm nezůstalo `hwjcw_`. Varování „Skipping an uninitialized class Astra…/Elementor…“ jsou zbytky dřívějších šablon v datech, nevadí.
+
+### 4. Heslo
+
+- [ ] Soubor s heslem:
+  ```sh
+  docker run --rm httpd:2.4 htpasswd -nbB tester 'dlouhe-heslo' > .htpasswd
+  ```
+- [ ] `.htpasswd` nahrát přes SFTP **mimo adresáře webů** (vedle `www` a `test`, ne do nich). Plnou cestu na serveru ukáže administrace, nebo dočasný soubor `cesta.php` s `<?php echo __DIR__;` v adresáři `test` (po přečtení smazat).
+- [ ] V `kopie/web/.htaccess` nahradit `/DOPLNIT/plnou/cestu/k/.htpasswd` skutečnou cestou.
+
+### 5. Nahrát soubory
+
+- [ ] Obsah `kopie/web/` (včetně skrytého `.htaccess`) nahrát přes SFTP do adresáře subdomény `test`.
+- [ ] Ověřit: `https://test.pneukarnik.cz/` bez hesla vrací 401, s heslem chybu připojení k databázi nebo instalaci WordPressu (tabulky `tstpk_` ještě nejsou). Instalaci **nedokončovat**.
+
+### 6. Databáze
+
+- [ ] **Záloha živé databáze:** phpMyAdmin → databáze → Exportovat (rychlý, SQL), soubor uložit. Duplicator na živém webu jde taky, jen ho neobnovovat do kopie.
+- [ ] Zapsat si počet tabulek `hwjcw_` (phpMyAdmin, filtr tabulek `hwjcw_`).
+- [ ] phpMyAdmin → stejná databáze → Import → `kopie/kopie.sql` (18 MB; při limitu nahrávání ho zabalit `gzip kopie/kopie.sql` a importovat `.sql.gz`).
+- [ ] Kontrola: přibylo 58 tabulek `tstpk_`, počet `hwjcw_` se nezměnil, živý web běží.
+- [ ] `https://test.pneukarnik.cz/` (s heslem) ukáže starý web s adresami `test.pneukarnik.cz`. Přihlášení `…/wp-admin/` je stejné jako na živém webu.
+- [ ] Nastavení → Obecné: obě adresy `https://test.pneukarnik.cz`. Nastavení → Čtení: „Požádat vyhledávače, aby neindexovaly tento web“ je zaškrtnuté.
+
+### 7. Kroky přepnutí na kopii
+
+Stejné jako v sekci Přepnutí níže (bez kroku 1, zálohou kopie je `kopie/`), v tomto pořadí:
+
+- [ ] Pluginy: hromadně **deaktivovat všechny** staré pluginy (krok 4). Kvůli WordPressu 7.1 to musí být před aktualizací.
+- [ ] Nástěnka → Aktualizace: WordPress na 7.1, pak „Aktualizovat databázi“, pokud ji WordPress nabídne (krok 3).
+- [ ] Nahrát šablonu a plugin z repa (krok 2). Zipy připravíš v kořeni repa:
+  ```sh
+  (cd wp-content/themes && zip -rq ../../pneukarnik.zip pneukarnik)
+  (cd wp-content/plugins && zip -rq ../../pneukarnik-booking.zip pneukarnik-booking)
+  ```
+  Vzhled → Motivy → Přidat → Nahrát `pneukarnik.zip`. Pluginy → Přidat → Nahrát `pneukarnik-booking.zip`. Plugin ze starého pokusu tam už je, zvolit **„Nahradit stávající“**. Jiná cesta je SFTP: starý adresář `wp-content/plugins/pneukarnik-booking` nejdřív smazat, ať nezůstanou staré soubory.
+- [ ] Aktivovat šablonu Pneukarník a plugin Pneukarnik Booking (krok 4).
+- [ ] Nastavení → Trvalé odkazy → Uložit (krok 5). WordPress doplní svůj blok do `.htaccess`, blok s heslem musí zůstat nahoře.
+- [ ] Rezervace → Převod ze starého webu **bez e‑mailu Zákazníkům** (krok 6) a projít report (krok 7).
+- [ ] Smazat staré pluginy podle kroku 8. WP Mail SMTP nechat kvůli kroku 8 níže. (`/nova/` v kopii není.)
+- [ ] `wp-content/debug.log` je prázdný.
+
+### 8. E‑maily: SMTP, SPF, DKIM
+
+- [ ] Administrace Webglobe: e‑mailová schránka na doméně pro odesílání, např. `rezervace@pneukarnik.cz`. Poznamenat si údaje SMTP (server, port, šifrování).
+- [ ] DNS `pneukarnik.cz` (u Webglobe nebo jinde):
+  - **SPF:** TXT záznam `v=spf1 … -all` obsahuje poštovní servery Webglobe. Přesné znění (`include:` …) dá administrace nebo podpora Webglobe. Smí být jen jeden SPF záznam.
+  - **DKIM:** zapnout pro doménu v administraci pošty Webglobe a ověřit, že se v DNS objevil záznam `…._domainkey`.
+  - **DMARC** (doporučeno): TXT `_dmarc.pneukarnik.cz` = `v=DMARC1; p=none; rua=mailto:rezervace@pneukarnik.cz`.
+- [ ] Na kopii aktivovat **WP Mail SMTP**: zvolit Ostatní SMTP, údaje schránky, zapnout „Vynutit e‑mail odesílatele“ s adresou schránky. Bez toho plugin posílá z `noreply@test.pneukarnik.cz`, a to SPF ani DKIM neprojde.
+- [ ] Zkušební rezervace na vlastní adresu v Gmailu a na Seznamu:
+  - nesmí skončit ve spamu
+  - Gmail → Zobrazit původní zprávu: `SPF: PASS`, `DKIM: PASS`, `DMARC: PASS`
+  - Seznam: zobrazit zdroj zprávy a v hlavičce `Authentication-Results` ověřit SPF a DKIM `pass`
+- Volitelně: rezervace na adresu z mail-tester.com a skóre aspoň 9/10.
+
+### 9. Obsah a ověření
+
+- [ ] Provozovatel dostane vlastní účet (Uživatelé → Přidat, role Administrátor nebo Editor) a heslo k serveru.
+- [ ] Provozovatel doplní Služby (viz Výsledek zkoušky), Nastavení (kontakty, Pracovní doba, Sezóny, Lhůta zrušení), stránky O nás, Kontakt, Ochrana osobních údajů (perex do výňatku stránky) a Průvodce.
+- [ ] Zkušební rezervace, Zrušení odkazem z e‑mailu, PDF přehled a iCal.
+- [ ] Cron je vypnutý. Anonymizaci, Připomínky přezutí a recenze jde spustit ručně, když je potřeba vyzkoušet: plugin WP Crontrol, nebo dočasně `DISABLE_WP_CRON` na `false`.
+- [ ] Návrat zpět (nacvičení): znovu nahrát soubory a `kopie.sql` podle kroků 5 a 6 a v phpMyAdminu smazat tabulky `tstpk_`, které přidal nový plugin (`tstpk_pneukarnik_booking_services`, `…_day_exceptions`, `…_subscriptions`). Starý web na kopii musí naběhnout, pak krok 7 zopakovat. Proto `kopie/` lokálně smaž až po této zkoušce.
+
+**Po zkoušce** (nebo až kopie nebude potřeba): smazat adresář subdomény a v phpMyAdminu **jen tabulky `tstpk_`** (filtr tabulek `tstpk_`, Zaškrtnout vše, Odstranit). Lokálně smazat `kopie/`. Všude jsou osobní údaje zákazníků.
 
 ## Přepnutí (mimo sezónu, cíl leden–únor 2027)
 
