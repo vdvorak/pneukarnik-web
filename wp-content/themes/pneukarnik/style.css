@@ -640,6 +640,32 @@ a.card--muted:hover,a.card--tint:hover{box-shadow:var(--shadow-tile-hover)}
 	.kalendar__mrizka{--mezera:2px}
 }
 
+/* Potvrzení, Zrušení a Odhlášení: bílá karta na přechodu, ✓ u úspěchu, souhrn jako řádky „klíč – hodnota“. */
+.vysledek{background:var(--gradient-hero)}
+.vysledek__inner{max-width:640px;margin:0 auto;padding:64px var(--gutter) 96px}
+.vysledek__karta{--card-pad:clamp(24px,5vw,44px);--card-gap:20px;align-items:flex-start;border-radius:var(--radius-xl);box-shadow:var(--shadow-float)}
+.vysledek__karta > *{margin:0}
+.vysledek__karta h1{font:var(--type-h2)}
+.vysledek__karta .notice{align-self:stretch}
+.vysledek__ikona{display:grid;place-items:center;width:64px;height:64px;border-radius:50%;background:var(--brand-accent);font:900 30px var(--font-display)}
+.vysledek__perex{font-size:18px;line-height:1.6;color:var(--text-muted)}
+.vysledek__perex--tmavy{color:var(--text-body)}
+.vysledek__text{font-size:17px;line-height:1.6;text-wrap:pretty}
+.vysledek__poznamka{font-size:16px;line-height:1.6;color:var(--text-muted)}
+.vysledek__tlacitka{display:flex;flex-wrap:wrap;gap:12px;padding-top:4px}
+.vysledek__tlacitka form{margin:0}
+.vysledek__kontakt{display:flex;flex-direction:column;gap:6px}
+.vysledek__telefon{font:900 20px var(--font-display)}
+.vysledek__email{font-size:17px;font-weight:700}
+.udaje{align-self:stretch;display:flex;flex-direction:column}
+.udaje > div{display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 20px;padding:14px 0;border-bottom:1px solid var(--border-divider);font-size:16px}
+.udaje dt{color:var(--text-muted)}
+.udaje dd{margin:0;font-weight:700;text-align:right}
+
+/* Zrušit rezervaci: červený obrys, na hover plná (mimo systém, jen tady). */
+.button--danger{padding:14px 26px;border:2px solid var(--danger);background:#fff;color:var(--danger);font-size:17px}
+.button--danger:hover{background:var(--danger);color:#fff}
+
 /* 404 */
 .chyba{background:var(--gradient-hero)}
 .chyba__inner{max-width:var(--container-narrow);margin:0 auto;padding:88px var(--gutter) 112px;display:flex;flex-direction:column;align-items:flex-start;gap:20px}

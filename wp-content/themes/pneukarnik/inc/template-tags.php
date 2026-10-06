@@ -599,3 +599,18 @@ function pneukarnik_page_hero( string $title, string $lead = '', ?array $back = 
 	</section>
 	<?php
 }
+
+/**
+ * Souhrn Rezervace jako řádky „klíč – hodnota“ (Potvrzení, Zrušení).
+ *
+ * @param array<string,string> $rows popisek => hodnota
+ */
+function pneukarnik_booking_summary( array $rows ): void {
+	?>
+	<dl class="udaje">
+		<?php foreach ( $rows as $label => $value ) : ?>
+			<div><dt><?php echo esc_html( $label ); ?></dt><dd><?php echo esc_html( $value ); ?></dd></div>
+		<?php endforeach; ?>
+	</dl>
+	<?php
+}

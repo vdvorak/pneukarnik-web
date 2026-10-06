@@ -294,20 +294,33 @@ test('Zákazník zruší Rezervaci odkazem z e‑mailu a Termín se uvolní', as
 	await page.goto(link);
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Zrušení rezervace');
 	await expect(page.locator('dd').filter({ hasText: serviceTitle })).toBeVisible();
+	await expect(page.getByText(/^Rezervaci můžete zrušit nejpozději /)).toBeVisible();
 	await page.getByRole('button', { name: 'Zrušit rezervaci' }).click();
-	await expect(page.getByRole('alert')).toContainText('Rezervace je zrušená');
+	await expect(page.getByRole('status')).toContainText('Rezervace je zrušená');
 
 	const slots = await (await request.get('/wp-json/pneukarnik/v1/slots', { params: { 'service_ids[]': serviceId, date } })).json();
 	expect(slots.slots.map((slot: { time_start: string }) => slot.time_start)).toContain('11:00');
 	await waitForMail(request, email, /je zrušená$/);
 
 	await page.goto(link);
-	await expect(page.getByRole('alert')).toHaveText('Tato rezervace už je zrušená.');
+	await expect(page.getByRole('status')).toHaveText('Tato rezervace už je zrušená.');
+	await expect(page.getByRole('button', { name: 'Zrušit rezervaci' })).toHaveCount(0);
 
 	// Změna Termínu = Zrušení + nová Rezervace s předvyplněnými údaji.
 	await page.getByRole('link', { name: 'Objednat znovu' }).click();
 	await expect(page.getByLabel('Jméno nebo firma')).toHaveValue('E2E Rušitel');
 	await expect(page.getByLabel('E‑mail')).toHaveValue(email);
+});
+
+test('Neplatný odkaz pro zrušení nic neukáže a nabídne telefon a novou rezervaci', async ({ page }) => {
+	await page.goto('/rezervace/zruseni/?r=' + '0'.repeat(64));
+
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Zrušení rezervace');
+	await expect(page.getByRole('alert')).toHaveText('Odkaz pro zrušení je neplatný nebo už vypršel.');
+	await expect(page.locator('main dl')).toHaveCount(0);
+	await expect(page.getByRole('main').getByRole('link', { name: /^Zavolat/ })).toHaveAttribute('href', /^tel:/);
+	await expect(page.getByRole('main').getByRole('link', { name: 'Objednat znovu' })).toBeVisible();
+	await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
 });
 
 test('Údaje se zapamatují jen se zaškrtnutím a jdou smazat', async ({ page }) => {
