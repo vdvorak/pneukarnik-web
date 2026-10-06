@@ -24,7 +24,6 @@ final class Pneukarnik_Email {
 	private const COLOR_MUTED  = '#555555';
 	private const COLOR_LINK   = '#1F2933';
 	private const COLOR_ACCENT = '#F5A400';
-	private const COLOR_CHECK  = '#9A6200';
 	private const COLOR_BORDER = '#E3E7EB';
 	private const COLOR_PANEL  = '#F5F7F9';
 	private const COLOR_DANGER = '#C0392B';
@@ -258,7 +257,7 @@ final class Pneukarnik_Email {
 		$cell = 'font-family:' . self::FONT_BODY . ';font-size:16px;line-height:24px;';
 		$html = '<table role="presentation" cellpadding="0" cellspacing="0" border="0">';
 		foreach ( $items as $item ) {
-			$html .= '<tr><td style="padding:2px 10px 2px 0;' . $cell . 'font-weight:900;color:' . self::COLOR_CHECK . ';vertical-align:top">✓</td>'
+			$html .= '<tr><td style="padding:2px 10px 2px 0;' . $cell . 'font-weight:900;color:' . self::COLOR_ACCENT . ';vertical-align:top">✓</td>'
 				. '<td style="padding:2px 0;' . $cell . 'color:' . self::COLOR_TEXT . '">' . esc_html( $item ) . '</td></tr>';
 		}
 		return $html . '</table>';
