@@ -224,25 +224,6 @@ function pneukarnik_icon( string $name ): string {
 }
 
 /**
- * Přepínač stránky Služby: Vše / Pneuservis / Autoservis jako odkazy (funguje bez JavaScriptu).
- *
- * @param string|null $current Zobrazená Kategorie, null = Vše.
- */
-function pneukarnik_services_filter( ?string $current ): void {
-	$items = [ '' => [ __( 'Vše', 'pneukarnik' ), Pneukarnik_Service::services_url() ] ];
-	foreach ( Pneukarnik_Service::categories() as $category => $label ) {
-		$items[ $category ] = [ $label, Pneukarnik_Service::category_url( $category ) ];
-	}
-	?>
-	<nav class="choice-chips" aria-label="<?php esc_attr_e( 'Kategorie Služeb', 'pneukarnik' ); ?>">
-		<?php foreach ( $items as $category => [ $label, $url ] ) : ?>
-			<a class="choice-chips__chip" href="<?php echo esc_url( $url ); ?>"<?php echo (string) $category === (string) $current ? ' aria-current="page"' : ''; ?>><?php echo esc_html( $label ); ?></a>
-		<?php endforeach; ?>
-	</nav>
-	<?php
-}
-
-/**
  * Pohotovost jako tmavý pruh nad hlavičkou, jen když ji Provozovatel zapnul.
  */
 function pneukarnik_emergency(): void {
@@ -348,7 +329,7 @@ function pneukarnik_hero_photo(): void {
 }
 
 /**
- * Krátký popis Kategorie na dlaždici Úvodu, prázdný = bez popisu.
+ * Krátký popis Kategorie pod nadpisem jejího rozcestníku, prázdný = bez popisu.
  */
 function pneukarnik_category_lead( string $category ): string {
 	$leads = [

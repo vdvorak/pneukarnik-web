@@ -1,8 +1,9 @@
 <?php
 /**
- * Stránka Služby (/sluzby/) s přepínačem Vše / Pneuservis / Autoservis. Rozcestníky Kategorií
- * (/pneuservis/, /autoservis/) jsou tatáž stránka s jednou Kategorií. Zveřejněné Služby v nastaveném
- * pořadí, Služba s platnou Akcí má na kartě štítek, Služba se zveřejněným Průvodcem „i“ s odkazem na něj.
+ * Stránka Služby (/sluzby/) se všemi Službami pod nadpisy Kategorií. Rozcestníky Kategorií
+ * (/pneuservis/, /autoservis/) jsou tatáž stránka s jednou Kategorií, slouží hlavně vyhledávačům
+ * (odkaz z patičky) a vedou zpět na všechny Služby. Zveřejněné Služby v nastaveném pořadí, Služby
+ * s platnou Akcí napřed a se štítkem, Služba se zveřejněným Průvodcem „i“ s odkazem na něj.
  *
  * @package Pneukarnik
  */
@@ -28,19 +29,19 @@ get_header();
 ?>
 <main id="obsah" class="site-main">
 	<?php
-	pneukarnik_page_hero(
-		__( 'Služby', 'pneukarnik' ),
-		__( 'Pneuservis i autoservis pod jednou střechou. Vyberte, co potřebujete, a rovnou se objednejte.', 'pneukarnik' ),
-		null,
-		false,
-		static fn() => pneukarnik_services_filter( $pneukarnik_current )
-	);
+	if ( null === $pneukarnik_current ) {
+		pneukarnik_page_hero( __( 'Služby', 'pneukarnik' ), __( 'Pneuservis i autoservis pod jednou střechou. Vyberte, co potřebujete, a rovnou se objednejte.', 'pneukarnik' ) );
+	} else {
+		pneukarnik_page_hero( $pneukarnik_categories[ $pneukarnik_current ], pneukarnik_category_lead( $pneukarnik_current ), [ __( 'Všechny služby', 'pneukarnik' ), Pneukarnik_Service::services_url() ] );
+	}
 	?>
 	<div class="sluzby">
 		<?php foreach ( $pneukarnik_categories as $pneukarnik_category => $pneukarnik_label ) : ?>
-			<?php $pneukarnik_services = $pneukarnik_groups[ $pneukarnik_category ]; ?>
-			<section class="sluzby__kategorie" aria-labelledby="kategorie-<?php echo esc_attr( $pneukarnik_category ); ?>">
-				<h2 id="kategorie-<?php echo esc_attr( $pneukarnik_category ); ?>"><?php echo esc_html( $pneukarnik_label ); ?></h2>
+			<?php $pneukarnik_services = Pneukarnik_Service::promoted_first( $pneukarnik_groups[ $pneukarnik_category ], $pneukarnik_promotions ); ?>
+			<section class="sluzby__kategorie"<?php echo null === $pneukarnik_current ? ' aria-labelledby="kategorie-' . esc_attr( $pneukarnik_category ) . '"' : ''; ?>>
+				<?php if ( null === $pneukarnik_current ) : ?>
+					<h2 id="kategorie-<?php echo esc_attr( $pneukarnik_category ); ?>"><?php echo esc_html( $pneukarnik_label ); ?></h2>
+				<?php endif; ?>
 				<?php if ( $pneukarnik_services ) : ?>
 					<ul class="karty-sluzeb">
 						<?php foreach ( $pneukarnik_services as $pneukarnik_service ) : ?>

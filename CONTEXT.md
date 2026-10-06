@@ -25,11 +25,11 @@ Trvalá položka nabídky Provozovatele (např. Přezutí pneu, Geometrie), kter
 _Avoid_: produkt, položka, úkon
 
 **Kategorie**:
-Jedna ze dvou skupin, do kterých patří každá Služba: **Pneuservis** nebo **Autoservis**.
+Jedna ze dvou skupin, do kterých patří každá Služba: **Pneuservis** nebo **Autoservis**. Určuje adresu Služby a rozcestník pro vyhledávače a na stránce Služby dělí seznam nadpisy. Zákazník podle ní nenaviguje: hledá rovnou Službu.
 _Avoid_: typ služby, sekce
 
 **Akce**:
-Časově omezená nabídka s platností od–do, vázaná na Službu (např. zaváděcí cena dekarbonizace). Když platnost skončí, Akce zmizí a Služba zůstane.
+Časově omezená nabídka s platností od–do, vázaná na Službu (např. zaváděcí cena dekarbonizace). Když platnost skončí, Akce zmizí a Služba zůstane. Na webu ji nese karta a detail její Služby, která jde po dobu Akce napřed; vlastní sekci nemá.
 _Avoid_: sleva, novinka, promo
 
 **Délka**:

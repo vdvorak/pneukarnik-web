@@ -15,9 +15,10 @@ Design se řeší samostatně.
 
 ```
 /                         Úvod
-/pneuservis               rozcestník Kategorie Pneuservis
+/sluzby                   všechny Služby pod nadpisy Kategorií (v hlavním menu)
+/pneuservis               rozcestník Kategorie Pneuservis (pro vyhledávače, odkaz z patičky)
 /pneuservis/{sluzba}      detail Služby
-/autoservis               rozcestník Kategorie Autoservis
+/autoservis               rozcestník Kategorie Autoservis (pro vyhledávače, odkaz z patičky)
 /autoservis/{sluzba}      detail Služby
 /rezervace                rezervace (+ potvrzení, zrušení)
 /o-nas                    historie, tým, BestDrive/Barum, galerie
@@ -26,7 +27,7 @@ Design se řeší samostatně.
 /ochrana-osobnich-udaju
 ```
 
-**Úvod** (v tomto pořadí): aktivní Oznámení → hero (CTA Rezervovat + telefon, obojí viditelné bez scrollování) → dlaždice Pneuservis / Autoservis → nejžádanější Služby → Aktuální akce (jen pokud nějaká platí) → proč my (rok založení, BestDrive, vybavení) → Google recenze → Pracovní doba a mapa.
+**Úvod** (v tomto pořadí): aktivní Oznámení → hero (CTA Rezervovat + telefon, obojí viditelné bez scrollování) → „Co pro vás uděláme“ (6 karet: Služby s platnou Akcí, pak nejžádanější, zbytek doplní další v pořadí z administrace; pod nimi odkaz na všechny Služby) → proč my (rok založení, BestDrive, vybavení) → Google recenze → Pracovní doba a mapa.
 
 **Detail Služby** (povinné jsou jen 1, 4 a 8):
 1. název + perex,
@@ -45,7 +46,7 @@ První verzi textů napíše vývojář, Provozovatel je zkontroluje.
 ## Obsah spravovaný v administraci
 
 - **Služby** (strukturovaná pole, ne volný editor): Kategorie, Délka, cena, sezónní ano/ne, pořadí a pole detailu.
-- **Akce**: Služba, cena, platnost od–do. Zobrazení: štítek na kartě, blok v detailu, sekce na Úvodu.
+- **Akce**: Služba, cena, platnost od–do. Zobrazení: štítek na kartě, blok v detailu. Vlastní sekci nemá: Služba s Akcí je napřed na Úvodu i ve své Kategorii na stránce Služby.
 - **Oznámení**: text, platnost od–do, „zobrazit i u rezervace“. Může jich být víc, nahoře se ukazuje nejnovější.
 - **Pracovní doba** pro každý den v týdnu (0–2 bloky), **Výjimky** (zavřeno / jiná doba, opakovat každý rok), státní svátky ČR předvyplněné.
 - **Sezóny** jarní a podzimní (od–do, datum pro leasing).

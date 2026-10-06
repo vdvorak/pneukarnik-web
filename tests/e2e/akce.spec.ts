@@ -36,6 +36,23 @@ test('Platná Akce má štítek na kartě a blok s cenou a platností v detailu'
 	await expect(page.getByText('1 500 Kč')).toBeVisible();
 });
 
+test('Služba s platnou Akcí je ve své Kategorii napřed', async ({ page }) => {
+	test.slow(); // Služby a Akce přes administraci, při souběhu všech testů trvá déle.
+	// Záporné pořadí: obě Služby jsou před Službami z jiných testů, bez Akce by byla první ta bez Akce.
+	const plain = uniqueTitle('Výměna oleje');
+	await publishService(page, { title: plain, category: 'Autoservis', perex: 'Olej a filtr.', price: 900, duration: 60, order: -3 });
+	const promoted = uniqueTitle('Klimatizace');
+	await publishService(page, { title: promoted, category: 'Autoservis', perex: 'Doplnění chladiva.', price: 1200, duration: 60, order: -2 });
+	await publishPromotion(page, { title: uniqueTitle('Jarní klimatizace'), service: promoted, price: 990, from: dayFromToday(-1), to: dayFromToday(1) });
+
+	for (const path of ['/sluzby/', '/autoservis/']) {
+		await page.goto(path);
+		const titles = await page.locator('.karta-sluzby__nazev').allTextContents();
+		expect(titles.indexOf(promoted), path).toBeGreaterThanOrEqual(0);
+		expect(titles.indexOf(promoted), path).toBeLessThan(titles.indexOf(plain));
+	}
+});
+
 test('Akce mimo platnost se nezobrazí ani na kartě, ani v detailu', async ({ page }) => {
 	test.slow(); // Služba a Akce přes administraci, při souběhu všech testů trvá déle.
 	const service = uniqueTitle('Geometrie');

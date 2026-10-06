@@ -180,6 +180,7 @@ class Pneukarnik_Admin_Service_Meta {
 					<label style="display:block"><input type="checkbox" name="_service_is_seasonal" value="1" <?php checked( $service->seasonal ); ?>> <?php esc_html_e( 'Sezónní (v Sezóně jde online rezervovat jen sezónní Služby)', 'pneukarnik-booking' ); ?></label>
 					<label style="display:block"><input type="checkbox" name="_service_ask_stored_wheels" value="1" <?php checked( $service->ask_stored_wheels ); ?>> <?php esc_html_e( 'Ptát se na uskladněná kola („Kola mám uskladněná u vás“)', 'pneukarnik-booking' ); ?></label>
 					<label style="display:block"><input type="checkbox" name="_service_featured" value="1" <?php checked( $service->featured ); ?>> <?php esc_html_e( 'Nejžádanější (zobrazit na Úvodu)', 'pneukarnik-booking' ); ?></label>
+					<p class="description"><?php echo esc_html( sprintf( /* translators: %d: nejvyšší počet Služeb na Úvodu */ __( 'Úvod ukáže %d Služeb: s platnou Akcí, pak nejžádanější, zbytek doplní další v nastaveném pořadí.', 'pneukarnik-booking' ), Pneukarnik_Service::HOME_LIMIT ) ); ?></p>
 				</td>
 			</tr>
 			<tr>

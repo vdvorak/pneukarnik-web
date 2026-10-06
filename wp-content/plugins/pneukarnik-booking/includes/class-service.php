@@ -16,6 +16,9 @@ final class Pneukarnik_Service {
 	public const PNEUSERVIS = 'pneuservis';
 	public const AUTOSERVIS = 'autoservis';
 
+	/** Kolik Služeb nejvýš ukáže Úvod (dvě řady po třech). */
+	public const HOME_LIMIT = 6;
+
 	/**
 	 * @param list<string>                        $includes
 	 * @param list<string>                        $bring
@@ -168,6 +171,32 @@ final class Pneukarnik_Service {
 				'meta_value' => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 			]
 		);
+	}
+
+	/**
+	 * Služby pro sekci „Co pro vás uděláme“ na Úvodu, nejvýš HOME_LIMIT: Služby s platnou Akcí, pak
+	 * nejžádanější, volná místa doplní další zveřejněné Služby. Uvnitř skupin pořadí z administrace.
+	 *
+	 * @param array<int, Pneukarnik_Promotion> $promotions Platné Akce podle Služby (Pneukarnik_Promotion::current()).
+	 * @return list<self>
+	 */
+	public static function for_home( array $promotions ): array {
+		$rank     = static fn( self $service ): int => isset( $promotions[ $service->id ] ) ? 0 : ( $service->featured ? 1 : 2 );
+		$services = self::published();
+		usort( $services, static fn( self $a, self $b ): int => $rank( $a ) <=> $rank( $b ) );
+		return array_slice( $services, 0, self::HOME_LIMIT );
+	}
+
+	/**
+	 * Služby s platnou Akcí na začátek, jinak beze změny pořadí.
+	 *
+	 * @param list<self>                       $services
+	 * @param array<int, Pneukarnik_Promotion> $promotions Platné Akce podle Služby.
+	 * @return list<self>
+	 */
+	public static function promoted_first( array $services, array $promotions ): array {
+		$promoted = static fn( self $service ): bool => isset( $promotions[ $service->id ] );
+		return [ ...array_filter( $services, $promoted ), ...array_filter( $services, static fn( self $service ): bool => ! $promoted( $service ) ) ];
 	}
 
 	/**

@@ -1,7 +1,7 @@
 <?php
 /**
  * Údaje pro Úvod a hlavičku: otevírací doba na 7 dní (stejná pravidla jako Termíny),
- * kontakty a sociální sítě z Nastavení, Pohotovost jen po zapnutí, mapa a nejžádanější Služby.
+ * kontakty a sociální sítě z Nastavení, Pohotovost jen po zapnutí, mapa a Služby na Úvodu (Akce napřed).
  */
 
 declare(strict_types=1);
@@ -205,6 +205,51 @@ class HomeInfoTest extends Pneukarnik_REST_Test_Case {
 		$this->assertNotContains( $plain, array_map( static fn( Pneukarnik_Service $s ): int => $s->id, Pneukarnik_Service::featured() ) );
 	}
 
+	public function test_home_shows_promoted_then_featured_services_at_most_six(): void {
+		Pneukarnik_Clock::freeze( '2027-03-15 10:00' );
+		$ids = [];
+		foreach ( range( 1, 8 ) as $order ) {
+			$ids[ $order ] = $this->create_service( 30, false, "Služba {$order}" );
+			wp_update_post(
+				[
+					'ID'         => $ids[ $order ],
+					'menu_order' => $order,
+				]
+			);
+		}
+		foreach ( [ 1, 2, 3, 4, 5, 6 ] as $order ) {
+			update_post_meta( $ids[ $order ], '_service_featured', '1' );
+		}
+		$this->promotion_for( $ids[8] );
+		$this->promotion_for( $ids[4] );
+
+		$this->assertSame(
+			[ $ids[4], $ids[8], $ids[1], $ids[2], $ids[3], $ids[5] ],
+			array_map( static fn( Pneukarnik_Service $s ): int => $s->id, Pneukarnik_Service::for_home( Pneukarnik_Promotion::current() ) )
+		);
+	}
+
+	public function test_home_fills_free_places_with_other_published_services_in_set_order(): void {
+		Pneukarnik_Clock::freeze( '2027-03-15 10:00' );
+		$ids = [];
+		foreach ( range( 1, 4 ) as $order ) {
+			$ids[ $order ] = $this->create_service( 30, false, "Služba {$order}" );
+			wp_update_post(
+				[
+					'ID'         => $ids[ $order ],
+					'menu_order' => $order,
+				]
+			);
+		}
+		update_post_meta( $ids[3], '_service_featured', '1' );
+		$this->promotion_for( $ids[4] );
+
+		$this->assertSame(
+			[ $ids[4], $ids[3], $ids[1], $ids[2] ],
+			array_map( static fn( Pneukarnik_Service $s ): int => $s->id, Pneukarnik_Service::for_home( Pneukarnik_Promotion::current() ) )
+		);
+	}
+
 	public function test_why_us_lines_are_title_with_optional_text(): void {
 		update_option( 'pneukarnik_why_us', "Partner sítě BestDrive | Věrnostní karta platí i u nás.\r\n\n  Ve Znojmě od roku 1991  \n| Termín online, bez registrace\nVybavení dílny |  \nCena | od 600 Kč | s DPH\n  |  " );
 
@@ -265,5 +310,24 @@ class HomeInfoTest extends Pneukarnik_REST_Test_Case {
 		update_option( 'pneukarnik_founded_year', $saved );
 
 		$this->assertSame( $expected, pneukarnik_founded_year() );
+	}
+
+	/**
+	 * Akce u Služby platná v březnu 2027.
+	 */
+	private function promotion_for( int $service ): void {
+		self::factory()->post->create(
+			[
+				'post_type'   => 'pneukarnik_promotion',
+				'post_status' => 'publish',
+				'post_title'  => 'Zaváděcí cena',
+				'meta_input'  => [
+					'_promotion_service_id' => (string) $service,
+					'_promotion_price'      => '990',
+					'_promotion_valid_from' => '2027-03-01',
+					'_promotion_valid_to'   => '2027-03-31',
+				],
+			]
+		);
 	}
 }

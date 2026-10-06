@@ -1,15 +1,16 @@
 <?php
 /**
  * Úvod v pořadí ze zadání: (Oznámení v hlavičce) → hero s telefonem, Rezervovat a otevírací dobou
- * Dnes / Zítra → Kategorie → nejžádanější Služby → Aktuální akce → proč k nám → Google recenze →
- * otevírací doba na 7 dní a mapa. Sekce bez obsahu se nevykreslí.
+ * Dnes / Zítra → Co pro vás uděláme (Služby s Akcí, nejžádanější, odkaz na všechny) → proč k nám →
+ * Google recenze → otevírací doba na 7 dní a mapa. Sekce bez obsahu se nevykreslí.
  *
  * @package Pneukarnik
  */
 
-$pneukarnik_featured   = Pneukarnik_Service::featured();
 $pneukarnik_promotions = Pneukarnik_Promotion::current();
-$pneukarnik_guides     = $pneukarnik_featured ? Pneukarnik_Guide::by_service() : [];
+$pneukarnik_services   = Pneukarnik_Service::for_home( $pneukarnik_promotions );
+$pneukarnik_all_count  = count( Pneukarnik_Service::published() );
+$pneukarnik_guides     = $pneukarnik_services ? Pneukarnik_Guide::by_service() : [];
 $pneukarnik_why_us     = pneukarnik_why_us();
 $pneukarnik_reviews    = Pneukarnik_Reviews::summary();
 $pneukarnik_year       = pneukarnik_founded_year();
@@ -43,63 +44,28 @@ get_header();
 		</div>
 	</section>
 
-	<section class="uvod__kategorie" id="sluzby">
-		<div class="section__inner">
-			<h2 class="section__title"><?php esc_html_e( 'Co pro vás uděláme', 'pneukarnik' ); ?></h2>
-			<ul class="dlazdice">
-				<?php foreach ( Pneukarnik_Service::categories() as $pneukarnik_category => $pneukarnik_label ) : ?>
-					<li class="card card--muted dlazdice__karta">
-						<p class="dlazdice__stitek"><?php esc_html_e( 'Kategorie', 'pneukarnik' ); ?></p>
-						<h3 class="dlazdice__nazev"><a class="dlazdice__odkaz" href="<?php echo esc_url( Pneukarnik_Service::category_url( $pneukarnik_category ) ); ?>"><?php echo esc_html( $pneukarnik_label ); ?></a></h3>
-						<?php $pneukarnik_lead = pneukarnik_category_lead( $pneukarnik_category ); ?>
-						<?php if ( '' !== $pneukarnik_lead ) : ?>
-							<p class="dlazdice__popis"><?php echo esc_html( $pneukarnik_lead ); ?></p>
-						<?php endif; ?>
-						<p class="dlazdice__vice" aria-hidden="true"><?php esc_html_e( 'Zobrazit služby →', 'pneukarnik' ); ?></p>
-					</li>
-				<?php endforeach; ?>
-			</ul>
-		</div>
-	</section>
-
-	<?php if ( $pneukarnik_featured ) : ?>
-		<section class="section--muted uvod__nejzadanejsi">
+	<?php if ( $pneukarnik_services ) : ?>
+		<section class="section--muted uvod__sluzby" id="sluzby">
 			<div class="section__inner">
-				<h2 class="section__title"><?php esc_html_e( 'Nejžádanější služby', 'pneukarnik' ); ?></h2>
+				<h2 class="section__title"><?php esc_html_e( 'Co pro vás uděláme', 'pneukarnik' ); ?></h2>
 				<ul class="karty-sluzeb">
-					<?php foreach ( $pneukarnik_featured as $pneukarnik_service ) : ?>
+					<?php foreach ( $pneukarnik_services as $pneukarnik_service ) : ?>
 						<?php pneukarnik_service_card( $pneukarnik_service, isset( $pneukarnik_promotions[ $pneukarnik_service->id ] ), $pneukarnik_guides[ $pneukarnik_service->id ] ?? null ); ?>
 					<?php endforeach; ?>
 				</ul>
-			</div>
-		</section>
-	<?php endif; ?>
-
-	<?php if ( $pneukarnik_promotions ) : ?>
-		<section class="uvod__akce">
-			<div class="uvod__akce-panel">
-				<h2><?php esc_html_e( 'Aktuální akce', 'pneukarnik' ); ?></h2>
-				<ul class="akce">
-					<?php foreach ( $pneukarnik_promotions as $pneukarnik_promotion ) : ?>
-						<?php $pneukarnik_service = $pneukarnik_promotion->service(); ?>
-						<li class="akce__polozka">
-							<h3 class="akce__nazev">
-								<?php if ( $pneukarnik_service ) : ?>
-									<a class="arrow-link" href="<?php echo esc_url( $pneukarnik_service->url() ); ?>"><?php echo esc_html( $pneukarnik_promotion->title ); ?></a>
-								<?php else : ?>
-									<?php echo esc_html( $pneukarnik_promotion->title ); ?>
-								<?php endif; ?>
-							</h3>
-							<p class="akce__cena"><?php echo esc_html( ( $pneukarnik_service ? $pneukarnik_service->title . ': ' : '' ) . pneukarnik_amount( (int) $pneukarnik_promotion->price ) ); ?></p>
-							<p class="akce__platnost">
-								<?php
-								/* translators: %s: poslední den platnosti Akce, např. 31. 3. 2027 */
-								echo esc_html( sprintf( __( 'Akce platí do %s.', 'pneukarnik' ), Pneukarnik_Clock::at( $pneukarnik_promotion->valid_to )->format( 'j. n. Y' ) ) );
-								?>
-							</p>
-						</li>
-					<?php endforeach; ?>
-				</ul>
+				<p class="uvod__vse">
+					<a class="button button--outline" href="<?php echo esc_url( Pneukarnik_Service::services_url() ); ?>">
+						<?php
+						echo esc_html(
+							$pneukarnik_all_count >= 5
+								/* translators: %d: počet zveřejněných Služeb, 5 a víc */
+								? sprintf( __( 'Všech %d služeb', 'pneukarnik' ), $pneukarnik_all_count )
+								: __( 'Všechny služby', 'pneukarnik' )
+						);
+						?>
+						<span aria-hidden="true">→</span>
+					</a>
+				</p>
 			</div>
 		</section>
 	<?php endif; ?>

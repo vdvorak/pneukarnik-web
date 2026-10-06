@@ -31,11 +31,12 @@ test('Úvod vykreslí vlastní šablona', async ({ page }) => {
 	await expect(page.getByRole('link', { name: 'Pneuservis Kárník' })).toBeVisible();
 });
 
-test('Úvod má sekce v pořadí ze zadání a otevírací dobu na 7 dní', async ({ page }) => {
+test('Úvod má sekce v pořadí ze zadání, Služby s Akcí napřed a otevírací dobu na 7 dní', async ({ page }) => {
 	test.slow(); // Služba a Akce přes administraci, při souběhu všech testů trvá déle.
 	await login(page);
 	const service = uniqueTitle('Přezutí úvod');
-	await publishService(page, { title: service, category: 'Pneuservis', perex: 'Nejžádanější přezutí.', price: 600, duration: 60, featured: true });
+	// Pořadí -10: Služby s Akcí z jiných testů (pořadí 0 až -3) ji z prvního místa na Úvodu nevytlačí.
+	await publishService(page, { title: service, category: 'Pneuservis', perex: 'Nejžádanější přezutí.', price: 600, duration: 60, featured: true, order: -10 });
 	const promotion = uniqueTitle('Akce úvod');
 	await publishPromotion(page, { title: promotion, service, price: 499, from: dayFromToday(-1), to: dayFromToday(1) });
 	setOptions({ pneukarnik_why_us: 'Ve Znojmě od roku 1991\nPartner sítě BestDrive | Věrnostní karta BestDrive platí i u nás.' });
@@ -45,11 +46,14 @@ test('Úvod má sekce v pořadí ze zadání a otevírací dobu na 7 dní', asyn
 	await expect(page.locator('main h1')).toHaveText('Pneuservis a autoservis Jan Kárník');
 	await expect(page.locator('.uvod__dnes')).toContainText('Dnes:');
 	await expect(page.locator('.uvod__dnes')).toContainText('Zítra:');
-	await expect(page.locator('main h2')).toHaveText(['Co pro vás uděláme', 'Nejžádanější služby', 'Aktuální akce', 'Proč k nám', 'Otevírací doba', 'Kde nás najdete']);
-	await expect(page.locator('.uvod__kategorie').getByRole('link')).toHaveText(['Pneuservis', 'Autoservis']);
-	await expect(page.locator('.uvod__nejzadanejsi').getByRole('link', { name: service })).toBeVisible();
-	await expect(page.locator('.uvod__akce').getByRole('link', { name: promotion })).toBeVisible();
-	await expect(page.locator('.uvod__akce').getByText('499 Kč')).toBeVisible();
+	await expect(page.locator('main h2')).toHaveText(['Co pro vás uděláme', 'Proč k nám', 'Otevírací doba', 'Kde nás najdete']);
+	const services = page.locator('.uvod__sluzby');
+	const cards = services.locator('.karta-sluzby');
+	expect(await cards.count()).toBeLessThanOrEqual(6);
+	await expect(cards.first().getByRole('link', { name: service })).toBeVisible();
+	await expect(cards.first().getByText('Akce', { exact: true })).toBeVisible();
+	await expect(services.getByRole('link', { name: /^Všech(ny)? (\d+ )?služ/ })).toHaveAttribute('href', /\/sluzby\/$/);
+	await expect(page.getByText(promotion)).toHaveCount(0); // Akce nemá vlastní sekci, ukáže ji karta Služby.
 	const reasons = page.locator('.uvod__proc li');
 	await expect(reasons.locator('.duvod__nadpis')).toHaveText(['Ve Znojmě od roku 1991', 'Partner sítě BestDrive']);
 	await expect(reasons.first().locator('.duvod__text')).toHaveCount(0);

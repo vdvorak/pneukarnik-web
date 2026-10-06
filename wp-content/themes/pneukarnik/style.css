@@ -230,13 +230,6 @@ a.card--muted:hover,a.card--tint:hover{box-shadow:var(--shadow-tile-hover)}
 .accordion__body > :first-child{margin-top:0}
 .accordion__body > :last-child{margin-bottom:0}
 
-/* ChoiceChips: přepínač jako řada štítků, zvolený plný primární. Tady odkazy s aria-current. */
-.choice-chips{display:flex;flex-wrap:wrap;gap:8px}
-.choice-chips__chip{display:inline-flex;align-items:center;min-height:44px;padding:9px 16px;border:1.5px solid var(--border-input);border-radius:var(--radius-pill);background:#fff;color:var(--text-body);font-weight:700;font-size:14px;line-height:1.2}
-.choice-chips__chip:hover{border-color:var(--brand-primary);color:var(--brand-primary)}
-.choice-chips__chip[aria-current]{border-color:var(--brand-primary);background:var(--brand-primary);color:#fff}
-.choice-chips__chip:focus-visible{border-radius:var(--radius-pill)}
-
 /* ---------------------------------------------------------------- Pohotovost a Oznámení nad hlavičkou */
 
 .pohotovost{background:var(--neutral-900);color:#fff}
@@ -499,33 +492,10 @@ a.card--muted:hover,a.card--tint:hover{box-shadow:var(--shadow-tile-hover)}
 	.uvod__hero-inner{padding:56px 20px 60px}
 }
 
-/* Dlaždice Kategorií: celá karta je odkazem (roztažený odkaz názvu). */
-.dlazdice{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:20px}
-.dlazdice__karta{--card-pad:36px;--card-gap:16px;position:relative}
-.dlazdice__karta > *{margin:0}
-.dlazdice__karta:hover{box-shadow:var(--shadow-tile-hover)}
-.dlazdice__stitek{font:900 13px var(--font-display);letter-spacing:var(--tracking-eyebrow);text-transform:uppercase;color:var(--brand-accent)}
-.dlazdice__nazev{font:900 32px/1.1 var(--font-display)}
-.dlazdice__odkaz{color:var(--text-body)}
-.dlazdice__odkaz:hover{color:var(--text-body)}
-.dlazdice__odkaz::after{content:"";position:absolute;inset:0;border-radius:var(--radius-lg)}
-.dlazdice__odkaz:focus-visible{outline:0;box-shadow:none}
-.dlazdice__odkaz:focus-visible::after{outline:3px solid var(--brand-accent);outline-offset:2px;box-shadow:0 0 0 2px var(--neutral-900)}
-.dlazdice__popis{font-size:16px;line-height:1.6;color:var(--text-muted)}
-.dlazdice__vice{margin-top:8px;font-weight:800;color:var(--brand-primary)}
-
-/* Aktuální akce: tmavý panel na šířku kontejneru. */
-.uvod__akce{padding:var(--section-y) var(--gutter) 0}
-.uvod__akce-panel{max-width:var(--container);margin:0 auto;padding:44px clamp(24px,5vw,56px);display:flex;flex-direction:column;gap:24px;border-radius:var(--radius-xl);background:var(--surface-dark);color:#fff}
-.uvod__akce h2{margin:0}
-.akce{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px 40px}
-.akce__polozka{display:flex;flex-direction:column;gap:6px;padding-top:16px;border-top:1px solid var(--border-on-dark)}
-.akce__polozka > *{margin:0}
-.akce__nazev{font:900 22px/1.3 var(--font-display);text-transform:none;color:var(--brand-accent)}
-.akce__nazev a,.akce__nazev a:hover{color:inherit}
-.akce__nazev a:hover{text-decoration:underline;text-underline-offset:4px}
-.akce__cena{font-size:17px}
-.akce__platnost{font-size:15px;opacity:.75}
+/* Co pro vás uděláme: karty Služeb a pod nimi odkaz na všechny. */
+.uvod__vse{margin:0;text-align:center}
+.uvod__vse .button--outline{border:2px solid var(--brand-accent)}
+.uvod__vse .button--outline:hover{background:var(--brand-accent-tint);color:var(--text-body)}
 
 /* Proč k nám: číslované body (číslo z pořadí seznamu, čtečka ho přečte jednou). */
 .duvody{margin:0;padding:0;list-style:none;counter-reset:duvod;display:flex;flex-direction:column;gap:22px}
@@ -558,7 +528,6 @@ a.card--muted:hover,a.card--tint:hover{box-shadow:var(--shadow-tile-hover)}
 .uvod__mapa .mapa__adresa{margin-top:0}
 
 /* Služby: Kategorie pod sebou, každá s nadpisem a kartami. */
-.page-hero .choice-chips{padding-top:8px}
 .sluzby{max-width:var(--container);margin:0 auto;padding:24px var(--gutter) var(--section-y);display:flex;flex-direction:column;gap:56px}
 .sluzby__kategorie{display:flex;flex-direction:column;gap:20px}
 .sluzby__kategorie h2{margin:0}

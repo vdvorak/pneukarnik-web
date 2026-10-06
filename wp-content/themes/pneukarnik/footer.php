@@ -1,7 +1,7 @@
 <?php
 /**
  * Patička stránky: značka a sociální sítě, kontaktní a fakturační údaje z Nastavení, Průvodci
- * a odkazy. Na mobilu pod ní lišta Zavolat + Rezervovat.
+ * a odkazy (mezi nimi rozcestníky Kategorií, třeba „Pneuservis Znojmo“). Na mobilu pod ní lišta Zavolat + Rezervovat.
  *
  * @package Pneukarnik
  */
@@ -67,6 +67,9 @@ $pneukarnik_ids     = array_filter(
 			<nav class="site-footer__sloupec" aria-labelledby="odkazy-v-paticce">
 				<span class="site-footer__titulek" id="odkazy-v-paticce"><?php esc_html_e( 'Odkazy', 'pneukarnik' ); ?></span>
 				<ul>
+					<?php foreach ( Pneukarnik_Service::categories() as $pneukarnik_category => $pneukarnik_label ) : ?>
+						<li><a href="<?php echo esc_url( Pneukarnik_Service::category_url( $pneukarnik_category ) ); ?>"><?php echo esc_html( $pneukarnik_label . ( '' !== $pneukarnik_city ? ' ' . $pneukarnik_city : '' ) ); ?></a></li>
+					<?php endforeach; ?>
 					<li><a href="<?php echo esc_url( home_url( '/o-nas/' ) ); ?>"><?php esc_html_e( 'O nás', 'pneukarnik' ); ?></a></li>
 					<li><a href="<?php echo esc_url( home_url( '/kontakt/' ) ); ?>"><?php esc_html_e( 'Kontakt', 'pneukarnik' ); ?></a></li>
 					<li><a href="<?php echo esc_url( home_url( '/ochrana-osobnich-udaju/' ) ); ?>"><?php esc_html_e( 'Ochrana osobních údajů', 'pneukarnik' ); ?></a></li>
