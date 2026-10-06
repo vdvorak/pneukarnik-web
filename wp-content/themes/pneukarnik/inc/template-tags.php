@@ -148,10 +148,7 @@ function pneukarnik_booking_notices(): void {
 	?>
 	<section class="rezervace__oznameni" aria-label="<?php esc_attr_e( 'Oznámení k rezervaci', 'pneukarnik' ); ?>">
 		<?php foreach ( $notices as $notice ) : ?>
-			<div class="oznameni-u-rezervace">
-				<p class="oznameni__nadpis"><strong><?php echo esc_html( $notice->title ); ?></strong></p>
-				<?php echo wp_kses_post( wpautop( esc_html( $notice->text ) ) ); ?>
-			</div>
+			<p class="notice"><strong class="oznameni__nadpis"><?php echo esc_html( $notice->title ); ?></strong> <?php echo nl2br( esc_html( $notice->text ) ); ?></p>
 		<?php endforeach; ?>
 	</section>
 	<?php
@@ -277,6 +274,41 @@ function pneukarnik_hours_label( ?array $hours ): string {
 	}
 	$time = static fn( string $hhmm ): string => (int) substr( $hhmm, 0, 2 ) . substr( $hhmm, 2 ); // 08:00 → 8:00
 	return implode( ', ', array_map( static fn( array $block ): string => $time( $block['from'] ) . '–' . $time( $block['to'] ), $hours ) );
+}
+
+/**
+ * Zkrácená Pracovní doba z Nastavení, např. „Po–Pá 8:00–12:00, 13:00–17:00; So 8:00–11:00“.
+ * Po sobě jdoucí dny se stejnými bloky sloučí, zavřené dny vynechá. Vše zavřené = prázdný řetězec.
+ */
+function pneukarnik_weekly_hours(): string {
+	$names  = [
+		'mon' => 'Po',
+		'tue' => 'Út',
+		'wed' => 'St',
+		'thu' => 'Čt',
+		'fri' => 'Pá',
+		'sat' => 'So',
+		'sun' => 'Ne',
+	];
+	$all    = Pneukarnik_Working_Hours::get_all();
+	$groups = []; // [ první den, poslední den, bloky ]
+	$prev   = null;
+	foreach ( array_keys( $names ) as $day ) {
+		$hours = $all[ $day ] ?? null;
+		if ( $hours && $hours === $prev ) {
+			$groups[ array_key_last( $groups ) ][1] = $day;
+		} elseif ( $hours ) {
+			$groups[] = [ $day, $day, $hours ];
+		}
+		$prev = $hours;
+	}
+	return implode(
+		'; ',
+		array_map(
+			static fn( array $group ): string => $names[ $group[0] ] . ( $group[0] !== $group[1] ? '–' . $names[ $group[1] ] : '' ) . ' ' . pneukarnik_hours_label( $group[2] ),
+			$groups
+		)
+	);
 }
 
 /**

@@ -134,6 +134,7 @@ address{font-style:normal}
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--brand-accent);outline-offset:2px;box-shadow:0 0 0 2px var(--neutral-900);border-radius:6px}
 button:focus-visible,.button:focus-visible,.mobilni-menu summary:focus-visible,.mobilni-lista a:focus-visible,.site-footer__socialni a:focus-visible,.site-header__ikona:focus-visible{border-radius:var(--radius-pill)}
 
+[hidden]{display:none!important}
 .screen-reader-text{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .skip-link{position:absolute;left:16px;top:-100px;z-index:50;background:var(--neutral-900);color:#fff;padding:12px 18px;border-radius:var(--radius-pill);font-weight:800}
 .skip-link:focus{top:12px;color:#fff}
@@ -509,6 +510,134 @@ a.card--muted:hover,a.card--tint:hover{box-shadow:var(--shadow-tile-hover)}
 	.cena-sluzby__castka{font:900 26px var(--font-display)}
 	.cena-sluzby__zahrnuje{font-size:14px;line-height:1.5}
 	.cena-sluzby .cena-sluzby__akce{display:none}
+}
+
+/* Rezervace: formulář v kartě se třemi očíslovanými částmi, vpravo přilepený souhrn a karta
+   „Raději zavoláte?“. Pod 1000 px jeden sloupec a souhrn nad tlačítkem Rezervovat. */
+.rezervace__uzka{max-width:var(--container-narrow);margin:0 auto;padding:24px var(--gutter) var(--section-y);display:flex;flex-direction:column;gap:20px}
+.rezervace__nahrada{display:flex;flex-direction:column;align-items:flex-start;gap:14px}
+.rezervace__nahrada p{margin:0}
+
+.rezervace__mrizka{max-width:var(--container);margin:0 auto;padding:24px var(--gutter) var(--section-y);display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:32px;align-items:start}
+.rezervace__hlavni{min-width:0;display:flex;flex-direction:column;gap:20px}
+.rezervace__oznameni{display:flex;flex-direction:column;gap:12px}
+.rezervace__oznameni .notice{margin:0}
+.rezervace__form{--card-pad:clamp(20px,4vw,36px);--card-gap:36px}
+.rezervace__cast{display:flex;flex-direction:column;gap:16px}
+.rezervace__nadpis{margin:0;display:flex;align-items:center;gap:14px;font:800 22px/1.3 var(--font-display)}
+.rezervace__cislo{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--brand-accent);color:var(--text-on-accent);font:900 18px var(--font-display)}
+.rezervace__stav{margin:0;font-size:14px;line-height:1.5;color:var(--text-muted)}
+.rezervace__stav:empty{display:none}
+
+/* Pole formuláře (Field, Input, Select, Textarea systému). */
+.pole{margin:0;display:flex;flex-direction:column;gap:6px}
+.pole__popisek{display:flex;flex-direction:column;gap:2px;font-weight:800;font-size:15px;line-height:1.4;color:var(--text-body)}
+.pole__nepovinne{font-weight:600;font-size:13px;color:var(--text-muted)}
+.pole input,.pole select,.pole textarea{width:100%;padding:13px 14px;border:1.5px solid var(--border-input);border-radius:var(--radius-input);background:#fff;color:var(--text-body);font-size:16px;line-height:1.4}
+.pole select{font-weight:600}
+.pole textarea{resize:vertical}
+.pole input:focus-visible,.pole select:focus-visible,.pole textarea:focus-visible{border-radius:var(--radius-input)}
+.pole [aria-invalid="true"]{border-color:var(--danger)}
+.pole__spz{text-transform:uppercase}
+.pole__napoveda{font-size:14px;color:var(--text-muted)}
+.pole__chyba{color:var(--danger);font-size:13px;font-weight:700}
+.pole__chyba:empty{display:none}
+.pole--siroke{grid-column:1 / -1}
+
+/* Checkbox systému: text vedle, tlumený. */
+.zaskrtavaci{margin:0;display:flex;align-items:flex-start;gap:10px;font-size:14px;line-height:1.45;color:var(--text-muted)}
+.zaskrtavaci input{flex:none;width:20px;height:20px;margin:0;accent-color:var(--brand-primary)}
+.zaskrtavaci label{cursor:pointer}
+.zaskrtavaci a{font-weight:700}
+
+/* 1 Služba */
+.rezervace__sluzby{display:flex;flex-direction:column;gap:16px}
+.rezervace__sluzba{display:flex;align-items:flex-end;gap:12px}
+.rezervace__sluzba .pole{flex:1;min-width:0}
+.rezervace__odebrat{flex:none;min-height:50px;padding:0 4px;border:0;background:transparent;color:var(--danger);font-weight:800;font-size:15px;cursor:pointer}
+.rezervace__pridat{align-self:flex-start;min-height:44px;padding:10px 18px;border:1.5px dashed var(--border-input);border-radius:var(--radius-pill);background:transparent;color:var(--text-body);font-weight:800;font-size:15px;cursor:pointer}
+.rezervace__pridat:hover{border-color:var(--brand-primary)}
+.rezervace__volby{display:flex;flex-direction:column;gap:12px;padding-top:4px}
+.rezervace__leasing{max-width:420px;padding-left:30px}
+
+/* 2 Den a čas: kalendář s kulatými dny, vedle Volné termíny jako pilulky. */
+.rezervace__den-a-cas{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:24px;align-items:start}
+.kalendar,.terminy{min-width:0;display:flex;flex-direction:column;gap:12px}
+.kalendar__hlavicka{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.kalendar__mesic{font:900 17px var(--font-display);text-transform:uppercase}
+.kalendar__sipka{flex:none;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:var(--surface-muted);color:var(--text-body);font-size:18px;font-weight:800;cursor:pointer}
+.kalendar__sipka:disabled{opacity:.4;cursor:default}
+.kalendar__mrizka{--mezera:4px;width:calc(100% + 2 * var(--mezera));margin:calc(-1 * var(--mezera));table-layout:fixed;border-collapse:separate;border-spacing:var(--mezera);text-align:center}
+.kalendar__mrizka th{padding:4px 0;font-size:12px;font-weight:800;color:var(--text-muted);text-transform:uppercase}
+.kalendar__mrizka td{padding:0}
+.kalendar__mrizka button{display:block;width:100%;max-width:48px;aspect-ratio:1;margin:0 auto;padding:0;border:0;border-radius:50%;background:var(--brand-primary-tint);color:var(--text-body);font-size:15px;font-weight:800;cursor:pointer}
+.kalendar__mrizka button:hover{box-shadow:inset 0 0 0 1.5px var(--brand-primary)}
+.kalendar__mrizka button:disabled{background:transparent;color:#80868D;font-weight:400;cursor:default;box-shadow:none}
+.kalendar__mrizka button[aria-pressed="true"]{background:var(--brand-primary);color:#fff;font-weight:900;box-shadow:0 0 0 2px #fff,0 0 0 4px var(--brand-primary)}
+.kalendar__dny--nacitani button:disabled{background:var(--surface-muted);color:transparent}
+.rezervace__omezeni{display:flex;flex-direction:column;gap:12px}
+.rezervace__omezeni:empty{display:none}
+.rezervace__omezeni .notice{margin:0;font-size:15px}
+
+.terminy__nadpis{margin:0;font-weight:800;font-size:15px}
+.terminy__den{font-weight:400;color:var(--text-muted)}
+.terminy__seznam{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
+.terminy__seznam:empty{display:none}
+.termin{min-height:44px;padding:10px 8px;border:1.5px solid var(--border-input);border-radius:var(--radius-pill);background:#fff;color:var(--text-body);font-weight:800;font-size:15px;line-height:1.2;cursor:pointer}
+.termin:hover{border-color:var(--brand-primary)}
+.termin[aria-pressed="true"]{border-color:var(--brand-primary);background:var(--brand-primary);color:#fff}
+.termin[aria-pressed="true"]::before{content:"✓ ";content:"✓ " / ""}
+.termin--nacitani{border-color:var(--surface-muted);background:var(--surface-muted);cursor:default}
+.termin--nacitani:hover{border-color:var(--surface-muted)}
+
+/* 3 Vaše údaje */
+.rezervace__udaje{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:16px 20px}
+.rezervace__souhlasy{display:flex;flex-direction:column;gap:12px;padding-top:20px;border-top:1px solid var(--border-divider)}
+.rezervace__zapomenout{margin:-12px 0 0 30px;font-size:14px;color:var(--text-muted)}
+.rezervace__zapomenout button{min-height:44px;padding:0;border:0;background:transparent;color:var(--brand-primary);font-weight:800;font-size:15px;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.rezervace__chyba-souhlasu{margin-top:-8px;padding-left:30px;font-size:14px}
+
+/* Odeslání: celková chyba a tlačítko, při Odesílání vypnuté s textem (ne zašedlé). */
+.rezervace__odeslat{display:flex;flex-direction:column;gap:12px}
+.rezervace__odeslat > [role="alert"]:empty{margin-top:-12px}
+.rezervace__odeslat .notice{margin:0}
+.rezervace__tlacitko{margin:0;display:flex;flex-wrap:wrap;align-items:center;gap:14px}
+.rezervace__tlacitko .button[aria-busy="true"]{opacity:1;cursor:progress}
+.rezervace__tlacitko .button[aria-busy="true"]:hover{background:var(--brand-accent)}
+.rezervace__odesilam{font-size:14px;color:var(--text-muted)}
+
+/* Souhrn Vaše rezervace (tmavý) a Raději zavoláte? */
+.rezervace__bok{position:sticky;top:24px;display:flex;flex-direction:column;gap:16px}
+.souhrn{display:flex;flex-direction:column;gap:14px;padding:26px;border-radius:var(--radius-lg);background:var(--surface-dark);color:#fff;font-size:15px;line-height:1.5}
+.souhrn > *{margin:0}
+.souhrn__sluzby{padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.souhrn__sluzby li{display:flex;justify-content:space-between;gap:12px}
+.souhrn__minuty,.souhrn__prazdne{opacity:.7}
+.souhrn__minuty{white-space:nowrap}
+.souhrn__celkem{display:flex;flex-direction:column;gap:6px;padding-top:14px;border-top:1px solid var(--border-on-dark)}
+.souhrn__celkem div{display:flex;justify-content:space-between;gap:12px}
+.souhrn__celkem dt{opacity:.7}
+.souhrn__celkem dd{margin:0;font-weight:800;text-align:right}
+.souhrn .souhrn__termin{color:var(--brand-accent)}
+.souhrn--mobil{display:none}
+.zavolejte{--card-pad:24px;--card-gap:8px}
+.zavolejte p{margin:0}
+.zavolejte__nadpis{font:900 17px var(--font-display);text-transform:uppercase}
+.zavolejte__text{font-size:15px;line-height:1.5;color:var(--text-muted)}
+.zavolejte__telefon{align-self:flex-start;font:900 20px var(--font-display);color:var(--brand-primary)}
+
+@media (max-width:999px){
+	.rezervace__mrizka{grid-template-columns:minmax(0,1fr)}
+	.rezervace__bok{position:static}
+	.souhrn--bok{display:none}
+	.souhrn--mobil{display:flex;gap:6px;padding:16px 18px;border-radius:var(--radius-md)}
+	.souhrn--mobil .souhrn__celkem{padding-top:8px;margin-top:2px}
+	.souhrn--mobil .souhrn__delka{display:none}
+}
+@media (max-width:719px){
+	.rezervace__mrizka,.rezervace__uzka{padding:24px 16px 48px}
+	.rezervace__form{--card-pad:20px 14px}
+	.kalendar__mrizka{--mezera:2px}
 }
 
 /* 404 */

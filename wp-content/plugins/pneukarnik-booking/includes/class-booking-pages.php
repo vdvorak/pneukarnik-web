@@ -222,7 +222,7 @@ final class Pneukarnik_Booking_Pages {
 	/**
 	 * Data pro rezervační formulář šablony.
 	 *
-	 * @return array{enabled:bool,disabled_message:string,services:list<array{id:int,slug:string,name:string,ask_stored_wheels:bool}>,max_services:int,selected:int,min_date:string,max_date:string,api:string,nonce:string,phone:string,privacy_url:string}
+	 * @return array{enabled:bool,disabled_message:string,services:list<array{id:int,slug:string,name:string,duration:int,ask_stored_wheels:bool}>,max_services:int,selected:int,min_date:string,max_date:string,api:string,nonce:string,phone:string,privacy_url:string}
 	 */
 	public static function form_config(): array {
 		$services = array_values(
@@ -248,6 +248,7 @@ final class Pneukarnik_Booking_Pages {
 					'id'                => $s->id,
 					'slug'              => $s->slug,
 					'name'              => $s->title,
+					'duration'          => $s->duration,
 					'ask_stored_wheels' => $s->ask_stored_wheels,
 				],
 				$services

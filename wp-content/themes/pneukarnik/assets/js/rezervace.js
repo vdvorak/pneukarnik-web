@@ -7,7 +7,7 @@
  */
 
 /**
- * @typedef {{ enabled: boolean, disabled_message: string, services: {id: number, slug: string, name: string, ask_stored_wheels: boolean}[], max_services: number, selected: number, min_date: string, max_date: string, api: string, nonce: string, phone: string, privacy_url: string }} Config
+ * @typedef {{ enabled: boolean, disabled_message: string, services: {id: number, slug: string, name: string, duration: number, ask_stored_wheels: boolean}[], max_services: number, selected: number, min_date: string, max_date: string, api: string, nonce: string, phone: string, privacy_url: string }} Config
  * @typedef {{ time_start: string, time_end: string }} Termin
  * @typedef {{ name: 'spring' | 'autumn', from: string, to: string, leasing_from: string | null }} Season
  * @typedef {{ code: string, data?: { status: number, errors?: Record<string, string>, season?: Season, disabled_message?: string } }} ApiError
@@ -112,6 +112,14 @@ function seasonText(code, season, phone) {
 
 const monthTitle = new Intl.DateTimeFormat('cs', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 const dayLabel = new Intl.DateTimeFormat('cs', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+const weekday = new Intl.DateTimeFormat('cs', { weekday: 'long', timeZone: 'UTC' });
+const shortDate = new Intl.DateTimeFormat('cs', { day: 'numeric', month: 'numeric', year: 'numeric', timeZone: 'UTC' });
+
+/** Den pro lidi, např. „pondělí 1. 3. 2027“. @param {string} ymd */
+const humanDay = (ymd) => `${weekday.format(utcDate(ymd))} ${shortDate.format(utcDate(ymd))}`;
+
+/** Během načítání místo Termínů zašedlé prázdné pilulky. */
+const LOADING_SLOTS = 6;
 
 /**
  * Dny kalendáře jako UTC půlnoci, aby výpočty nezávisely na časové zóně prohlížeče.
@@ -133,6 +141,15 @@ function setText(element, text) {
 	element.textContent = text;
 }
 
+/**
+ * Upozornění (Notice) s textem: výchozí akcentové, info nebo danger.
+ * @param {string} text
+ * @param {'' | 'info' | 'danger'} tone
+ */
+function notice(text, tone = '') {
+	return Object.assign(document.createElement('p'), { className: tone ? `notice notice--${tone}` : 'notice', textContent: text });
+}
+
 function init() {
 	const configElement = document.getElementById('rezervace-config');
 	const form = /** @type {HTMLFormElement} */ (document.getElementById('rezervace-form'));
@@ -150,9 +167,15 @@ function init() {
 	const stav = /** @type {HTMLElement} */ (document.getElementById('kalendar-stav'));
 	const predchozi = /** @type {HTMLButtonElement} */ (document.getElementById('kalendar-predchozi'));
 	const dalsi = /** @type {HTMLButtonElement} */ (document.getElementById('kalendar-dalsi'));
+	const omezeni = /** @type {HTMLElement} */ (document.getElementById('kalendar-omezeni'));
+	const time = /** @type {HTMLInputElement} */ (form.elements.namedItem('time'));
 	const terminy = /** @type {HTMLElement} */ (document.getElementById('terminy'));
+	const terminyDen = /** @type {HTMLElement} */ (document.getElementById('terminy-den'));
+	const terminyStav = /** @type {HTMLElement} */ (document.getElementById('terminy-stav'));
 	const zprava = /** @type {HTMLElement} */ (document.getElementById('rezervace-zprava'));
 	const submit = /** @type {HTMLButtonElement} */ (form.querySelector('button[type="submit"]'));
+	const submitText = submit.textContent ?? '';
+	const odesilam = /** @type {HTMLElement} */ (document.getElementById('rez-odesilam'));
 	const uskladnena = /** @type {HTMLElement} */ (document.getElementById('rez-uskladnena'));
 	const leasing = /** @type {HTMLInputElement} */ (document.getElementById('rez-leasing'));
 	const leasingSpolecnost = /** @type {HTMLElement} */ (document.getElementById('rez-leasing-spolecnost'));
@@ -160,6 +183,7 @@ function init() {
 	const zapomenout = /** @type {HTMLButtonElement} */ (document.getElementById('rez-zapomenout'));
 	const zapomenuto = /** @type {HTMLElement} */ (document.getElementById('rez-zapomenuto'));
 	const askStoredWheels = new Set(config.services.filter((service) => service.ask_stored_wheels).map((service) => String(service.id)));
+	const servicesById = new Map(config.services.map((service) => [String(service.id), service]));
 	const maxServices = Math.min(config.max_services, config.services.length);
 	let request = 0;
 	let daysRequest = 0;
@@ -248,17 +272,39 @@ function init() {
 		const select = /** @type {HTMLSelectElement} */ (row.querySelector('select'));
 		select.id = `rez-sluzba-${++rows}`;
 		row.querySelector('label')?.setAttribute('for', select.id);
-		row.querySelector('.sluzby__odebrat')?.addEventListener('click', () => {
+		row.querySelector('.rezervace__odebrat')?.addEventListener('click', () => {
 			row.remove();
 			syncServices();
 			syncStoredWheels();
 			pridat.focus();
 			loadDays();
 			loadTerminy();
+			renderSummary();
 		});
 		sluzby.append(row);
 		syncServices();
 		select.focus();
+	}
+
+	/** Souhrn vpravo (na mobilu nad tlačítkem): Služby s Délkou, celková Délka a Termín. */
+	function renderSummary() {
+		const selected = serviceIds().map((id) => servicesById.get(id)).filter((service) => service !== undefined);
+		const total = selected.reduce((sum, service) => sum + service.duration, 0);
+		const termin = date.value ? (time.value ? `${humanDay(date.value)} v ${humanTime(time.value)}` : shortDate.format(utcDate(date.value))) : '—';
+		for (const souhrn of document.querySelectorAll('[data-souhrn]')) {
+			const list = /** @type {HTMLElement} */ (souhrn.querySelector('[data-souhrn-sluzby]'));
+			const items = selected.map((service) => {
+				const item = document.createElement('li');
+				item.append(
+					Object.assign(document.createElement('span'), { textContent: service.name }),
+					Object.assign(document.createElement('span'), { className: 'souhrn__minuty', textContent: `${service.duration} min` }),
+				);
+				return item;
+			});
+			list.replaceChildren(...(items.length ? items : [Object.assign(document.createElement('li'), { className: 'souhrn__prazdne', textContent: 'Zatím není vybraná žádná služba.' })]));
+			setText(/** @type {HTMLElement} */ (souhrn.querySelector('[data-souhrn-delka]')), total ? `${total} min` : '—');
+			setText(/** @type {HTMLElement} */ (souhrn.querySelector('[data-souhrn-termin]')), termin);
+		}
 	}
 
 	/** Mřížka měsíce: dny bez volného Termínu jsou vypnuté (zašedlé). */
@@ -297,12 +343,15 @@ function init() {
 		const current = ++daysRequest;
 		const ids = serviceIds();
 		availableDays = new Set();
+		omezeni.replaceChildren();
+		dny.classList.remove('kalendar__dny--nacitani');
 		if (ids.length === 0) {
 			setText(stav, 'Nejdřív vyberte službu, pak uvidíte volné dny.');
 			renderCalendar();
 			return;
 		}
 		setText(stav, 'Načítám volné dny…');
+		dny.classList.add('kalendar__dny--nacitani');
 		renderCalendar();
 		try {
 			const query = availabilityQuery();
@@ -310,6 +359,7 @@ function init() {
 			const response = await fetch(`${config.api}/available-days?${query}`, { headers: { Accept: 'application/json' } });
 			if (current !== daysRequest) return;
 			const data = await response.json();
+			dny.classList.remove('kalendar__dny--nacitani');
 			if (!response.ok) {
 				setText(stav, explain(data) ?? 'Volné dny se nepodařilo načíst.');
 				return;
@@ -317,11 +367,20 @@ function init() {
 			/** @type {{ days: string[], restrictions: Restriction[] }} */
 			const { days, restrictions } = data;
 			availableDays = new Set(days);
-			const reasons = restrictions.map((restriction) => seasonText(restriction.code, restriction.season, config.phone)).filter(Boolean);
-			setText(stav, [availableDays.size ? 'Zašedlé dny nemají volný termín.' : 'V tomto měsíci nejsou volné termíny. Zkuste další měsíc.', ...reasons].join(' '));
+			setText(stav, availableDays.size ? 'Zašedlé dny nemají volný termín.' : 'V tomto měsíci nejsou volné termíny. Zkuste další měsíc.');
+			// Proč Sezóna nedovolí některé dny: leasing jako informace, jen sezónní Služby jako upozornění.
+			omezeni.replaceChildren(
+				...restrictions.flatMap((restriction) => {
+					const text = seasonText(restriction.code, restriction.season, config.phone);
+					return text ? [notice(text, restriction.code === 'booking.leasing_date' ? 'info' : '')] : [];
+				}),
+			);
 			renderCalendar();
 		} catch {
-			if (current === daysRequest) setText(stav, messages.network);
+			if (current === daysRequest) {
+				dny.classList.remove('kalendar__dny--nacitani');
+				setText(stav, messages.network);
+			}
 		}
 	}
 
@@ -333,19 +392,38 @@ function init() {
 		loadDays();
 	}
 
-	/** @param {string} text */
+	/** Místo Termínů jen text (žádné volné, chyba). @param {string} text */
 	const showTerminyText = (text) => {
-		terminy.replaceChildren(Object.assign(document.createElement('p'), { textContent: text }));
+		terminy.replaceChildren();
+		setText(terminyStav, text);
 	};
+
+	/** Zašedlé prázdné pilulky, dokud se Termíny načítají. */
+	function showTerminyLoading() {
+		terminy.replaceChildren(...Array.from({ length: LOADING_SLOTS }, () => Object.assign(document.createElement('span'), { className: 'termin termin--nacitani' })));
+		setText(terminyStav, 'Načítám volné termíny…');
+	}
+
+	/** @param {HTMLButtonElement} button */
+	function pickTermin(button) {
+		time.value = button.dataset.time ?? '';
+		terminy.querySelectorAll('[aria-pressed="true"]').forEach((pressed) => pressed.setAttribute('aria-pressed', 'false'));
+		button.setAttribute('aria-pressed', 'true');
+		setText(/** @type {HTMLElement} */ (document.getElementById('chyba-time')), '');
+		renderSummary();
+	}
 
 	async function loadTerminy() {
 		const current = ++request;
 		const ids = serviceIds();
+		time.value = '';
+		renderSummary();
+		setText(terminyDen, date.value ? `· ${humanDay(date.value)}` : '');
 		if (ids.length === 0 || !date.value) {
-			showTerminyText('Vyberte službu a den.');
+			showTerminyText('Termíny se ukážou po výběru dne.');
 			return;
 		}
-		showTerminyText('Načítám volné termíny…');
+		showTerminyLoading();
 		try {
 			const query = availabilityQuery();
 			query.set('date', date.value);
@@ -363,13 +441,17 @@ function init() {
 				showTerminyText('V tento den nejsou volné termíny. Zkuste prosím jiný den.');
 				return;
 			}
+			setText(terminyStav, '');
 			terminy.replaceChildren(
 				...data.slots.map((slot) => {
-					const label = document.createElement('label');
-					label.className = 'termin';
-					const radio = Object.assign(document.createElement('input'), { type: 'radio', name: 'time', value: slot.time_start, required: true });
-					label.append(radio, ` ${humanTime(slot.time_start)}–${humanTime(slot.time_end)}`);
-					return label;
+					const button = Object.assign(document.createElement('button'), {
+						type: 'button',
+						className: 'termin',
+						textContent: `${humanTime(slot.time_start)}–${humanTime(slot.time_end)}`,
+					});
+					button.dataset.time = slot.time_start;
+					button.setAttribute('aria-pressed', 'false');
+					return button;
 				}),
 			);
 		} catch {
@@ -377,8 +459,13 @@ function init() {
 		}
 	}
 
+	/** Celková chyba nad tlačítkem, prázdný text ji schová. @param {string} text */
+	const showMessage = (text) => {
+		zprava.replaceChildren(...(text ? [notice(text, 'danger')] : []));
+	};
+
 	function clearErrors() {
-		setText(zprava, '');
+		showMessage('');
 		form.querySelectorAll('.pole__chyba').forEach((element) => setText(/** @type {HTMLElement} */ (element), ''));
 		form.querySelectorAll('[aria-invalid]').forEach((element) => element.removeAttribute('aria-invalid'));
 	}
@@ -389,11 +476,21 @@ function init() {
 		for (const [field, code] of Object.entries(errors)) {
 			const target = document.getElementById(`chyba-${field}`);
 			if (target) setText(target, FIELD_MESSAGES[field]?.[code] ?? 'Zkontrolujte toto pole.');
-			const input = /** @type {HTMLElement | null} */ (form.querySelector(`[name="${field}"]`));
+			const input = /** @type {HTMLInputElement | null} */ (form.querySelector(`[name="${field}"]`));
 			input?.setAttribute('aria-invalid', 'true');
-			first ??= input;
+			// Den a Termín jsou skrytá pole, kurzor jde až na první vyplnitelné.
+			if (input && input.type !== 'hidden') first ??= input;
 		}
+		showMessage('Rezervaci jsme neodeslali. Zkontrolujte prosím zvýrazněná pole.');
 		first?.focus();
+	}
+
+	/** Stav Odesílání: tlačítko vypnuté s textem „Odesílám rezervaci…“. @param {boolean} sending */
+	function setSending(sending) {
+		submit.disabled = sending;
+		submit.setAttribute('aria-busy', String(sending));
+		setText(submit, sending ? 'Odesílám rezervaci…' : submitText);
+		odesilam.hidden = !sending;
 	}
 
 	/** @param {SubmitEvent} event */
@@ -404,7 +501,7 @@ function init() {
 		const body = {
 			service_ids: serviceIds(),
 			date: date.value,
-			time: values.get('time') ?? '',
+			time: time.value,
 			name: values.get('name'),
 			phone: values.get('phone'),
 			email: values.get('email'),
@@ -417,7 +514,7 @@ function init() {
 			consent_gdpr: values.get('consent_gdpr') === '1',
 			consent_reminder: values.get('consent_reminder') === '1',
 		};
-		submit.disabled = true;
+		setSending(true);
 		let leaving = false;
 		try {
 			const response = await fetch(`${config.api}/bookings`, {
@@ -437,15 +534,15 @@ function init() {
 			if (error.code === 'booking.invalid_fields' && error.data?.errors) {
 				showFieldErrors(error.data.errors);
 			} else {
-				setText(zprava, explain(error) ?? messages.network);
+				showMessage(explain(error) ?? messages.network);
 				if (error.code === 'booking.slot_taken' || error.code === 'booking.slot_unavailable') {
 					await Promise.all([loadTerminy(), loadDays()]);
 				}
 			}
 		} catch {
-			setText(zprava, messages.network);
+			showMessage(messages.network);
 		} finally {
-			if (!leaving) submit.disabled = false;
+			if (!leaving) setSending(false);
 		}
 	}
 
@@ -454,6 +551,10 @@ function init() {
 		syncStoredWheels();
 		loadDays();
 		loadTerminy();
+	});
+	terminy.addEventListener('click', (event) => {
+		const button = /** @type {HTMLElement} */ (event.target).closest('button');
+		if (button?.dataset.time) pickTermin(/** @type {HTMLButtonElement} */ (button));
 	});
 	const syncLeasing = () => {
 		leasingSpolecnost.hidden = !leasing.checked;
@@ -470,10 +571,12 @@ function init() {
 		date.value = button.dataset.date;
 		dny.querySelectorAll('[aria-pressed="true"]').forEach((pressed) => pressed.setAttribute('aria-pressed', 'false'));
 		button.setAttribute('aria-pressed', 'true');
+		setText(/** @type {HTMLElement} */ (document.getElementById('chyba-date')), '');
 		loadTerminy();
 	});
 	predchozi.addEventListener('click', () => moveMonth(-1));
 	dalsi.addEventListener('click', () => moveMonth(1));
+	/** @type {HTMLElement} */ (document.getElementById('rezervace')).hidden = false;
 	const remembered = storedContact();
 	if (remembered) {
 		fillContact(remembered);

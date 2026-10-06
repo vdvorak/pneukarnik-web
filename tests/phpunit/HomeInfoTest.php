@@ -71,6 +71,32 @@ class HomeInfoTest extends Pneukarnik_REST_Test_Case {
 		$this->assertSame( 'Dnes: 8:00–12:00 (Školení) Zítra: Zavřeno (Den české státnosti)', trim( (string) preg_replace( '/\s+/u', ' ', $html ) ) );
 	}
 
+	/**
+	 * @return iterable<string, array{0:array<string,mixed>,1:string}>
+	 */
+	public static function weekly_hours(): iterable {
+		$workdays  = [ 'mon', 'tue', 'wed', 'thu', 'fri' ];
+		$afternoon = [ [ 'from' => '13:00', 'to' => '17:00' ] ]; // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		yield 'všední dny stejně' => [ array_fill_keys( $workdays, self::TWO_PARTS ), 'Po–Pá 8:00–12:00, 13:00–17:00' ];
+		yield 'sobota jinak' => [ array_merge( array_fill_keys( $workdays, self::TWO_PARTS ), [ 'sat' => self::MORNING ] ), 'Po–Pá 8:00–12:00, 13:00–17:00; So 8:00–12:00' ];
+		yield 'zavřená středa rozdělí týden' => [ array_fill_keys( [ 'mon', 'tue', 'thu', 'fri' ], self::MORNING ), 'Po–Út 8:00–12:00; Čt–Pá 8:00–12:00' ];
+		yield 'jiné bloky se nesloučí' => [ array_merge( [ 'mon' => self::MORNING ], array_fill_keys( [ 'tue', 'wed' ], $afternoon ) ), 'Po 8:00–12:00; Út–St 13:00–17:00' ];
+		yield 'vše zavřené' => [ [], '' ];
+	}
+
+	/**
+	 * Karta „Raději zavoláte?“ u rezervace ukazuje Pracovní dobu z Nastavení zkráceně.
+	 *
+	 * @dataProvider weekly_hours
+	 * @param array<string,mixed> $hours
+	 */
+	public function test_weekly_hours_merge_same_consecutive_days_and_skip_closed( array $hours, string $expected ): void {
+		require_once dirname( __DIR__, 2 ) . '/wp-content/themes/pneukarnik/inc/template-tags.php';
+		$this->assertTrue( Pneukarnik_Working_Hours::save( $hours ) );
+
+		$this->assertSame( $expected, pneukarnik_weekly_hours() );
+	}
+
 	public function test_contact_comes_from_settings_with_default_company(): void {
 		update_option( 'pneukarnik_phone', ' +420 775 565 326 ' );
 		update_option( 'pneukarnik_email', 'servis@example.test' );

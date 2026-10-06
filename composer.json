@@ -31,7 +31,7 @@
 			"@phpstan"
 		],
 		"phpcs": "phpcs",
-		"phpstan": "phpstan analyse --memory-limit=1G --no-progress",
+		"phpstan": "phpstan analyse --memory-limit=2G --no-progress",
 		"fix": "phpcbf",
 		"test": "phpunit"
 	}

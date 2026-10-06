@@ -238,6 +238,11 @@ export async function pickDay(page: Page, date: string): Promise<void> {
 	await day.click();
 }
 
+/** Vybere v rezervačním formuláři volný Termín, např. „8:00–9:00“. */
+export async function pickTime(page: Page, label: string): Promise<void> {
+	await page.getByRole('button', { name: label, exact: true }).click();
+}
+
 /** Přidá v administraci celodenní Výjimku „zavřeno“ na jeden den. */
 export async function addClosedDay(page: Page, date: string, note: string): Promise<void> {
 	await page.goto('/wp-admin/admin.php?page=pneukarnik-day-exceptions');

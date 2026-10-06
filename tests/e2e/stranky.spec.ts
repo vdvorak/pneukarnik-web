@@ -67,5 +67,5 @@ test('Průvodce je v patičce a jeho odkaz otevře rezervaci s předvybranou Slu
 	await page.getByRole('main').getByRole('link', { name: 'Rezervovat' }).click();
 
 	await expect(page).toHaveURL(/\/rezervace\/\?sluzba=e2e-prezuti-pruvodce-\d+$/);
-	await expect(page.locator('#rez-sluzba-1 option:checked')).toHaveText(service);
+	await expect(page.locator('#rez-sluzba-1 option:checked')).toHaveText(`${service} (600\u00a0Kč)`);
 });

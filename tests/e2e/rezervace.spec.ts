@@ -1,5 +1,5 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
-import { addClosedDay, E2E_PREFIX, login, pickDay, publishService, saveAutumnSeason, saveBookingSettings, uniqueTitle, upcomingWeekday } from './support/admin';
+import { addClosedDay, E2E_PREFIX, login, pickDay, pickTime, publishService, saveAutumnSeason, saveBookingSettings, uniqueTitle, upcomingWeekday } from './support/admin';
 import { waitForMail } from './support/mailpit';
 
 // Dílna je jedna, testy si tedy nesmí brát Termíny navzájem.
@@ -61,12 +61,12 @@ test('Zákazník si z detailu Služby zarezervuje Termín a uvidí potvrzení', 
 
 	await expect(page.getByLabel('Služba')).toHaveValue(String(serviceId));
 	await pickDay(page, date);
-	await page.getByLabel('8:00–9:00').check();
+	await pickTime(page, '8:00–9:00');
 	await page.getByLabel('Jméno nebo firma').fill(customer.name);
 	await page.getByLabel('Telefon').fill(customer.phone);
 	await page.getByLabel('E‑mail').fill(customer.email);
 	await page.getByLabel('SPZ').fill(customer.plate);
-	await page.getByLabel('Značka a model (nepovinné)').fill('Škoda Fabia');
+	await page.getByLabel('Značka a model').fill('Škoda Fabia');
 	await page.getByLabel(/Souhlasím se zpracováním/).check();
 	await page.getByLabel(/Připomeňte mi před každou sezónou/).check();
 	const [sent] = await Promise.all([page.waitForRequest(/\/pneukarnik\/v1\/bookings$/), page.getByRole('button', { name: 'Rezervovat' }).click()]);
@@ -92,7 +92,7 @@ test('Zákazník přidá další Službu a Termín trvá součet Délek', async 
 	await expect(extra.locator(`option[value="${serviceId}"]`)).toBeDisabled();
 	await extra.selectOption(String(extraId));
 	await pickDay(page, upcomingWeekday(4));
-	await page.getByLabel('8:00–9:30').check();
+	await pickTime(page, '8:00–9:30');
 	await page.getByLabel('Jméno nebo firma').fill(customer.name);
 	await page.getByLabel('Telefon').fill(customer.phone);
 	await page.getByLabel('E‑mail').fill(customer.email);
@@ -110,7 +110,7 @@ test('Formulář bez údajů ukáže chyby u polí', async ({ page }) => {
 	await page.goto(`/rezervace/`);
 	await page.getByLabel('Služba').selectOption(String(serviceId));
 	await pickDay(page, upcomingWeekday(1));
-	await page.getByLabel('9:00–10:00').check();
+	await pickTime(page, '9:00–10:00');
 	await page.getByRole('button', { name: 'Rezervovat' }).click();
 
 	await expect(page.getByText('Vyplňte jméno nebo firmu.')).toBeVisible();
@@ -118,12 +118,66 @@ test('Formulář bez údajů ukáže chyby u polí', async ({ page }) => {
 	await expect(page).toHaveURL(/\/rezervace\/$/);
 });
 
+test('Den a Termín jdou vybrat klávesnicí a souhrn ukáže Služby s Délkou a Termín', async ({ page }) => {
+	const date = upcomingWeekday(13);
+	await page.goto('/rezervace/');
+	const summary = page.locator('.souhrn--bok');
+	await expect(summary).toContainText('Zatím není vybraná žádná služba.');
+	await expect(page.getByText('Objednáme vás i telefonicky, Po–Pá 8:00–12:00, 13:00–17:00.')).toBeVisible();
+
+	await page.getByLabel('Služba', { exact: true }).selectOption(String(serviceId));
+	await page.getByRole('button', { name: '+ přidat další službu' }).click();
+	await page.getByLabel('Další služba').selectOption(String(extraId));
+	await expect(summary.getByText(serviceTitle)).toBeVisible();
+	await expect(summary.locator('[data-souhrn-delka]')).toHaveText('90 min');
+
+	const day = page.locator(`[data-date="${date}"]`);
+	while (!(await day.isVisible())) {
+		await page.getByRole('button', { name: 'Další měsíc' }).press('Enter');
+	}
+	await expect(day).toBeEnabled();
+	await day.focus();
+	await page.keyboard.press('Enter');
+	await expect(day).toHaveAttribute('aria-pressed', 'true');
+	const slot = page.getByRole('button', { name: '8:00–9:30', exact: true });
+	await slot.focus();
+	await page.keyboard.press('Space');
+	await expect(slot).toHaveAttribute('aria-pressed', 'true');
+	await expect(summary.locator('[data-souhrn-termin]')).toHaveText(new RegExp(`^\\S+ ${Number(date.slice(8))}\\. ${Number(date.slice(5, 7))}\\. ${date.slice(0, 4)} v 8:00$`));
+});
+
+test('Na mobilu se kalendář vejde bez vodorovného posouvání a souhrn je nad tlačítkem', async ({ page }) => {
+	await page.setViewportSize({ width: 375, height: 700 });
+	await page.goto('/rezervace/');
+	await page.getByLabel('Služba', { exact: true }).selectOption(String(serviceId));
+	await expect(page.locator(`[data-date]:enabled`).first()).toBeVisible();
+
+	expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
+	await expect(page.locator('.souhrn--bok')).toBeHidden();
+	const summary = page.locator('.souhrn--mobil');
+	await expect(summary.getByText(serviceTitle)).toBeVisible();
+	const summaryBox = await summary.boundingBox();
+	const buttonBox = await page.getByRole('button', { name: 'Rezervovat' }).boundingBox();
+	expect(summaryBox!.y).toBeLessThan(buttonBox!.y);
+});
+
+test('Bez JavaScriptu je místo formuláře výzva zavolat', async ({ browser }) => {
+	const context = await browser.newContext({ javaScriptEnabled: false });
+	const page = await context.newPage();
+	await page.goto('/rezervace/');
+
+	await expect(page.getByText(/^Rezervace potřebuje zapnutý JavaScript/)).toBeVisible();
+	await expect(page.getByRole('main').getByRole('link', { name: /^Zavolat / })).toHaveAttribute('href', /^tel:/);
+	await expect(page.locator('#rezervace-form')).toBeHidden();
+	await context.close();
+});
+
 test('Když Termín mezitím někdo obsadí, formulář to řekne a nabídne zbylé Termíny', async ({ page, request }) => {
 	const date = upcomingWeekday(2);
 	await page.goto(`/rezervace/`);
 	await page.getByLabel('Služba').selectOption(String(serviceId));
 	await pickDay(page, date);
-	await page.getByLabel('10:00–11:00').check();
+	await pickTime(page, '10:00–11:00');
 	await page.getByLabel('Jméno nebo firma').fill(customer.name);
 	await page.getByLabel('Telefon').fill(customer.phone);
 	await page.getByLabel('E‑mail').fill(customer.email);
@@ -134,8 +188,8 @@ test('Když Termín mezitím někdo obsadí, formulář to řekne a nabídne zby
 	await page.getByRole('button', { name: 'Rezervovat' }).click();
 
 	await expect(page.getByRole('alert')).toContainText('si mezitím rezervoval někdo jiný');
-	await expect(page.getByLabel('10:00–11:00')).toHaveCount(0);
-	await expect(page.getByLabel('9:00–10:00')).toBeVisible();
+	await expect(page.getByRole('button', { name: '10:00–11:00', exact: true })).toHaveCount(0);
+	await expect(page.getByRole('button', { name: '9:00–10:00', exact: true })).toBeVisible();
 });
 
 test('Ze souběžných požadavků o stejný Termín uspěje právě jeden', async ({ request }) => {
@@ -191,20 +245,20 @@ test('V Sezóně jde online jen sezónní Služba a leasing až od leasingového
 	await saveAutumnSeason(page, { from: first, to: leasingFrom, leasingFrom });
 	try {
 		await page.goto('/rezervace/');
-		await page.getByLabel('Služba', { exact: true }).selectOption({ label: serviceTitle });
+		await page.getByLabel('Služba', { exact: true }).selectOption(String(serviceId));
 		await showMonth(first);
 		await expect(page.locator(`[data-date="${first}"]`)).toBeDisabled();
 		await expect(page.getByText(/je sezóna přezouvání a online jde objednat jen přezutí/)).toBeVisible();
 		await expect(page.getByLabel('Kola mám uskladněná u vás')).toBeHidden();
 
-		await page.getByLabel('Služba', { exact: true }).selectOption({ label: seasonalTitle });
+		await page.getByLabel('Služba', { exact: true }).selectOption({ label: `${seasonalTitle} (600\u00a0Kč)` }); // Výběr ukazuje i cenu.
 		await expect(page.locator(`[data-date="${first}"]`)).toBeEnabled();
 		await page.getByLabel('Vozidlo je na leasing').check();
 		await expect(page.locator(`[data-date="${first}"]`)).toBeDisabled();
 		await expect(page.getByText(/Vozidla na leasing objednáváme/)).toBeVisible();
 
 		await pickDay(page, leasingFrom);
-		await page.getByLabel('8:00–9:00').check();
+		await pickTime(page, '8:00–9:00');
 		await page.getByLabel('Kola mám uskladněná u vás').check();
 		await page.getByLabel('Leasingová společnost').fill('E2E Leasing');
 		await page.getByLabel('Jméno nebo firma').fill(customer.name);
@@ -260,12 +314,12 @@ test('Údaje se zapamatují jen se zaškrtnutím a jdou smazat', async ({ page }
 		await page.goto('/rezervace/');
 		await page.getByLabel('Služba', { exact: true }).selectOption(String(serviceId));
 		await pickDay(page, date);
-		await page.getByLabel(time).check();
+		await pickTime(page, time);
 		await page.getByLabel('Jméno nebo firma').fill(customer.name);
 		await page.getByLabel('Telefon').fill(customer.phone);
 		await page.getByLabel('E‑mail').fill(customer.email);
 		await page.getByLabel('SPZ').fill(customer.plate);
-		await page.getByLabel('Značka a model (nepovinné)').fill('Škoda Fabia');
+		await page.getByLabel('Značka a model').fill('Škoda Fabia');
 		await page.getByLabel('Zapamatovat údaje na tomto zařízení').setChecked(remember);
 		await page.getByLabel(/Souhlasím se zpracováním/).check();
 		await page.getByRole('button', { name: 'Rezervovat' }).click();
@@ -281,7 +335,7 @@ test('Údaje se zapamatují jen se zaškrtnutím a jdou smazat', async ({ page }
 	await page.goto('/rezervace/');
 	await expect(page.getByLabel('Jméno nebo firma')).toHaveValue(customer.name);
 	await expect(page.getByLabel('E‑mail')).toHaveValue(customer.email);
-	await expect(page.getByLabel('Značka a model (nepovinné)')).toHaveValue('Škoda Fabia');
+	await expect(page.getByLabel('Značka a model')).toHaveValue('Škoda Fabia');
 	await expect(page.getByLabel('Zapamatovat údaje na tomto zařízení')).toBeChecked();
 
 	await page.getByRole('button', { name: 'Smazat uložené údaje' }).click();
@@ -306,7 +360,7 @@ test('Odkaz „Objednat znovu“ z e‑mailu předvyplní kontaktní údaje', as
 	await expect(page.getByLabel('Jméno nebo firma')).toHaveValue('E2E Stálý zákazník');
 	await expect(page.getByLabel('E‑mail')).toHaveValue(email);
 	await expect(page.getByLabel('SPZ')).toHaveValue('1AB2345');
-	await expect(page.getByLabel('Značka a model (nepovinné)')).toHaveValue('Škoda Octavia');
-	await expect(page.getByLabel('Poznámka (nepovinné)')).toHaveValue('');
+	await expect(page.getByLabel('Značka a model')).toHaveValue('Škoda Octavia');
+	await expect(page.getByLabel('Poznámka')).toHaveValue('');
 	expect(page.url()).not.toContain('znovu');
 });
