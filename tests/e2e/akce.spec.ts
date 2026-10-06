@@ -24,14 +24,16 @@ test('Platná Akce má štítek na kartě, blok s cenou a platností v detailu a
 	});
 
 	await page.goto('/autoservis/');
-	await expect(card(page, service).getByText('Akce', { exact: true })).toBeVisible();
+	const [y, m, d] = to.split('-').map(Number);
+	await expect(card(page, service).getByText(/^Akce do /)).toHaveText(`Akce do ${d}. ${m}.${y === new Date().getFullYear() ? '' : ` ${y}`}`);
+	await expect(card(page, service).locator('.karta-sluzby__cena-akce')).toHaveText('990\u00a0Kč');
+	await expect(card(page, service).locator('s')).toHaveText('1\u00a0500\u00a0Kč');
 
-	await card(page, service).getByRole('link', { name: service }).click();
+	await card(page, service).getByRole('link', { name: service, exact: true }).click();
 	const block = page.locator('.sluzba__akce');
 	await expect(block.getByRole('heading', { level: 2 })).toHaveText(title);
 	await expect(block.getByText('990 Kč')).toBeVisible();
 	await expect(block.getByText('Jen pro osobní auta.')).toBeVisible();
-	const [y, m, d] = to.split('-').map(Number);
 	await expect(block.getByText(`Akce platí do ${d}. ${m}. ${y}.`)).toBeVisible();
 	await expect(page.getByText('1 500 Kč')).toBeVisible();
 
@@ -66,9 +68,10 @@ test('Akce mimo platnost se nezobrazí ani na kartě, ani v detailu', async ({ p
 
 	await page.goto('/pneuservis/');
 	await expect(card(page, service)).toBeVisible();
-	await expect(card(page, service).getByText('Akce', { exact: true })).toHaveCount(0);
+	await expect(card(page, service).getByText(/^Akce do /)).toHaveCount(0);
+	await expect(card(page, service).locator('s')).toHaveCount(0);
 
-	await card(page, service).getByRole('link', { name: service }).click();
+	await card(page, service).getByRole('link', { name: service, exact: true }).click();
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText(service);
 	await expect(page.locator('.sluzba__akce')).toHaveCount(0);
 });

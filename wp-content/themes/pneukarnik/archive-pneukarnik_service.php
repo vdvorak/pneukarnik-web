@@ -45,7 +45,7 @@ get_header();
 				<?php if ( $pneukarnik_services ) : ?>
 					<ul class="karty-sluzeb">
 						<?php foreach ( $pneukarnik_services as $pneukarnik_service ) : ?>
-							<?php pneukarnik_service_card( $pneukarnik_service, isset( $pneukarnik_promotions[ $pneukarnik_service->id ] ), $pneukarnik_guides[ $pneukarnik_service->id ] ?? null ); ?>
+							<?php pneukarnik_service_card( $pneukarnik_service, $pneukarnik_promotions[ $pneukarnik_service->id ] ?? null, $pneukarnik_guides[ $pneukarnik_service->id ] ?? null ); ?>
 						<?php endforeach; ?>
 					</ul>
 				<?php else : ?>

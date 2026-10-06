@@ -50,8 +50,8 @@ test('Úvod má sekce v pořadí ze zadání, Služby s Akcí napřed a otevíra
 	const services = page.locator('.uvod__sluzby');
 	const cards = services.locator('.karta-sluzby');
 	expect(await cards.count()).toBeLessThanOrEqual(6);
-	await expect(cards.first().getByRole('link', { name: service })).toBeVisible();
-	await expect(cards.first().getByText('Akce', { exact: true })).toBeVisible();
+	await expect(cards.first().getByRole('link', { name: service, exact: true })).toBeVisible();
+	await expect(cards.first().getByText(/^Akce do /)).toBeVisible();
 	await expect(services.getByRole('link', { name: /^Všech(ny)? (\d+ )?služ/ })).toHaveAttribute('href', /\/sluzby\/$/);
 	await expect(page.getByText(promotion)).toHaveCount(0); // Akce nemá vlastní sekci, ukáže ji karta Služby.
 	const reasons = page.locator('.uvod__proc li');

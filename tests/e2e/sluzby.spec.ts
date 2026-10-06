@@ -36,7 +36,7 @@ test('Služba z administrace je na rozcestníku i v detailu se všemi částmi v
 
 	await page.goto('/pneuservis/');
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Pneuservis');
-	await page.getByRole('link', { name: title }).click();
+	await page.getByRole('link', { name: title, exact: true }).click();
 
 	await expect(page).toHaveURL(/\/pneuservis\/e2e-prezuti-\d+\/$/);
 	const url = page.url();
@@ -69,7 +69,7 @@ test('Služba z administrace je na rozcestníku i v detailu se všemi částmi v
 	await expect(page.getByRole('navigation', { name: 'Rychlý kontakt' }).getByRole('link', { name: 'Rezervovat' })).toHaveAttribute('href', new RegExp(`\\?sluzba=${slug}$`));
 	await page.setViewportSize({ width: 1280, height: 720 });
 
-	await page.getByRole('link', { name: related }).click();
+	await page.getByRole('link', { name: related, exact: true }).click();
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText(related);
 
 	// Časté dotazy se rozbalí i bez JavaScriptu.
@@ -124,9 +124,10 @@ test('Stránka Služby ukáže obě Kategorie bez přepínače, rozcestník z pa
 	await expect(menu.getByRole('link', { name: 'Služby' })).toHaveAttribute('aria-current', 'page');
 	await expect(card(tyres).locator('.karta-sluzby__ikona svg')).toBeVisible();
 	await expect(card(tyres)).toContainText('800 Kč');
-	await expect(card(tyres)).toContainText('Online i telefonem');
+	await expect(card(tyres).getByRole('link', { name: `Rezervovat: ${tyres}` })).toHaveAttribute('href', /\/rezervace\/\?sluzba=e2e-uskladneni-\d+$/);
 	await expect(card(trip).locator('.karta-sluzby__hlava')).toHaveCount(0);
-	await expect(card(trip)).toContainText('Jen telefonicky');
+	await expect(card(trip).getByRole('link', { name: /^Rezervovat/ })).toHaveCount(0);
+	await expect(card(trip).getByRole('link', { name: 'Zavolat +420 775 565 326' })).toHaveAttribute('href', 'tel:+420775565326');
 
 	await visitor.locator('.site-footer').getByRole('link', { name: /^Autoservis/ }).click();
 	await expect(visitor).toHaveURL(/\/autoservis\/$/);
@@ -173,7 +174,7 @@ test('Karta Služby se zveřejněným Průvodcem má „i“, které vede na Pr�
 		await expect(info).toHaveAttribute('title', `Průvodce: ${guide}`);
 		await expect(info.locator('svg')).toBeVisible();
 		await expect(card(drafted).locator('.karta-sluzby__hlava')).toHaveCount(0);
-		await expect(card(drafted).getByRole('link')).toHaveCount(1);
+		await expect(card(drafted).getByRole('link', { name: /^Průvodce/ })).toHaveCount(0);
 
 		// Z klávesnice: „i“ je před názvem karty a má viditelný focus.
 		await card(guided).getByRole('link', { name: guided }).focus();

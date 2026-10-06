@@ -179,24 +179,31 @@ function pneukarnik_tel_href( string $phone ): string {
 
 /**
  * Karta Služby v přehledu (stránka Služby, Úvod): ikona, štítek platné Akce a „i“ s odkazem na Průvodce
- * (horní řádek jen s nimi), název, perex, cena a jestli jde objednat online. Celá karta je odkazem
- * (roztažený odkaz názvu), „i“ leží nad ním.
+ * (horní řádek jen s nimi), název, perex, cena (s Akcí akční a přeškrtnutá běžná) a Rezervovat s touto
+ * Službou, u Služby jen na telefon Zavolat. Celá karta je odkazem na detail (roztažený odkaz názvu),
+ * „i“ a Rezervovat/Zavolat leží nad ním.
  *
- * @param Pneukarnik_Guide|null $guide   Zveřejněný Průvodce ke Službě (Pneukarnik_Guide::by_service()).
- * @param string                $heading Úroveň nadpisu karty podle okolí.
+ * @param Pneukarnik_Promotion|null $promotion Platná Akce Služby (Pneukarnik_Promotion::current()).
+ * @param Pneukarnik_Guide|null     $guide     Zveřejněný Průvodce ke Službě (Pneukarnik_Guide::by_service()).
+ * @param string                    $heading   Úroveň nadpisu karty podle okolí.
  */
-function pneukarnik_service_card( Pneukarnik_Service $service, bool $has_promotion, ?Pneukarnik_Guide $guide = null, string $heading = 'h3' ): void {
+function pneukarnik_service_card( Pneukarnik_Service $service, ?Pneukarnik_Promotion $promotion, ?Pneukarnik_Guide $guide = null, string $heading = 'h3' ): void {
 	$heading = tag_escape( $heading );
 	$icon    = pneukarnik_service_icon( $service->icon );
+	$phone   = Pneukarnik_Contact::phone();
 	?>
 	<li class="card karta-sluzby">
-		<?php if ( '' !== $icon || $has_promotion || $guide ) : ?>
+		<?php if ( '' !== $icon || $promotion || $guide ) : ?>
 			<div class="karta-sluzby__hlava">
 				<?php if ( '' !== $icon ) : ?>
 					<span class="karta-sluzby__ikona"><?php echo $icon; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SVG ze šablony. ?></span>
 				<?php endif; ?>
-				<?php if ( $has_promotion ) : ?>
-					<span class="pill pill--accent karta-sluzby__akce"><?php esc_html_e( 'Akce', 'pneukarnik' ); ?></span>
+				<?php if ( $promotion ) : ?>
+					<?php
+					/* translators: %s: poslední den platnosti Akce, např. 31. 3. */
+					$until = sprintf( __( 'Akce do %s', 'pneukarnik' ), pneukarnik_short_date( $promotion->valid_to ) );
+					?>
+					<span class="pill karta-sluzby__akce"><?php echo esc_html( $until ); ?></span>
 				<?php endif; ?>
 				<?php if ( $guide ) : ?>
 					<?php
@@ -210,11 +217,38 @@ function pneukarnik_service_card( Pneukarnik_Service $service, bool $has_promoti
 		<<?php echo $heading; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- tag_escape výše. ?> class="karta-sluzby__nazev"><a class="karta-sluzby__odkaz" href="<?php echo esc_url( $service->url() ); ?>"><?php echo esc_html( $service->title ); ?></a></<?php echo $heading; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 		<p class="karta-sluzby__perex"><?php echo esc_html( $service->perex ); ?></p>
 		<p class="karta-sluzby__spodek">
-			<span class="karta-sluzby__cena"><?php echo esc_html( pneukarnik_price_label( $service ) ); ?></span>
-			<span class="karta-sluzby__rezervace"><?php echo esc_html( $service->bookable ? __( 'Online i telefonem', 'pneukarnik' ) : __( 'Jen telefonicky', 'pneukarnik' ) ); ?></span>
+			<span class="karta-sluzby__cena">
+				<?php if ( $promotion && null !== $promotion->price ) : ?>
+					<span class="screen-reader-text"><?php esc_html_e( 'Akční cena', 'pneukarnik' ); ?></span>
+					<span class="karta-sluzby__cena-akce"><?php echo esc_html( pneukarnik_amount( $promotion->price ) ); ?></span>
+					<?php if ( ! $service->price_by_vehicle && null !== $service->price ) : ?>
+						<span class="screen-reader-text"><?php esc_html_e( ', běžně', 'pneukarnik' ); ?></span>
+						<s class="karta-sluzby__cena-bezna"><?php echo esc_html( pneukarnik_price_label( $service ) ); ?></s>
+					<?php endif; ?>
+				<?php else : ?>
+					<?php echo esc_html( pneukarnik_price_label( $service ) ); ?>
+				<?php endif; ?>
+			</span>
+			<?php if ( $service->bookable ) : ?>
+				<?php /* translators: %s: název Služby */ ?>
+				<a class="karta-sluzby__rezervovat" href="<?php echo esc_url( pneukarnik_booking_url( $service ) ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Rezervovat: %s', 'pneukarnik' ), $service->title ) ); ?>"><?php esc_html_e( 'Rezervovat', 'pneukarnik' ); ?> <span aria-hidden="true">→</span></a>
+			<?php elseif ( '' !== $phone ) : ?>
+				<?php /* translators: %s: telefonní číslo */ ?>
+				<a class="karta-sluzby__rezervovat" href="<?php echo esc_url( pneukarnik_tel_href( $phone ) ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Zavolat %s', 'pneukarnik' ), $phone ) ); ?>"><?php esc_html_e( 'Zavolat', 'pneukarnik' ); ?> <span aria-hidden="true">→</span></a>
+			<?php endif; ?>
 		</p>
 	</li>
 	<?php
+}
+
+/**
+ * Den na štítku, např. „31. 3.“, z jiného roku než letos s rokem („31. 3. 2028“).
+ *
+ * @param string $date YYYY-MM-DD.
+ */
+function pneukarnik_short_date( string $date ): string {
+	$day = Pneukarnik_Clock::at( $date );
+	return $day->format( $day->format( 'Y' ) === Pneukarnik_Clock::now()->format( 'Y' ) ? 'j. n.' : 'j. n. Y' );
 }
 
 /**

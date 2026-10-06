@@ -59,7 +59,7 @@ test('Zákazník si z detailu Služby zarezervuje Termín, uvidí potvrzení a p
 	const date = upcomingWeekday(0);
 
 	await page.goto('/pneuservis/');
-	await page.getByRole('link', { name: serviceTitle }).click();
+	await page.getByRole('link', { name: serviceTitle, exact: true }).click();
 	await page.getByRole('main').getByRole('link', { name: 'Rezervovat' }).click();
 
 	await expect(page.getByLabel('Služba')).toHaveValue(String(serviceId));

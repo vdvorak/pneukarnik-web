@@ -25,7 +25,7 @@ test.beforeAll(async ({ browser }) => {
 	});
 	editUrl = page.url();
 	await page.goto('/pneuservis/');
-	serviceUrl = (await page.getByRole('link', { name: title }).getAttribute('href')) ?? '';
+	serviceUrl = (await page.getByRole('link', { name: title, exact: true }).getAttribute('href')) ?? '';
 	await page.close();
 	expect(serviceUrl).toMatch(/\/pneuservis\/e2e-geometrie-seo-\d+\/$/);
 });
