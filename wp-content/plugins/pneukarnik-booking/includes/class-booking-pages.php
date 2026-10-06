@@ -75,6 +75,14 @@ final class Pneukarnik_Booking_Pages {
 		return $booking;
 	}
 
+	/**
+	 * Odkaz „Přidat do kalendáře“ na stránce potvrzení: soubor .ics chráněný týmž tokenem.
+	 */
+	public static function confirmation_calendar_url(): string {
+		$token = isset( $_GET['r'] ) ? sanitize_key( wp_unslash( $_GET['r'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- jen čtení podle tajného tokenu.
+		return Pneukarnik_Rest_Booking_Ics::url( $token );
+	}
+
 	public static function reject_unknown_confirmation(): void {
 		if ( 'potvrzeni' === self::current() && null === self::confirmed_booking() ) {
 			global $wp_query;

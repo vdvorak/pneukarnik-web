@@ -31,6 +31,9 @@ final class Pneukarnik_Email {
 	/** @var list<array{type:string,text?:string,rows?:array<string,string|list<string>>,items?:list<string>,url?:string,label?:string,variant?:string}> */
 	private array $blocks = [];
 
+	/** @var list<array{filename:string,content:string,type:string}> */
+	private array $attachments = [];
+
 	public function __construct( private readonly string $subject ) {}
 
 	public function heading( string $text ): self {
@@ -124,6 +127,16 @@ final class Pneukarnik_Email {
 		return $this;
 	}
 
+	/** Příloha vytvořená z obsahu (např. rezervace.ics). HTML ani text e‑mailu nemění. */
+	public function attach( string $filename, string $content, string $type ): self {
+		$this->attachments[] = [
+			'filename' => $filename,
+			'content'  => $content,
+			'type'     => $type,
+		];
+		return $this;
+	}
+
 	public function subject(): string {
 		return $this->subject;
 	}
@@ -181,7 +194,7 @@ final class Pneukarnik_Email {
 	}
 
 	/**
-	 * Odešle e‑mail jako HTML s textovou alternativou.
+	 * Odešle e‑mail jako HTML s textovou alternativou a přílohami.
 	 *
 	 * @param string       $reply_to Adresa pro odpověď, prázdná = bez Reply-To.
 	 * @param list<string> $extra_headers Další hlavičky „Název: hodnota“ (např. List-Unsubscribe).
@@ -199,10 +212,15 @@ final class Pneukarnik_Email {
 		}
 		$headers = [ ...$headers, ...$extra_headers ];
 
-		$text = $this->text();
-		// wp_mail neumí textovou alternativu, PHPMailer ano. AltBody wp_mail před každým e‑mailem vymaže.
-		$alt_body = static function ( PHPMailer\PHPMailer\PHPMailer $mailer ) use ( $text ): void {
+		$text        = $this->text();
+		$attachments = $this->attachments;
+		// wp_mail neumí textovou alternativu ani přílohy bez souboru na disku, PHPMailer ano.
+		// AltBody i přílohy wp_mail před každým e‑mailem vymaže.
+		$alt_body = static function ( PHPMailer\PHPMailer\PHPMailer $mailer ) use ( $text, $attachments ): void {
 			$mailer->AltBody = $text; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- vlastnost PHPMaileru.
+			foreach ( $attachments as $attachment ) {
+				$mailer->addStringAttachment( $attachment['content'], $attachment['filename'], PHPMailer\PHPMailer\PHPMailer::ENCODING_BASE64, $attachment['type'] );
+			}
 		};
 		add_action( 'phpmailer_init', $alt_body );
 		try {

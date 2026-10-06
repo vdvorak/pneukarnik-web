@@ -121,7 +121,9 @@ final class Pneukarnik_Notifications {
 			/* translators: %s: telefon Provozovatele */
 			->paragraph( '' !== $phone ? sprintf( __( 'Potřebujete něco změnit? Zavolejte nám na %s.', 'pneukarnik-booking' ), $phone ) : '' )
 			->link( __( 'Objednat znovu', 'pneukarnik-booking' ), Pneukarnik_Prefill::url( (int) $booking['id'] ) )
-			->signature( self::text( 'signature' ) . "\n" . self::contact() );
+			->signature( self::text( 'signature' ) . "\n" . self::contact() )
+			// Poštovní klienti z přílohy sami nabídnou „Přidat do kalendáře“.
+			->attach( Pneukarnik_Rest_Booking_Ics::FILENAME, Pneukarnik_Rest_Booking_Ics::ics( $booking, $cancel_token ), Pneukarnik_Rest_Booking_Ics::CONTENT_TYPE );
 	}
 
 	/**

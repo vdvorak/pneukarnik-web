@@ -1,7 +1,7 @@
 <?php
 /**
  * Potvrzení Rezervace. Rezervaci najde plugin podle tokenu v adrese (bez osobních údajů v URL).
- * Bílá karta na přechodu s ✓, souhrnem a odkazem zpět na Úvod.
+ * Bílá karta na přechodu s ✓, souhrnem, tlačítkem „Přidat do kalendáře“ (.ics) a odkazem zpět na Úvod.
  *
  * @package Pneukarnik
  */
@@ -29,6 +29,9 @@ get_header();
 			<h1><?php esc_html_e( 'Rezervace přijata', 'pneukarnik' ); ?></h1>
 			<p class="vysledek__perex"><?php esc_html_e( 'Děkujeme, těšíme se na vás. Potvrzení jsme poslali také e‑mailem.', 'pneukarnik' ); ?></p>
 			<?php pneukarnik_booking_summary( $pneukarnik_rows ); ?>
+			<div class="vysledek__tlacitka">
+				<a class="button" href="<?php echo esc_url( Pneukarnik_Booking_Pages::confirmation_calendar_url() ); ?>" download="rezervace.ics"><?php echo pneukarnik_icon( 'calendar-plus' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SVG ze šablony. ?><?php esc_html_e( 'Přidat do kalendáře', 'pneukarnik' ); ?></a>
+			</div>
 			<a class="arrow-link arrow-link--back" href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'Zpět na úvod', 'pneukarnik' ); ?></a>
 		</div>
 	</div>

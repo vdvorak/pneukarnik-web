@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { expect, test, type APIRequestContext } from '@playwright/test';
 import { addClosedDay, E2E_PREFIX, login, pickDay, pickTime, publishService, saveAutumnSeason, saveBookingSettings, uniqueTitle, upcomingWeekday } from './support/admin';
 import { waitForMail } from './support/mailpit';
@@ -54,7 +55,7 @@ test.beforeAll(async ({ browser, request }) => {
 	expect(extraId).toBeGreaterThan(0);
 });
 
-test('Zákazník si z detailu Služby zarezervuje Termín a uvidí potvrzení', async ({ page }) => {
+test('Zákazník si z detailu Služby zarezervuje Termín, uvidí potvrzení a přidá si ho do kalendáře', async ({ page, request }) => {
 	const date = upcomingWeekday(0);
 
 	await page.goto('/pneuservis/');
@@ -84,6 +85,19 @@ test('Zákazník si z detailu Služby zarezervuje Termín a uvidí potvrzení', 
 	}
 	// Celá rezervace proběhne bez cookies, web proto nepotřebuje cookie lištu.
 	expect(await page.context().cookies()).toEqual([]);
+
+	// Soubor .ics s jednou událostí v UTC (8:00 v Praze), bez osobních údajů Zákazníka.
+	const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('link', { name: 'Přidat do kalendáře' }).click()]);
+	expect(download.suggestedFilename()).toBe('rezervace.ics');
+	const ics = readFileSync(await download.path(), 'utf8').replace(/\r\n /g, '');
+	expect(ics.match(/^BEGIN:VEVENT\r$/gm)).toHaveLength(1);
+	expect(ics).toMatch(new RegExp(`^DTSTART:${date.replaceAll('-', '')}T0[67]0000Z\r$`, 'm'));
+	expect(ics).toContain(serviceTitle);
+	expect(ics).toContain('SPZ: 1AB2345');
+	for (const personal of [customer.phone, customer.email, 'Zákazník', 'Škoda']) {
+		expect(ics).not.toContain(personal);
+	}
+	expect((await request.get(`/wp-json/pneukarnik/v1/confirmation/calendar?token=${'0'.repeat(64)}`)).status()).toBe(404);
 });
 
 test('Zákazník přidá další Službu a Termín trvá součet Délek', async ({ page }) => {

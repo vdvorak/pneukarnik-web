@@ -67,6 +67,8 @@ spl_autoload_register(
 			'Pneukarnik_Rest_Prefill'         => 'api/class-rest-prefill.php',
 			'Pneukarnik_Prefill'              => 'includes/class-prefill.php',
 			'Pneukarnik_Rest_Calendar'        => 'api/class-rest-calendar.php',
+			'Pneukarnik_Rest_Booking_Ics'     => 'api/class-rest-booking-ics.php',
+			'Pneukarnik_Ical'                 => 'includes/class-ical.php',
 			'Pneukarnik_Admin_Settings'       => 'admin/class-admin-settings.php',
 			'Pneukarnik_Admin_Bookings'       => 'admin/class-admin-bookings.php',
 			'Pneukarnik_Day_Sheet'            => 'includes/class-day-sheet.php',
@@ -154,6 +156,7 @@ function pneukarnik_register_rest_routes(): void {
 	( new Pneukarnik_Rest_Cancel() )->register_routes();
 	( new Pneukarnik_Rest_Prefill() )->register_routes();
 	( new Pneukarnik_Rest_Calendar() )->register_routes();
+	( new Pneukarnik_Rest_Booking_Ics() )->register_routes();
 	( new Pneukarnik_Rest_Admin() )->register_routes();
 	( new Pneukarnik_Rest_Reminder() )->register_routes();
 	( new Pneukarnik_Rest_Legacy_Import() )->register_routes();

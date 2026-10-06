@@ -754,6 +754,7 @@ a.card--muted:hover,a.card--tint:hover{box-shadow:var(--shadow-tile-hover)}
 .vysledek__poznamka{font-size:16px;line-height:1.6;color:var(--text-muted)}
 .vysledek__tlacitka{display:flex;flex-wrap:wrap;gap:12px;padding-top:4px}
 .vysledek__tlacitka form{margin:0}
+.vysledek__tlacitka .button svg{flex:none;width:20px;height:20px}
 .vysledek__kontakt{display:flex;flex-direction:column;gap:6px}
 .vysledek__telefon{font:900 20px var(--font-display)}
 .vysledek__email{font-size:17px;font-weight:700}

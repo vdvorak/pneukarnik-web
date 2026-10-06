@@ -67,13 +67,14 @@ První verzi textů napíše vývojář, Provozovatel je zkontroluje.
   - **Připomínka přezutí** před každou Sezónou s odkazem, který předvyplní údaje a sezónní Služby a uskladněná kola z minulé sezónní Rezervace (Termín vybírá Zákazník sám).
 - **Zrušení** odkazem z e‑mailu do Lhůty zrušení (nastavitelná, default 24 h). Po lhůtě se zobrazí telefon. Změna Termínu = Zrušení + nová Rezervace s předvyplněnými údaji.
 - Potvrzení e‑mailem zákazníkovi. Upozornění Provozovateli podle jeho odpovědi.
+- **Rezervace do kalendáře** Zákazníka: soubor `.ics` s jednou událostí (tlačítko „Přidat do kalendáře“ na stránce Potvrzení a příloha potvrzovacího e‑mailu). Bez jména, kontaktu a poznámky Zákazníka.
 
 ## Administrace rezervací
 
 - **Kalendářní pohled** (den/týden) s rychlým zadáním Rezervace (telefonické objednávky, blokují čas) + seznam s filtry.
 - Úprava a zrušení Rezervace (e‑mail zákazníkovi).
 - **PDF denní přehled**.
-- **iCal** odběr rezervací do kalendáře v telefonu.
+- **iCal** odběr rezervací do kalendáře v telefonu (tajný odkaz jen pro Provozovatele).
 
 ## Provoz, právo, převod
 

@@ -24,6 +24,7 @@ class AdminPermissionsTest extends Pneukarnik_REST_Test_Case {
 		'GET /pneukarnik/v1/prefill',
 		'POST /pneukarnik/v1/unsubscribe',
 		'GET /pneukarnik/v1/calendar', // iCal, chráněný tajným tokenem (CalendarFeedTest).
+		'GET /pneukarnik/v1/confirmation/calendar', // .ics Zákazníka, chráněný tokenem Potvrzení (BookingIcsTest).
 	];
 
 	private const MONDAY = '2027-03-01';

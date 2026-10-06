@@ -69,29 +69,15 @@ class Pneukarnik_Rest_Calendar {
 	 * @param list<array<string,mixed>> $bookings
 	 */
 	private static function build_ical( array $bookings ): string {
-		$utc     = new \DateTimeZone( 'UTC' );
-		$now_utc = Pneukarnik_Clock::now()->setTimezone( $utc )->format( 'Ymd\THis\Z' );
+		$now     = Pneukarnik_Ical::now();
 		$site    = get_bloginfo( 'name' );
 		$host    = (string) wp_parse_url( home_url(), PHP_URL_HOST );
 		$address = Pneukarnik_Contact::address();
 
-		$lines = [
-			'BEGIN:VCALENDAR',
-			'VERSION:2.0',
-			'PRODID:-//' . self::escape_text( $site ) . '//pneukarnik-booking//CS',
-			self::fold( 'X-WR-CALNAME:' . self::escape_text( 'Rezervace – ' . $site ) ),
-			'X-WR-TIMEZONE:' . Pneukarnik_Clock::TIMEZONE,
-			'CALSCALE:GREGORIAN',
-			'METHOD:PUBLISH',
-		];
-
+		$events = [];
 		foreach ( $bookings as $b ) {
-			// Datum a čas z DB jsou místní čas v Europe/Prague, iCal je dostane v UTC.
-			$dtstart = Pneukarnik_Clock::at( $b['booking_date'] . ' ' . $b['time_start'] )->setTimezone( $utc )->format( 'Ymd\THis\Z' );
-			$dtend   = Pneukarnik_Clock::at( $b['booking_date'] . ' ' . $b['time_end'] )->setTimezone( $utc )->format( 'Ymd\THis\Z' );
-
-			$service     = '' !== $b['service_name'] ? $b['service_name'] : 'Rezervace';
-			$desc_parts  = array_filter(
+			$service    = '' !== $b['service_name'] ? $b['service_name'] : 'Rezervace';
+			$desc_parts = array_filter(
 				[
 					'SPZ: ' . $b['customer_plate'],
 					$b['vehicle'] ? 'Vozidlo: ' . $b['vehicle'] : '',
@@ -102,50 +88,33 @@ class Pneukarnik_Rest_Calendar {
 					$b['customer_note'] ? 'Poznámka: ' . $b['customer_note'] : '',
 				]
 			);
-			$description = implode( '\n', array_map( [ self::class, 'escape_text' ], $desc_parts ) );
 
-			$lines[] = 'BEGIN:VEVENT';
-			$lines[] = 'UID:booking-' . (int) $b['id'] . '@' . $host;
-			$lines[] = 'DTSTAMP:' . $now_utc;
-			$lines[] = 'DTSTART:' . $dtstart;
-			$lines[] = 'DTEND:' . $dtend;
-			$lines[] = self::fold( 'SUMMARY:' . self::escape_text( $service . ' — ' . $b['customer_name'] ) );
-			$lines[] = self::fold( 'DESCRIPTION:' . $description );
-			if ( '' !== $address ) {
-				$lines[] = self::fold( 'LOCATION:' . self::escape_text( $address ) );
-			}
-			$lines[] = self::fold( 'URL:' . Pneukarnik_Admin_Calendar::url( $b['booking_date'], (int) $b['id'] ) );
-			$lines[] = 'STATUS:CONFIRMED';
-			$lines[] = 'END:VEVENT';
+			$events[] = array_filter(
+				[
+					'UID'         => 'booking-' . (int) $b['id'] . '@' . $host,
+					'DTSTAMP'     => $now,
+					'DTSTART'     => Pneukarnik_Ical::utc( $b['booking_date'], $b['time_start'] ),
+					'DTEND'       => Pneukarnik_Ical::utc( $b['booking_date'], $b['time_end'] ),
+					'SUMMARY'     => Pneukarnik_Ical::text( $service . ' — ' . $b['customer_name'] ),
+					'DESCRIPTION' => Pneukarnik_Ical::text( implode( "\n", $desc_parts ) ),
+					'LOCATION'    => Pneukarnik_Ical::text( $address ),
+					'URL'         => Pneukarnik_Admin_Calendar::url( $b['booking_date'], (int) $b['id'] ),
+					'STATUS'      => 'CONFIRMED',
+				],
+				static fn( string $value ): bool => '' !== $value
+			);
 		}
 
-		$lines[] = 'END:VCALENDAR';
-
-		return implode( "\r\n", $lines ) . "\r\n";
-	}
-
-	/**
-	 * Escapování hodnoty TEXT podle RFC 5545: zpětné lomítko, středník, čárka a konce řádků.
-	 * Text od Zákazníka tak nemůže přidat vlastní řádky ani události.
-	 */
-	private static function escape_text( string $text ): string {
-		$text = str_replace( [ '\\', ';', ',' ], [ '\\\\', '\\;', '\\,' ], $text );
-		return str_replace( [ "\r\n", "\r", "\n" ], '\\n', $text );
-	}
-
-	/**
-	 * Zalomení řádku podle RFC 5545: nejvýš 75 oktetů, pokračování CRLF + mezera.
-	 * mb_strcut nerozdělí vícebajtový znak UTF-8 (čeština) mezi dva řádky.
-	 */
-	private static function fold( string $line ): string {
-		$output = '';
-		$length = strlen( $line );
-		while ( $length > 75 ) {
-			$chunk   = mb_strcut( $line, 0, 75, 'UTF-8' );
-			$output .= $chunk . "\r\n ";
-			$line    = substr( $line, strlen( $chunk ) );
-			$length  = strlen( $line );
-		}
-		return $output . $line;
+		return Pneukarnik_Ical::calendar(
+			[
+				'VERSION'       => '2.0',
+				'PRODID'        => '-//' . Pneukarnik_Ical::text( $site ) . '//pneukarnik-booking//CS',
+				'X-WR-CALNAME'  => Pneukarnik_Ical::text( 'Rezervace – ' . $site ),
+				'X-WR-TIMEZONE' => Pneukarnik_Clock::TIMEZONE,
+				'CALSCALE'      => 'GREGORIAN',
+				'METHOD'        => 'PUBLISH',
+			],
+			$events
+		);
 	}
 }

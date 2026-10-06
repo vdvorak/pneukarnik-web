@@ -219,7 +219,7 @@ abstract class Pneukarnik_REST_Test_Case extends WP_UnitTestCase {
 	/**
 	 * Odeslané e‑maily od zavolání capture_mails(), jak je předal WordPress PHPMaileru.
 	 *
-	 * @var list<array{to:list<string>,subject:string,html:string,text:string,from_name:string,reply_to:list<string>,headers:list<array{0:string,1:string}>}>
+	 * @var list<array{to:list<string>,subject:string,html:string,text:string,from_name:string,reply_to:list<string>,headers:list<array{0:string,1:string}>,attachments:list<array{filename:string,content:string,type:string}>}>
 	 */
 	protected array $mails = [];
 
@@ -233,13 +233,21 @@ abstract class Pneukarnik_REST_Test_Case extends WP_UnitTestCase {
 			function ( PHPMailer\PHPMailer\PHPMailer $mailer ): void {
 				// phpcs:disable WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- vlastnosti PHPMaileru.
 				$this->mails[] = [
-					'to'        => array_column( $mailer->getToAddresses(), 0 ),
-					'subject'   => $mailer->Subject,
-					'html'      => 'text/html' === $mailer->ContentType ? $mailer->Body : '',
-					'text'      => 'text/html' === $mailer->ContentType ? $mailer->AltBody : $mailer->Body,
-					'from_name' => $mailer->FromName,
-					'reply_to'  => array_column( $mailer->getReplyToAddresses(), 0 ),
-					'headers'   => $mailer->getCustomHeaders(),
+					'to'          => array_column( $mailer->getToAddresses(), 0 ),
+					'subject'     => $mailer->Subject,
+					'html'        => 'text/html' === $mailer->ContentType ? $mailer->Body : '',
+					'text'        => 'text/html' === $mailer->ContentType ? $mailer->AltBody : $mailer->Body,
+					'from_name'   => $mailer->FromName,
+					'reply_to'    => array_column( $mailer->getReplyToAddresses(), 0 ),
+					'headers'     => $mailer->getCustomHeaders(),
+					'attachments' => array_map(
+						static fn( array $attachment ): array => [
+							'filename' => $attachment[2],
+							'content'  => $attachment[0],
+							'type'     => $attachment[4],
+						],
+						$mailer->getAttachments()
+					),
 				];
 				// phpcs:enable
 			},
@@ -250,7 +258,7 @@ abstract class Pneukarnik_REST_Test_Case extends WP_UnitTestCase {
 	/**
 	 * Jediný zachycený e‑mail pro adresu.
 	 *
-	 * @return array{to:list<string>,subject:string,html:string,text:string,from_name:string,reply_to:list<string>,headers:list<array{0:string,1:string}>}
+	 * @return array{to:list<string>,subject:string,html:string,text:string,from_name:string,reply_to:list<string>,headers:list<array{0:string,1:string}>,attachments:list<array{filename:string,content:string,type:string}>}
 	 */
 	protected function mail_to( string $address ): array {
 		$mails = array_values( array_filter( $this->mails, static fn( array $mail ): bool => in_array( $address, $mail['to'], true ) ) );
