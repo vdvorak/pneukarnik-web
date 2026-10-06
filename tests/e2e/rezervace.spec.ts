@@ -1,7 +1,7 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
 import { addClosedDay, E2E_PREFIX, login, pickDay, pickTime, publishService, saveAutumnSeason, saveBookingSettings, uniqueTitle, upcomingWeekday } from './support/admin';
 import { waitForMail } from './support/mailpit';
-import { createGuide, createService, deletePosts, setPostStatus } from './support/wp';
+import { createGuide, createService, deletePosts, reminderLink, setPostStatus } from './support/wp';
 
 // Dílna je jedna, testy si tedy nesmí brát Termíny navzájem.
 test.describe.configure({ mode: 'serial' });
@@ -413,6 +413,32 @@ test('Služba, kterou už nejde objednat online, se z „Objednat znovu“ nepř
 		await expect(page.locator('#terminy button').first()).toBeVisible();
 	} finally {
 		deletePosts([retired]);
+	}
+});
+
+test('Odkaz z Připomínky přezutí předvyplní kontaktní údaje, sezónní Služby a uskladněná kola', async ({ page, request }) => {
+	const seasonal = createService(uniqueTitle('Přezutí sezónní'), `e2e-prezuti-sezonni-${Date.now()}`, 'pneuservis', {
+		_service_bookable: '1',
+		_service_is_seasonal: '1',
+		_service_ask_stored_wheels: '1',
+	});
+	try {
+		const email = `e2e-pripominka-${Date.now()}@example.test`;
+		const booking = await request.post('/wp-json/pneukarnik/v1/bookings', {
+			data: { ...customer, email, name: 'E2E Sezónní zákazník', service_ids: [extraId, seasonal], date: upcomingWeekday(15), time: '08:00', stored_wheels: true, consent_gdpr: true },
+		});
+		expect(booking.status()).toBe(201);
+
+		await page.goto(reminderLink(email));
+		await expect(page.getByText('Služby a údaje jsme předvyplnili podle vaší předchozí rezervace. Vyberte prosím nový termín.')).toBeVisible();
+		await expect(page.getByLabel('Služba', { exact: true })).toHaveValue(String(seasonal));
+		await expect(page.getByLabel('Další služba')).toHaveCount(0);
+		await expect(page.getByLabel('Kola mám uskladněná u vás')).toBeChecked();
+		await expect(page.getByLabel('Jméno nebo firma')).toHaveValue('E2E Sezónní zákazník');
+		await expect(page.locator('[data-souhrn-termin]').first()).toHaveText('—');
+		expect(page.url()).not.toContain('znovu');
+	} finally {
+		deletePosts([seasonal]);
 	}
 });
 

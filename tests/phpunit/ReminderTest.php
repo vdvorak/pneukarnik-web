@@ -114,13 +114,89 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 		$mail = $this->mail_to( 'jan@example.test' );
 		$this->assertStringContainsString( 'přezout', mb_strtolower( $mail['subject'] ) );
 		$this->assertStringContainsString( '15. 3. 2027', $mail['text'] );
-		$prefill = $this->prefill( $this->prefill_token_from( $mail ) )->get_data();
-		$this->assertSame( 'jan@example.test', $prefill['email'] );
-		$this->assertArrayNotHasKey( 'service_ids', $prefill, 'Objednat přezutí předvyplní jen kontaktní údaje.' );
-		$this->assertArrayNotHasKey( 'stored_wheels', $prefill );
+		$this->assertSame( 'jan@example.test', $this->prefill( $this->prefill_token_from( $mail ) )->get_data()['email'] );
 		$unsubscribe = $this->unsubscribe_url_from( $mail );
 		$this->assertContains( [ 'List-Unsubscribe', '<' . $unsubscribe . '>' ], $mail['headers'] );
 		$this->assertContains( [ 'List-Unsubscribe-Post', 'List-Unsubscribe=One-Click' ], $mail['headers'] );
+	}
+
+	public function test_reminder_link_prefills_seasonal_services_and_stored_wheels_but_not_the_date(): void {
+		$storage = $this->create_service( 30, true, 'Uskladnění' );
+		update_post_meta( $this->tyres, '_service_ask_stored_wheels', '1' );
+		$this->book_services_with_consent( [ $this->tyres, $storage ], [ 'stored_wheels' => true ] );
+
+		$prefill = $this->reminder_prefill();
+
+		$this->assertSame(
+			[
+				'name'          => 'Jan Novák',
+				'phone'         => '+420 603 123 456',
+				'email'         => 'jan@example.test',
+				'plate'         => '1AB2345',
+				'vehicle'       => '',
+				'service_ids'   => [ $this->tyres, $storage ],
+				'stored_wheels' => true,
+			],
+			$prefill
+		);
+	}
+
+	public function test_services_come_from_the_last_seasonal_booking_and_contacts_from_the_last_booking(): void {
+		$oil = $this->create_service( 30, false, 'Výměna oleje' );
+		update_post_meta( $this->tyres, '_service_ask_stored_wheels', '1' );
+		$this->book_services_with_consent( [ $oil, $this->tyres ], [ 'stored_wheels' => true ] );
+		$this->book_services_with_consent( [ $oil ], [ 'phone' => '+420 777 000 111' ], '2027-02-11' );
+
+		$prefill = $this->reminder_prefill();
+
+		$this->assertSame( '+420 777 000 111', $prefill['phone'], 'Kontakty z poslední Rezervace' );
+		$this->assertSame( [ $this->tyres ], $prefill['service_ids'], 'Jen sezónní Služby z poslední sezónní Rezervace' );
+		$this->assertTrue( $prefill['stored_wheels'] );
+	}
+
+	public function test_seasonal_services_are_read_when_the_link_is_opened(): void {
+		$oil = $this->create_service( 30, false, 'Výměna oleje' );
+		$this->book_services_with_consent( [ $oil ] );
+		$this->run_reminders_at( self::BEFORE_SPRING );
+		$token = $this->prefill_token_from( $this->mail_to( 'jan@example.test' ) );
+
+		$this->assertArrayNotHasKey( 'service_ids', $this->prefill( $token )->get_data() );
+		$this->book_services_with_consent( [ $this->tyres ], [], '2027-03-08' );
+		$this->assertSame( [ $this->tyres ], $this->prefill( $token )->get_data()['service_ids'] );
+	}
+
+	public function test_without_seasonal_booking_the_link_prefills_only_contacts(): void {
+		$oil = $this->create_service( 30, false, 'Výměna oleje' );
+		$this->book_services_with_consent( [ $oil ] );
+
+		$prefill = $this->reminder_prefill();
+
+		$this->assertSame( 'jan@example.test', $prefill['email'] );
+		$this->assertArrayNotHasKey( 'service_ids', $prefill );
+		$this->assertArrayNotHasKey( 'stored_wheels', $prefill );
+	}
+
+	public function test_seasonal_service_no_longer_bookable_online_is_left_out(): void {
+		$storage = $this->create_service( 30, true, 'Uskladnění' );
+		$this->book_services_with_consent( [ $this->tyres, $storage ] );
+		update_post_meta( $storage, '_service_bookable', '' );
+
+		$this->assertSame( [ $this->tyres ], $this->reminder_prefill()['service_ids'] );
+
+		update_post_meta( $this->tyres, '_service_bookable', '' );
+		$this->assertArrayNotHasKey( 'service_ids', $this->reminder_prefill(), 'Žádná Služba online: jen kontakty' );
+	}
+
+	public function test_reminder_link_stops_working_once_the_booking_is_anonymised_or_forged(): void {
+		$this->book_with_consent( 'jan@example.test', true );
+		$this->run_reminders_at( self::BEFORE_SPRING );
+		$token = $this->prefill_token_from( $this->mail_to( 'jan@example.test' ) );
+
+		$this->assertSame( 404, $this->prefill( substr( $token, 0, -1 ) . ( str_ends_with( $token, '0' ) ? '1' : '0' ) )->get_status() );
+
+		Pneukarnik_Clock::freeze( '2030-01-01 12:00' );
+		do_action( Pneukarnik_GDPR::CRON_HOOK );
+		$this->assertSame( 404, $this->prefill( $token )->get_status() );
 	}
 
 	public function test_unsubscribe_link_withdraws_consent_right_away(): void {
@@ -406,6 +482,30 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 		);
 		$this->assertSame( 201, $response->get_status(), (string) wp_json_encode( $response->get_data() ) );
 		$this->mails = []; // Potvrzení Rezervace nás tu nezajímá.
+	}
+
+	/**
+	 * Online Rezervace Služeb se souhlasem s Připomínkou, další údaje podle $overrides.
+	 *
+	 * @param list<int>            $services
+	 * @param array<string, mixed> $overrides
+	 */
+	private function book_services_with_consent( array $services, array $overrides = [], string $date = '2027-02-10' ): void {
+		$response = $this->book( $services, $date, '09:00', $overrides + [ 'consent_reminder' => true ] );
+		$this->assertSame( 201, $response->get_status(), (string) wp_json_encode( $response->get_data() ) );
+		$this->mails = [];
+	}
+
+	/**
+	 * Údaje z odkazu „Objednat přezutí“ v Připomínce pro jan@example.test.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function reminder_prefill(): array {
+		$this->run_reminders_at( self::BEFORE_SPRING );
+		$response = $this->prefill( $this->prefill_token_from( $this->mail_to( 'jan@example.test' ) ) );
+		$this->assertSame( 200, $response->get_status() );
+		return $response->get_data();
 	}
 
 	private function run_reminders_at( string $now ): void {

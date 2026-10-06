@@ -81,7 +81,7 @@ Odkaz v e‑mailu k Rezervaci (potvrzení, Zrušení), který otevře rezervačn
 _Avoid_: rebook, opakovaná objednávka
 
 **Připomínka přezutí**:
-Sezónní e‑mail Zákazníkovi, který k němu dal samostatný souhlas, s odkazem na rezervaci předvyplněnou jeho kontaktními údaji. Odesílá se před každou Sezónou.
+Sezónní e‑mail Zákazníkovi, který k němu dal samostatný souhlas, s odkazem na rezervaci předvyplněnou kontaktními údaji z jeho poslední Rezervace a sezónními Službami a „Kola mám uskladněná u vás“ z jeho poslední Rezervace se sezónní Službou (jen Služby, které jde dál objednat online). Termín vybírá Zákazník sám. Odesílá se před každou Sezónou.
 _Avoid_: newsletter, marketingový e‑mail
 
 ## Relationships

@@ -64,7 +64,7 @@ První verzi textů napíše vývojář, Provozovatel je zkontroluje.
 - Bez registrace a účtů (ADR 0002). Místo toho:
   - předvyplnění údajů v prohlížeči,
   - odkaz „Objednat znovu“ v e‑mailu (předvyplní údaje, Služby a uskladněná kola, Termín vybírá Zákazník znovu),
-  - **Připomínka přezutí** před každou Sezónou.
+  - **Připomínka přezutí** před každou Sezónou s odkazem, který předvyplní údaje a sezónní Služby a uskladněná kola z minulé sezónní Rezervace (Termín vybírá Zákazník sám).
 - **Zrušení** odkazem z e‑mailu do Lhůty zrušení (nastavitelná, default 24 h). Po lhůtě se zobrazí telefon. Změna Termínu = Zrušení + nová Rezervace s předvyplněnými údaji.
 - Potvrzení e‑mailem zákazníkovi. Upozornění Provozovateli podle jeho odpovědi.
 

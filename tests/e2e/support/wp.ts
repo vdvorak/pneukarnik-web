@@ -35,6 +35,11 @@ export function getJsonOption(name: string): unknown {
 	}
 }
 
+/** Odkaz „Objednat přezutí“, který by e‑mailu poslala Připomínka přezutí. */
+export function reminderLink(email: string): string {
+	return wpCli(['wp', 'eval', `echo Pneukarnik_Prefill::url_for_email(${shellQuote(email)});`]).trim();
+}
+
 /** Příkaz v kontejneru `cli` (WP‑CLI) nad lokálním webem, vrací jeho výstup. */
 function wpCli(command: string[]): string {
 	return execFileSync('docker', ['compose', 'run', '--rm', '-T', 'cli', ...command], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
