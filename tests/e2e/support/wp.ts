@@ -43,16 +43,22 @@ function wpCli(command: string[]): string {
 const shellQuote = (value: string) => `'${value.replace(/'/g, `'\\''`)}'`;
 
 /**
- * Zveřejněná Služba se všemi povinnými poli a daným slugem (formulář administrace slug nenastavuje).
- * Název musí začínat E2E_PREFIX, aby ji smazal global-teardown. Vrací ID.
+ * Zveřejněná Služba se všemi povinnými poli a daným slugem (formulář administrace slug nenastavuje),
+ * další meta (např. `_service_bookable`) jde doplnit. Název musí začínat E2E_PREFIX, aby ji smazal
+ * global-teardown. Vrací ID.
  */
-export function createService(title: string, slug: string, category: 'pneuservis' | 'autoservis'): number {
-	const meta = { _service_category: category, _service_perex: 'Popis.', _service_price: '500', _service_duration: '60' };
+export function createService(title: string, slug: string, category: 'pneuservis' | 'autoservis', extraMeta: Record<string, string> = {}): number {
+	const meta = { _service_category: category, _service_perex: 'Popis.', _service_price: '500', _service_duration: '60', ...extraMeta };
 	return Number(
 		wpCli([
 			'wp', 'post', 'create', '--post_type=pneukarnik_service', '--post_status=publish', `--post_title=${title}`, `--post_name=${slug}`, `--meta_input=${JSON.stringify(meta)}`, '--porcelain',
 		]).trim(),
 	);
+}
+
+/** Změní stav příspěvku (i Služby), např. na `draft`. */
+export function setPostStatus(id: number, status: string): void {
+	wpCli(['wp', 'post', 'update', String(id), `--post_status=${status}`, '--quiet']);
 }
 
 /** Smaže příspěvky (i Služby) natrvalo. */

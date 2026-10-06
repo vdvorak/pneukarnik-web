@@ -217,7 +217,28 @@ function init() {
 		setText(zapomenuto, 'Uložené údaje jsme z tohoto prohlížeče smazali.');
 	}
 
-	/** „Objednat znovu“: odkaz z e‑mailu předvyplní kontaktní údaje dané Rezervace. */
+	/**
+	 * Služby a uskladněná kola z „Objednat znovu“: jen Služby, které jde objednat online,
+	 * nejvýš kolik jich formulář dovolí. Termín vybírá Zákazník znovu.
+	 *
+	 * @param {unknown[]} ids
+	 * @param {boolean} storedWheels
+	 */
+	function fillServices(ids, storedWheels) {
+		const known = [...new Set(ids.map(String))].filter((id) => servicesById.has(id)).slice(0, maxServices);
+		if (known.length === 0) return false;
+		for (const select of serviceSelects().slice(1)) select.closest('.rezervace__sluzba')?.remove();
+		serviceSelects()[0].value = known[0];
+		for (const id of known.slice(1)) addService(id);
+		/** @type {HTMLInputElement} */ (form.elements.namedItem('stored_wheels')).checked = storedWheels;
+		syncServices();
+		syncStoredWheels();
+		loadDays();
+		loadTerminy();
+		return true;
+	}
+
+	/** „Objednat znovu“: odkaz z e‑mailu předvyplní kontaktní údaje, případně i Služby dané Rezervace. */
 	async function prefillFromLink() {
 		const url = new URL(window.location.href);
 		const token = url.searchParams.get('znovu');
@@ -227,7 +248,14 @@ function init() {
 		window.history.replaceState(null, '', url);
 		try {
 			const response = await fetch(`${config.api}/prefill?${new URLSearchParams({ token })}`, { headers: { Accept: 'application/json' } });
-			if (response.ok) fillContact(await response.json());
+			if (!response.ok) return;
+			const details = await response.json();
+			fillContact(details);
+			if (!Array.isArray(details.service_ids)) return;
+			const text = fillServices(details.service_ids, details.stored_wheels === true)
+				? 'Služby a údaje jsme předvyplnili podle vaší předchozí rezervace. Vyberte prosím nový termín.'
+				: 'Údaje jsme předvyplnili podle vaší předchozí rezervace. Vyberte prosím službu a nový termín.';
+			form.before(notice(text, 'info'));
 		} catch {
 			// Formulář jde vyplnit i ručně.
 		}
@@ -267,10 +295,16 @@ function init() {
 		pridat.hidden = selects.length >= maxServices;
 	}
 
-	function addService() {
+	/**
+	 * Další řádek Služby. Bez hodnoty (tlačítko „+ přidat další službu“) dostane fokus.
+	 *
+	 * @param {string} [value]
+	 */
+	function addService(value = '') {
 		const row = /** @type {HTMLElement} */ (sablona.content.firstElementChild?.cloneNode(true));
 		const select = /** @type {HTMLSelectElement} */ (row.querySelector('select'));
 		select.id = `rez-sluzba-${++rows}`;
+		select.value = value;
 		row.querySelector('label')?.setAttribute('for', select.id);
 		row.querySelector('.rezervace__odebrat')?.addEventListener('click', () => {
 			row.remove();
@@ -283,7 +317,7 @@ function init() {
 		});
 		sluzby.append(row);
 		syncServices();
-		select.focus();
+		if (!value) select.focus();
 	}
 
 	/** Souhrn vpravo (na mobilu nad tlačítkem): Služby s Délkou, celková Délka a Termín. */
@@ -564,7 +598,7 @@ function init() {
 		loadDays();
 		loadTerminy();
 	});
-	pridat.addEventListener('click', addService);
+	pridat.addEventListener('click', () => addService());
 	dny.addEventListener('click', (event) => {
 		const button = /** @type {HTMLElement} */ (event.target).closest('button');
 		if (!button?.dataset.date) return;

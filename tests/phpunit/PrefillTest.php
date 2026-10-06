@@ -1,7 +1,7 @@
 <?php
 /**
- * „Objednat znovu“: odkaz v e‑mailu nese podepsaný token, REST podle něj vydá jen kontaktní
- * údaje dané Rezervace. Zfalšovaný nebo upravený token je odmítnut.
+ * „Objednat znovu“: odkaz v e‑mailu nese podepsaný token, REST podle něj vydá kontaktní údaje,
+ * Služby a uskladněná kola dané Rezervace, nikdy poznámku. Zfalšovaný nebo upravený token je odmítnut.
  */
 
 declare(strict_types=1);
@@ -12,6 +12,7 @@ class PrefillTest extends Pneukarnik_REST_Test_Case {
 	private const CUSTOMER = 'jan@example.test';
 
 	private int $tyres;
+	private int $alignment;
 
 	public function set_up(): void {
 		parent::set_up();
@@ -25,27 +26,48 @@ class PrefillTest extends Pneukarnik_REST_Test_Case {
 			]
 		);
 		$this->set_booking_rules( 60 );
-		$this->tyres = $this->create_service( 60 );
+		$this->tyres     = $this->create_service( 60 );
+		$this->alignment = $this->create_service( 30, false, 'Geometrie' );
+		update_post_meta( $this->tyres, '_service_ask_stored_wheels', '1' );
 		$this->capture_mails();
 	}
 
-	public function test_link_in_confirmation_gives_only_contact_details(): void {
-		$token = $this->booked_prefill_token();
+	public function test_link_in_confirmation_gives_contact_details_services_and_stored_wheels(): void {
+		$token = $this->booked_prefill_token( services: [ $this->alignment, $this->tyres ] );
 
 		$response = $this->prefill( $token );
 
 		$this->assertSame( 200, $response->get_status() );
 		$this->assertSame(
 			[
-				'name'    => 'Jan Novák',
-				'phone'   => '+420 603 123 456',
-				'email'   => self::CUSTOMER,
-				'plate'   => '1AB2345',
-				'vehicle' => 'Škoda Octavia',
+				'name'          => 'Jan Novák',
+				'phone'         => '+420 603 123 456',
+				'email'         => self::CUSTOMER,
+				'plate'         => '1AB2345',
+				'vehicle'       => 'Škoda Octavia',
+				'service_ids'   => [ $this->alignment, $this->tyres ],
+				'stored_wheels' => true,
 			],
 			$response->get_data()
 		);
 		$this->assertSame( 'no-store', $response->get_headers()['Cache-Control'] );
+	}
+
+	public function test_service_no_longer_bookable_online_is_left_out(): void {
+		$phone_only = $this->create_service( 30, false, 'Klimatizace' );
+		$token      = $this->booked_prefill_token( services: [ $this->tyres, $phone_only, $this->alignment ] );
+
+		update_post_meta( $phone_only, '_service_bookable', '' );
+		wp_update_post(
+			[
+				'ID'          => $this->alignment,
+				'post_status' => 'draft',
+			]
+		);
+
+		$data = $this->prefill( $token )->get_data();
+		$this->assertSame( [ $this->tyres ], $data['service_ids'] );
+		$this->assertSame( self::CUSTOMER, $data['email'] );
 	}
 
 	public function test_link_after_cancellation_leads_to_a_prefilled_new_booking(): void {
@@ -123,19 +145,22 @@ class PrefillTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	/**
-	 * Vytvoří Rezervaci a vrátí token z odkazu „Objednat znovu“ v potvrzovacím e‑mailu.
+	 * Vytvoří Rezervaci (s uskladněnými koly) a vrátí token z odkazu „Objednat znovu“ v potvrzovacím e‑mailu.
+	 *
+	 * @param list<int>|null $services Služby Rezervace, null = jen přezutí.
 	 */
-	private function booked_prefill_token( string $email = self::CUSTOMER, string $time = '08:00' ): string {
+	private function booked_prefill_token( string $email = self::CUSTOMER, string $time = '08:00', ?array $services = null ): string {
 		$this->created_booking(
 			$this->book(
-				$this->tyres,
+				$services ?? $this->tyres,
 				self::MONDAY,
 				$time,
 				[
-					'email'   => $email,
-					'company' => 'Novák s.r.o.',
-					'vehicle' => 'Škoda Octavia',
-					'note'    => 'Tajná poznámka',
+					'email'         => $email,
+					'company'       => 'Novák s.r.o.',
+					'vehicle'       => 'Škoda Octavia',
+					'note'          => 'Tajná poznámka',
+					'stored_wheels' => true,
 				]
 			)
 		);

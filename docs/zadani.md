@@ -63,7 +63,7 @@ První verzi textů napíše vývojář, Provozovatel je zkontroluje.
 - **Formulář:** jméno/firma, telefon, e‑mail, SPZ, značka a model (volitelné), poznámka, leasing + společnost, „kola mám uskladněná u vás“ (u pneuslužeb, pokud to Provozovatel chce), souhlas GDPR, souhlas s Připomínkou přezutí (nepovinný).
 - Bez registrace a účtů (ADR 0002). Místo toho:
   - předvyplnění údajů v prohlížeči,
-  - odkaz „Objednat znovu“ v e‑mailu,
+  - odkaz „Objednat znovu“ v e‑mailu (předvyplní údaje, Služby a uskladněná kola, Termín vybírá Zákazník znovu),
   - **Připomínka přezutí** před každou Sezónou.
 - **Zrušení** odkazem z e‑mailu do Lhůty zrušení (nastavitelná, default 24 h). Po lhůtě se zobrazí telefon. Změna Termínu = Zrušení + nová Rezervace s předvyplněnými údaji.
 - Potvrzení e‑mailem zákazníkovi. Upozornění Provozovateli podle jeho odpovědi.

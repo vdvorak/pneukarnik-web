@@ -77,11 +77,11 @@ Trvalá informační stránka, která odpovídá na častou otázku Zákazníků
 _Avoid_: článek, blog, rada, poradna
 
 **Objednat znovu**:
-Odkaz v e‑mailu k Rezervaci (potvrzení, Zrušení), který otevře rezervační formulář s kontaktními údaji z této Rezervace. Náhrada zákaznického účtu (ADR 0002), spolu s volitelným zapamatováním údajů v prohlížeči.
+Odkaz v e‑mailu k Rezervaci (potvrzení, Zrušení), který otevře rezervační formulář s kontaktními údaji, Službami a „Kola mám uskladněná u vás“ z této Rezervace. Termín vybírá Zákazník znovu, Službu, kterou už nejde objednat online, také. Náhrada zákaznického účtu (ADR 0002), spolu s volitelným zapamatováním údajů v prohlížeči.
 _Avoid_: rebook, opakovaná objednávka
 
 **Připomínka přezutí**:
-Sezónní e‑mail Zákazníkovi, který k němu dal samostatný souhlas, s odkazem na předvyplněnou rezervaci. Odesílá se před každou Sezónou.
+Sezónní e‑mail Zákazníkovi, který k němu dal samostatný souhlas, s odkazem na rezervaci předvyplněnou jeho kontaktními údaji. Odesílá se před každou Sezónou.
 _Avoid_: newsletter, marketingový e‑mail
 
 ## Relationships

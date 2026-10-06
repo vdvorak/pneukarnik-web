@@ -258,13 +258,13 @@ Změna Termínu nemá vlastní tok: je to Zrušení a nová Rezervace s předvyp
 
 ### Objednat znovu
 
-Odkaz v e‑mailu (potvrzení, Zrušení) otevře `/rezervace/` a doplní jméno, telefon, e‑mail, SPZ a vozidlo z původní Rezervace. Službu a Termín vybírá Zákazník znovu.
+Odkaz v e‑mailu (potvrzení, Zrušení) otevře `/rezervace/` a doplní jméno, telefon, e‑mail, SPZ, vozidlo, Služby a „Kola mám uskladněná u vás“ z původní Rezervace. Službu, kterou už nejde objednat online, vynechá. Termín vybírá Zákazník znovu.
 
 ### Připomínka přezutí a odhlášení
 
 1. Zákazník při rezervaci zaškrtne nepovinný souhlas.
 2. Před každou Sezónou (nastavený počet dní předem) mu přijde e‑mail „Je čas přezout“, nejvýš jednou za Sezónu.
-3. Tlačítko „Objednat přezutí“ otevře předvyplněný formulář.
+3. Tlačítko „Objednat přezutí“ otevře formulář předvyplněný kontaktními údaji.
 4. Odkaz „Odhlásit Připomínky přezutí“ odhlásí jedním kliknutím na stránce `/odhlaseni/`.
 
 ### Telefonická objednávka (administrace)

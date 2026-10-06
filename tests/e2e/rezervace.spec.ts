@@ -1,6 +1,7 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
 import { addClosedDay, E2E_PREFIX, login, pickDay, pickTime, publishService, saveAutumnSeason, saveBookingSettings, uniqueTitle, upcomingWeekday } from './support/admin';
 import { waitForMail } from './support/mailpit';
+import { createService, deletePosts, setPostStatus } from './support/wp';
 
 // Dílna je jedna, testy si tedy nesmí brát Termíny navzájem.
 test.describe.configure({ mode: 'serial' });
@@ -42,6 +43,7 @@ test.beforeAll(async ({ browser, request }) => {
 		price: 200,
 		duration: 30,
 		bookable: true,
+		askStoredWheels: true,
 	});
 	await page.close();
 
@@ -345,22 +347,58 @@ test('Údaje se zapamatují jen se zaškrtnutím a jdou smazat', async ({ page }
 	await expect(page.getByLabel('Zapamatovat údaje na tomto zařízení')).not.toBeChecked();
 });
 
-test('Odkaz „Objednat znovu“ z e‑mailu předvyplní kontaktní údaje', async ({ page, request }) => {
+/** Rezervace přes API a odkaz „Objednat znovu“ z jejího potvrzovacího e‑mailu. */
+async function reorderLink(request: APIRequestContext, data: Record<string, unknown>): Promise<string> {
 	const email = `e2e-znovu-${Date.now()}@example.test`;
-	const booking = await request.post('/wp-json/pneukarnik/v1/bookings', {
-		data: { service_ids: [serviceId], date: upcomingWeekday(12), time: '08:00', ...customer, name: 'E2E Stálý zákazník', email, vehicle: 'Škoda Octavia', note: 'Tajná poznámka', consent_gdpr: true },
-	});
+	const booking = await request.post('/wp-json/pneukarnik/v1/bookings', { data: { ...customer, email, consent_gdpr: true, ...data } });
 	expect(booking.status()).toBe(201);
-
 	const mail = await waitForMail(request, email, /^Potvrzení rezervace/);
 	const link = mail.html.match(/href="([^"]*\/rezervace\/\?znovu=[^"]+)"/)?.[1] ?? '';
 	expect(link).not.toBe('');
+	return link.replaceAll('&amp;', '&');
+}
 
-	await page.goto(link.replaceAll('&amp;', '&'));
+test('Odkaz „Objednat znovu“ z e‑mailu předvyplní kontaktní údaje, Služby a uskladněná kola', async ({ page, request }) => {
+	const link = await reorderLink(request, {
+		service_ids: [extraId, serviceId],
+		date: upcomingWeekday(12),
+		time: '08:00',
+		name: 'E2E Stálý zákazník',
+		vehicle: 'Škoda Octavia',
+		note: 'Tajná poznámka',
+		stored_wheels: true,
+	});
+
+	await page.goto(link);
+	await expect(page.getByText('Služby a údaje jsme předvyplnili podle vaší předchozí rezervace. Vyberte prosím nový termín.')).toBeVisible();
+	await expect(page.getByLabel('Služba', { exact: true })).toHaveValue(String(extraId));
+	await expect(page.getByLabel('Další služba')).toHaveValue(String(serviceId));
+	await expect(page.getByLabel('Kola mám uskladněná u vás')).toBeChecked();
 	await expect(page.getByLabel('Jméno nebo firma')).toHaveValue('E2E Stálý zákazník');
-	await expect(page.getByLabel('E‑mail')).toHaveValue(email);
+	await expect(page.getByLabel('E‑mail')).toHaveValue(/^e2e-znovu-/);
 	await expect(page.getByLabel('SPZ')).toHaveValue('1AB2345');
 	await expect(page.getByLabel('Značka a model')).toHaveValue('Škoda Octavia');
 	await expect(page.getByLabel('Poznámka')).toHaveValue('');
+	await expect(page.locator('[data-souhrn-delka]').first()).toHaveText('90 min');
+	await expect(page.locator('[data-souhrn-termin]').first()).toHaveText('—');
+	await expect(page.locator('#kalendar-dny [aria-pressed="true"]')).toHaveCount(0);
 	expect(page.url()).not.toContain('znovu');
+});
+
+test('Služba, kterou už nejde objednat online, se z „Objednat znovu“ nepředvyplní', async ({ page, request }) => {
+	const date = upcomingWeekday(14);
+	const retired = createService(uniqueTitle('Geometrie znovu'), `e2e-geometrie-znovu-${Date.now()}`, 'pneuservis', { _service_bookable: '1' });
+	try {
+		const link = await reorderLink(request, { service_ids: [retired, serviceId], date, time: '08:00' });
+		setPostStatus(retired, 'draft');
+
+		await page.goto(link);
+		await expect(page.getByText(/^Služby a údaje jsme předvyplnili/)).toBeVisible();
+		await expect(page.getByLabel('Služba', { exact: true })).toHaveValue(String(serviceId));
+		await expect(page.getByLabel('Další služba')).toHaveCount(0);
+		await pickDay(page, upcomingWeekday(7)); // Formulář dál funguje: zbylá Služba má volné Termíny.
+		await expect(page.locator('#terminy button').first()).toBeVisible();
+	} finally {
+		deletePosts([retired]);
+	}
 });

@@ -7,7 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * GET /wp-json/pneukarnik/v1/prefill?token=
- * Kontaktní údaje z odkazu „Objednat znovu“ pro předvyplnění formuláře (Pneukarnik_Prefill).
+ * Údaje z odkazu „Objednat znovu“ pro předvyplnění formuláře (Pneukarnik_Prefill).
  */
 class Pneukarnik_Rest_Prefill {
 
@@ -17,15 +17,15 @@ class Pneukarnik_Rest_Prefill {
 			'/prefill',
 			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'contact' ],
+				'callback'            => [ $this, 'details' ],
 				'permission_callback' => '__return_true',
 			]
 		);
 	}
 
-	public function contact( WP_REST_Request $request ): WP_REST_Response {
-		$contact  = Pneukarnik_Prefill::contact( $request->get_param( 'token' ) );
-		$response = null === $contact
+	public function details( WP_REST_Request $request ): WP_REST_Response {
+		$details  = Pneukarnik_Prefill::details( $request->get_param( 'token' ) );
+		$response = null === $details
 			? new WP_REST_Response(
 				[
 					'code'    => Pneukarnik_Prefill::INVALID_TOKEN,
@@ -34,7 +34,7 @@ class Pneukarnik_Rest_Prefill {
 				],
 				404
 			)
-			: new WP_REST_Response( $contact, 200 );
+			: new WP_REST_Response( $details, 200 );
 		$response->header( 'Cache-Control', 'no-store' );
 		return $response;
 	}
