@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-const pages = ['/', '/sluzby/', '/pneuservis/', '/kontakt/', '/o-nas/', '/rezervace/', '/rezervace/zruseni/?r=' + '0'.repeat(64), '/odhlaseni/?t=1.' + '0'.repeat(64), '/neexistujici-stranka/'];
+const pages = ['/', '/sluzby/', '/pneuservis/', '/kontakt/', '/o-nas/', '/ochrana-osobnich-udaju/', '/rezervace/', '/rezervace/zruseni/?r=' + '0'.repeat(64), '/odhlaseni/?t=1.' + '0'.repeat(64), '/neexistujici-stranka/'];
 
 test('Web nenačítá nic z cizích domén', async ({ page, baseURL }) => {
 	const own = new URL(baseURL ?? 'http://localhost:8080').host;

@@ -228,21 +228,6 @@ function pneukarnik_services_filter( ?string $current ): void {
 }
 
 /**
- * Telefon a Rezervovat, aby byly hned vidět (hlavička na každé stránce, hero na Úvodu).
- */
-function pneukarnik_contact_cta( string $css_class ): void {
-	$phone = Pneukarnik_Contact::phone();
-	?>
-	<p class="<?php echo esc_attr( $css_class ); ?>">
-		<?php if ( '' !== $phone ) : ?>
-			<a class="kontakt-cta__telefon" href="<?php echo esc_url( pneukarnik_tel_href( $phone ) ); ?>"><?php echo esc_html( $phone ); ?></a>
-		<?php endif; ?>
-		<a class="kontakt-cta__rezervovat" href="<?php echo esc_url( home_url( '/rezervace/' ) ); ?>"><?php esc_html_e( 'Rezervovat', 'pneukarnik' ); ?></a>
-	</p>
-	<?php
-}
-
-/**
  * Pohotovost jako tmavý pruh nad hlavičkou, jen když ji Provozovatel zapnul.
  */
 function pneukarnik_emergency(): void {
@@ -384,8 +369,9 @@ function pneukarnik_upcoming_hours(): void {
 
 /**
  * Mapa, která nic nenačte od Googlu, dokud na ni Zákazník neklikne. Bez adresy se nevykreslí.
+ * Pod ní odkaz do Google Maps, s $with_address i s názvem a adresou (Úvod).
  */
-function pneukarnik_map(): void {
+function pneukarnik_map( bool $with_address = true ): void {
 	$embed = Pneukarnik_Contact::map_embed_url();
 	if ( '' === $embed ) {
 		return;
@@ -408,32 +394,12 @@ function pneukarnik_map(): void {
 	</div>
 	<?php if ( '' !== $address ) : ?>
 		<p class="mapa__adresa">
-			<span><strong><?php bloginfo( 'name' ); ?></strong>, <?php echo esc_html( $address ); ?></span>
+			<?php if ( $with_address ) : ?>
+				<span><strong><?php bloginfo( 'name' ); ?></strong>, <?php echo esc_html( $address ); ?></span>
+			<?php endif; ?>
 			<a class="arrow-link" href="<?php echo esc_url( Pneukarnik_Contact::map_link() ); ?>" rel="noopener" target="_blank"><?php esc_html_e( 'Otevřít v Google Maps', 'pneukarnik' ); ?></a>
 		</p>
 	<?php endif; ?>
-	<?php
-}
-
-/**
- * Výzva k akci u Služby: Rezervovat (jen u online rezervovatelných) a Zavolat.
- */
-function pneukarnik_service_cta( Pneukarnik_Service $service ): void {
-	$phone = Pneukarnik_Contact::phone();
-	?>
-	<div class="cta">
-		<?php if ( $service->bookable ) : ?>
-			<a class="cta__rezervovat" href="<?php echo esc_url( pneukarnik_booking_url( $service ) ); ?>"><?php esc_html_e( 'Rezervovat', 'pneukarnik' ); ?></a>
-		<?php endif; ?>
-		<?php if ( '' !== $phone ) : ?>
-			<a class="cta__zavolat" href="<?php echo esc_url( pneukarnik_tel_href( $phone ) ); ?>">
-				<?php
-				/* translators: %s: telefonní číslo */
-				echo esc_html( sprintf( __( 'Zavolat %s', 'pneukarnik' ), $phone ) );
-				?>
-			</a>
-		<?php endif; ?>
-	</div>
 	<?php
 }
 

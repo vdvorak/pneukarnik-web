@@ -20,8 +20,36 @@ add_action(
 	static function (): void {
 		add_theme_support( 'title-tag' );
 		add_theme_support( 'html5', [ 'search-form', 'gallery', 'caption', 'style', 'script' ] );
+		// Perex stránky (O nás, Ochrana osobních údajů) v PageHero.
+		add_post_type_support( 'page', 'excerpt' );
 	}
 );
+
+add_action(
+	'init',
+	static function (): void {
+		// Zvýrazněný blok na šedém podkladu (O nás: BestDrive a Barum).
+		register_block_style(
+			'core/group',
+			[
+				'name'  => 'zvyrazneny',
+				'label' => __( 'Zvýrazněný', 'pneukarnik' ),
+			]
+		);
+	}
+);
+
+// Galerii z klasického editoru (Průvodci) styluje šablona, bez vložených stylů WordPressu.
+add_filter( 'use_default_gallery_style', '__return_false' );
+add_filter( 'the_content', 'pneukarnik_scrollable_tables', 20 );
+
+/**
+ * Tabulky v obsahu z editoru zabalí do obalu s vlastním vodorovným posuvníkem, aby na mobilu
+ * neroztáhly stránku (klasický editor tabulku nijak nebalí, blokový jen do <figure>).
+ */
+function pneukarnik_scrollable_tables( string $content ): string {
+	return (string) preg_replace( '#<table\b.*?</table>#is', '<div class="tabulka">$0</div>', $content );
+}
 
 add_action(
 	'wp_enqueue_scripts',

@@ -1,6 +1,7 @@
 <?php
 /**
- * Záložní šablona pro stránky, které ještě nemají vlastní: PageHero s názvem a text z editoru.
+ * Stránka bez vlastní šablony (O nás …): PageHero s názvem a perexem (výňatek stránky)
+ * a text z editoru v úzkém sloupci.
  *
  * @package Pneukarnik
  */
@@ -13,8 +14,8 @@ get_header();
 		the_post();
 		?>
 		<article <?php post_class(); ?>>
-			<?php pneukarnik_page_hero( get_the_title(), '', null, true ); ?>
-			<div class="obsah">
+			<?php pneukarnik_page_hero( get_the_title(), has_excerpt() ? get_the_excerpt() : '' ); ?>
+			<div class="stranka obsah">
 				<?php the_content(); ?>
 			</div>
 		</article>

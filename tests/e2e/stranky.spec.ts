@@ -27,6 +27,14 @@ test('O nás má BestDrive s věrnostní kartou a galerii', async ({ page }) => 
 	await expect(page.locator('main #galerie')).toHaveText('Galerie');
 });
 
+test('Ochrana osobních údajů má Správce z Nastavení', async ({ page }) => {
+	await page.goto('/ochrana-osobnich-udaju/');
+
+	const controller = page.locator('.spravce');
+	await expect(controller.locator('dt')).toContainText(['Firma']);
+	await expect(controller).toContainText('Pneuservis a autoservis Jan Kárník');
+});
+
 test('Sociální sítě z Nastavení jsou v patičce', async ({ page }) => {
 	const touched = ['pneukarnik_social_facebook', 'pneukarnik_social_instagram', 'pneukarnik_social_google'];
 	const original = Object.fromEntries(touched.map((name) => [name, getOption(name)]));
@@ -53,7 +61,8 @@ test('Průvodce je v patičce a jeho odkaz otevře rezervaci s předvybranou Slu
 	const service = uniqueTitle('Přezutí průvodce');
 	await publishService(page, { title: service, category: 'Pneuservis', perex: 'Sezónní přezutí.', price: 600, duration: 60, bookable: true });
 	const guide = uniqueTitle('Kdy přezout');
-	await publishGuide(page, { title: guide, perex: 'Kdy je ten správný čas.', text: '<h2>Zimní pneumatiky</h2><p>Pod 7 °C.</p>', service });
+	const table = '<table><thead><tr><th>Pneumatiky</th><th>Zákonné minimum</th><th>Doporučujeme</th></tr></thead><tbody><tr><td>Zimní (osobní auta)</td><td>4 mm</td><td>5 mm</td></tr></tbody></table>';
+	await publishGuide(page, { title: guide, perex: 'Kdy je ten správný čas.', text: `<h2>Zimní pneumatiky</h2><p>Pod 7 °C.</p>${table}`, service });
 
 	await page.goto('/');
 	await page.locator('.site-footer').getByRole('link', { name: guide }).click();
@@ -62,9 +71,19 @@ test('Průvodce je v patičce a jeho odkaz otevře rezervaci s předvybranou Slu
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText(guide);
 	await expect(page.getByText('Kdy je ten správný čas.')).toBeVisible();
 	await expect(page.getByRole('heading', { name: 'Zimní pneumatiky' })).toBeVisible();
-	await expect(page.getByRole('heading', { name: `Objednejte se: ${service}` })).toBeVisible();
+	const order = page.locator('.pruvodce__objednat');
+	await expect(order).toContainText('Objednejte se');
+	await expect(order.getByRole('heading', { level: 2 })).toHaveText(service);
+	await expect(order.getByRole('link', { name: 'Co Služba zahrnuje a kolik stojí' })).toHaveAttribute('href', /\/pneuservis\/e2e-prezuti-pruvodce-\d+\/$/);
+	await expect(order.getByRole('link', { name: 'Zavolat +420 775 565 326' })).toHaveAttribute('href', 'tel:+420775565326');
 
-	await page.getByRole('main').getByRole('link', { name: 'Rezervovat' }).click();
+	// Tabulka se na mobilu posouvá ve vlastním obalu, stránka do strany ne.
+	await page.setViewportSize({ width: 375, height: 700 });
+	expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
+	const wrapper = page.locator('.obsah .tabulka');
+	expect(await wrapper.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
+
+	await order.getByRole('link', { name: 'Rezervovat' }).click();
 
 	await expect(page).toHaveURL(/\/rezervace\/\?sluzba=e2e-prezuti-pruvodce-\d+$/);
 	await expect(page.locator('#rez-sluzba-1 option:checked')).toHaveText(`${service} (600\u00a0Kč)`);

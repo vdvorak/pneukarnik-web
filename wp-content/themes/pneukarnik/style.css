@@ -345,6 +345,14 @@ a.card--muted:hover,a.card--tint:hover{box-shadow:var(--shadow-tile-hover)}
 .oteviraci-doba__dnes{background:var(--brand-primary-tint);font-weight:800}
 .oteviraci-doba__dnes th{border-radius:12px 0 0 12px}
 .oteviraci-doba__dnes td{border-radius:0 12px 12px 0}
+/* Na mobilu řádky jako v návrhu: den vlevo, doba vpravo, a když se nevejde, pod dnem. */
+@media (max-width:719px){
+	.oteviraci-doba,.oteviraci-doba tbody{display:flex;flex-direction:column;gap:2px}
+	.oteviraci-doba tr{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 16px;padding:10px 12px;border-radius:12px}
+	.oteviraci-doba th,.oteviraci-doba td,.oteviraci-doba__dnes th,.oteviraci-doba__dnes td{padding:0;border-radius:0}
+	.oteviraci-doba th{white-space:nowrap}
+	.oteviraci-doba td{text-align:left}
+}
 
 /* Karty Služeb (stránka Služby, Úvod): mřížka, horní řádek jen s ikonou nebo Akcí, celá karta je odkaz. */
 .karty-sluzeb{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:20px}
@@ -375,15 +383,97 @@ a.card--muted:hover,a.card--tint:hover{box-shadow:var(--shadow-tile-hover)}
 
 /* ---------------------------------------------------------------- Stránky */
 
-/* Obecná stránka a text z editoru. */
-.obsah{max-width:var(--container-narrow);margin:0 auto;padding:24px var(--gutter) var(--section-y);font-size:17px;line-height:1.7;color:var(--text-soft)}
-.obsah > :first-child{margin-top:0}
-.obsah h2{margin:40px 0 12px;color:var(--text-body);font-size:26px}
-.obsah h3{margin:28px 0 8px;color:var(--text-body);font:900 19px/1.3 var(--font-display)}
+/* Úzký sloupec stránky pod PageHero (O nás, Ochrana osobních údajů, Průvodce). */
+.stranka{max-width:var(--container-narrow);margin:0 auto;padding:24px var(--gutter) var(--section-y)}
+
+/* Text z editoru (blokového i klasického): odstavce, nadpisy, seznamy, tabulka, obrázek s popiskem,
+   galerie a zvýrazněný blok. Bloky po 18 px, nadpisy s větší mezerou nad sebou. */
+.obsah{font-size:17px;line-height:1.7;color:var(--text-soft);text-wrap:pretty}
+.obsah > *,.obsah .wp-block-group__inner-container > *{margin-top:0;margin-bottom:18px}
+.obsah > :last-child,.obsah .wp-block-group__inner-container > :last-child{margin-bottom:0}
+.obsah h2{margin-top:42px;color:var(--text-body);font-size:26px}
+.obsah h3{margin-top:30px;color:var(--text-body);font:900 19px/1.3 var(--font-display)}
+.obsah > h2:first-child,.obsah > h3:first-child{margin-top:0}
 .obsah strong{color:var(--text-body)}
 .obsah a{font-weight:700;text-decoration:underline;text-underline-offset:3px}
 .obsah ul,.obsah ol{padding-left:24px}
+.obsah li{padding-left:4px}
 .obsah li + li{margin-top:6px}
+.obsah img{border-radius:var(--radius-lg)}
+
+/* Tabulka: obal s vlastním vodorovným posuvníkem (pneukarnik_scrollable_tables), šedý podklad. */
+.obsah .wp-block-table{margin-left:0;margin-right:0;overflow:visible}
+.obsah .tabulka{max-width:100%;overflow-x:auto;border-radius:var(--radius-md);background:var(--surface-muted)}
+.obsah .tabulka table{width:100%;min-width:420px;border-collapse:collapse;font-size:16px;line-height:1.5;color:var(--text-body)}
+.obsah .tabulka thead,.obsah .tabulka tfoot{border:0}
+.obsah .tabulka th,.obsah .tabulka td{padding:12px 16px;border:0;border-bottom:1px solid var(--border-divider);text-align:left;vertical-align:top}
+.obsah .tabulka th{font-weight:800}
+.obsah .tabulka tr:last-child > td{border-bottom:0}
+
+/* Obrázek s popiskem (blok Obrázek i [caption] klasického editoru). */
+.obsah figure{margin-left:0;margin-right:0}
+.obsah .wp-caption{max-width:100%}
+.obsah figcaption{margin-top:10px;font-size:14px;line-height:1.5;color:var(--text-muted)}
+.obsah .aligncenter{margin-left:auto;margin-right:auto}
+@media (min-width:720px){
+	.obsah .alignleft{float:left;margin:4px 24px 18px 0}
+	.obsah .alignright{float:right;margin:4px 0 18px 24px}
+}
+
+/* Galerie (blok Galerie i [gallery]): mřížka 4:3 se zaoblením. Šířky z CSS bloku Galerie
+   (selektor s :not(#…)) přebije jen !important. */
+.obsah figure.wp-block-gallery,.obsah .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.obsah figure.wp-block-gallery:empty{display:none}
+.obsah .wp-block-gallery .wp-block-image,.obsah .gallery-item{width:auto!important;margin:0!important;aspect-ratio:4/3}
+.obsah .gallery-icon,.obsah .wp-block-gallery .wp-block-image > a{height:100%}
+.obsah .wp-block-gallery img,.obsah .gallery img{display:block;width:100%!important;height:100%;object-fit:cover;border-radius:var(--radius-md)}
+.obsah .gallery figcaption{display:none}
+
+/* Zvýrazněný blok (styl bloku Skupina „Zvýrazněný“; u klasické šablony má obsah ve vnitřním obalu). */
+.obsah .is-style-zvyrazneny{padding:28px;border-radius:var(--radius-lg);background:var(--surface-muted)}
+.obsah .is-style-zvyrazneny h2:first-child{margin-top:0}
+.obsah > .is-style-zvyrazneny{margin-top:42px}
+
+/* Ochrana osobních údajů: Správce z kontaktních údajů. */
+.spravce{display:grid;grid-template-columns:auto 1fr;gap:8px 24px;padding:20px 24px;border-radius:var(--radius-md);background:var(--surface-muted);font-size:16px;line-height:1.5;color:var(--text-body)}
+.spravce dt{color:var(--text-muted)}
+.spravce dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.spravce a{text-decoration:none}
+
+/* Kontakt: dvě karty, pod nimi Jak k nám s Fakturačními údaji a Mapa. */
+.kontakt__inner{max-width:var(--container);margin:0 auto;padding:24px var(--gutter) var(--section-y);display:flex;flex-direction:column;gap:56px}
+.kontakt__karty{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:24px;align-items:start}
+.kontakt__karty .card{--card-pad:32px;--card-gap:14px}
+.kontakt__karty h2{margin:0 0 6px;font-size:24px}
+.kontakt__adresa{font-size:17px;line-height:1.6}
+.kontakt__telefon{align-self:flex-start;font:900 22px var(--font-display)}
+.kontakt__email{align-self:flex-start;font-size:17px;font-weight:700;overflow-wrap:anywhere}
+.kontakt__rezervovat{margin:8px 0 0}
+.kontakt__doba .oteviraci-doba{width:calc(100% + 24px);margin:0 -12px}
+@media (min-width:720px){
+	.kontakt__doba .oteviraci-doba th,.kontakt__doba .oteviraci-doba td{padding:10px 12px}
+}
+.kontakt__sloupce{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:40px;align-items:start}
+.kontakt__sloupec{display:flex;flex-direction:column;gap:16px}
+.kontakt__sloupce h2{margin:0}
+.kontakt__prijezd,.kontakt__fakturace{display:flex;flex-direction:column;gap:16px}
+.kontakt__prijezd + .kontakt__fakturace{margin-top:24px}
+.kontakt__fakturace h2{font-size:24px}
+.kontakt__fakturace p{margin:0;font-size:16px;line-height:1.7}
+.kontakt__mapa .mapa__adresa{margin-top:0}
+@media (max-width:719px){
+	.kontakt__karty .card{--card-pad:24px}
+}
+
+/* Průvodce: hero s nadtitulkem, text a tmavý blok Objednejte se. */
+.pruvodce .page-hero__title{font:var(--type-h1)}
+.pruvodce__perex{font-size:19px}
+.pruvodce__objednat{margin-top:56px;display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:clamp(24px,5vw,40px);border-radius:var(--radius-xl);background:var(--surface-dark);color:#fff}
+.pruvodce__objednat > *{margin:0}
+.pruvodce__sluzba{font:900 28px/1.15 var(--font-display)}
+.pruvodce__objednat .pruvodce__odkaz{color:var(--brand-accent)}
+.pruvodce__objednat .pruvodce__odkaz:hover{color:#fff}
+.pruvodce__tlacitka{display:flex;flex-wrap:wrap;gap:12px;padding-top:6px}
 
 /* Úvod: hero s fotkou provozovny a tmavým přechodem (na mobilu svislým), pod ním sekce systému. */
 .uvod__hero{position:relative;overflow:hidden;background:var(--neutral-900);color:#fff}

@@ -147,10 +147,12 @@ test('Kontakt má adresu, otevírací dobu, příjezd, mapu po kliknutí a faktu
 
 	await page.goto('/kontakt/');
 
-	await expect(page.locator('main h2')).toHaveText(['Adresa a spojení', 'Otevírací doba', 'Jak k nám', 'Mapa', 'Fakturační údaje']);
+	await expect(page.locator('main h2')).toHaveText(['Adresa a spojení', 'Otevírací doba', 'Jak k nám', 'Fakturační údaje', 'Mapa']);
 	const contact = page.locator('.kontakt__spojeni');
-	await expect(contact).toContainText('Dobšická 10, 669 02 Znojmo');
+	await expect(contact).toContainText('Dobšická 10');
+	await expect(contact).toContainText('669 02 Znojmo');
 	await expect(contact.getByRole('link', { name: '+420 775 565 326' })).toHaveAttribute('href', 'tel:+420775565326');
+	await expect(contact.getByRole('link', { name: 'Rezervovat' })).toHaveAttribute('href', /\/rezervace\/$/);
 	await expect(page.locator('.kontakt__doba .oteviraci-doba tr')).toHaveCount(7);
 	await expect(page.locator('.kontakt__fakturace')).toContainText('IČ: 12345678');
 	await expect(page.locator('.kontakt__fakturace')).toContainText('DIČ: CZ12345678');
@@ -159,6 +161,19 @@ test('Kontakt má adresu, otevírací dobu, příjezd, mapu po kliknutí a faktu
 	await page.getByRole('button', { name: 'Zobrazit mapu' }).click();
 
 	await expect(page.locator('.kontakt__mapa iframe')).toHaveAttribute('src', /^https:\/\/www\.google\.com\/maps/);
+});
+
+test('Kontakt nevykreslí prázdné kontaktní údaje', async ({ page }) => {
+	setOptions({ pneukarnik_address: '', pneukarnik_ico: '', pneukarnik_dic: '' });
+	try {
+		await page.goto('/kontakt/');
+
+		await expect(page.locator('main h2')).toHaveText(['Adresa a spojení', 'Otevírací doba', 'Jak k nám']);
+		await expect(page.locator('.kontakt__adresa br')).toHaveCount(0);
+		await expect(page.getByRole('link', { name: 'Otevřít v Google Maps' })).toHaveCount(0);
+	} finally {
+		setOptions({ pneukarnik_address: 'Dobšická 10, 669 02 Znojmo' });
+	}
 });
 
 test('Google recenze z cache serveru jsou na Úvodu bez klíče API v HTML a bez požadavků na Google', async ({ page, request }) => {

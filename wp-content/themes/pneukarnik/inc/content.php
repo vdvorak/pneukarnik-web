@@ -21,7 +21,7 @@ function pneukarnik_ensure_content(): void {
 		return;
 	}
 
-	foreach ( pneukarnik_default_pages() as $slug => [ $title, $content ] ) {
+	foreach ( pneukarnik_default_pages() as $slug => [ $title, $excerpt, $content ] ) {
 		$page = get_page_by_path( $slug );
 		if ( ! $page ) {
 			$id   = wp_insert_post(
@@ -30,6 +30,7 @@ function pneukarnik_ensure_content(): void {
 					'post_status'  => 'publish',
 					'post_name'    => $slug,
 					'post_title'   => $title,
+					'post_excerpt' => $excerpt,
 					'post_content' => $content,
 				]
 			);
@@ -63,38 +64,43 @@ function pneukarnik_ensure_content(): void {
 }
 
 /**
- * Stránky z mapy stránek ve specu (adresa => název, obsah v blocích editoru).
+ * Stránky z mapy stránek ve specu (adresa => název, perex do PageHero, obsah v blocích editoru).
  *
- * @return array<string, array{0:string,1:string}>
+ * @return array<string, array{0:string,1:string,2:string}>
  */
 function pneukarnik_default_pages(): array {
-	$heading   = static fn( string $text, string $id = '' ): string => '<!-- wp:heading --><h2 class="wp-block-heading"' . ( '' !== $id ? ' id="' . $id . '"' : '' ) . '>' . $text . "</h2><!-- /wp:heading -->\n\n";
-	$paragraph = static fn( string $text ): string => '<!-- wp:paragraph --><p>' . $text . "</p><!-- /wp:paragraph -->\n\n";
-	$list      = static fn( array $items ): string => '<!-- wp:list --><ul class="wp-block-list">' . implode( '', array_map( static fn( string $item ): string => '<!-- wp:list-item --><li>' . $item . '</li><!-- /wp:list-item -->', $items ) ) . "</ul><!-- /wp:list -->\n\n";
+	$heading     = static fn( string $text, string $id = '' ): string => '<!-- wp:heading --><h2 class="wp-block-heading"' . ( '' !== $id ? ' id="' . $id . '"' : '' ) . '>' . $text . "</h2><!-- /wp:heading -->\n\n";
+	$paragraph   = static fn( string $text ): string => '<!-- wp:paragraph --><p>' . $text . "</p><!-- /wp:paragraph -->\n\n";
+	$highlighted = static fn( string $blocks ): string => '<!-- wp:group {"className":"is-style-zvyrazneny"} --><div class="wp-block-group is-style-zvyrazneny">' . "\n" . $blocks . "</div><!-- /wp:group -->\n\n";
+	$list        = static fn( array $items ): string => '<!-- wp:list --><ul class="wp-block-list">' . implode( '', array_map( static fn( string $item ): string => '<!-- wp:list-item --><li>' . $item . '</li><!-- /wp:list-item -->', $items ) ) . "</ul><!-- /wp:list -->\n\n";
 
 	return [
 		'o-nas'                  => [
 			'O nás',
+			'[Jednou větou, kdo jsme a od kdy servis ve Znojmě provozujeme, doplní Provozovatel.]',
 			$heading( 'Historie', 'historie' )
 				. $paragraph( 'Pneuservis a autoservis Jan Kárník ve Znojmě. [Od kdy servis funguje, jak začínal a co se od té doby změnilo, doplní Provozovatel.]' )
 				. $heading( 'Tým', 'tym' )
 				. $paragraph( '[Kdo se o vaše auto postará: jména, role a zkušenosti, doplní Provozovatel.]' )
-				. $heading( 'BestDrive a Barum', 'bestdrive' )
-				. $paragraph( '[Vztah k síti BestDrive a ke značce Barum (pobočka, partner, prodej pneumatik) upřesní Provozovatel.]' )
-				. $paragraph( '<strong>Věrnostní karta BestDrive:</strong> [jaké výhody karta dává, kde ji Zákazník získá a jak ji u nás uplatní, doplní Provozovatel podle podkladů BestDrive.]' )
+				. $highlighted(
+					$heading( 'BestDrive a Barum', 'bestdrive' )
+					. $paragraph( '[Vztah k síti BestDrive a ke značce Barum (pobočka, partner, prodej pneumatik) upřesní Provozovatel.]' )
+					. $paragraph( '<strong>Věrnostní karta BestDrive:</strong> [jaké výhody karta dává, kde ji Zákazník získá a jak ji u nás uplatní, doplní Provozovatel podle podkladů BestDrive.]' )
+				)
 				. $heading( 'Galerie', 'galerie' )
 				. "<!-- wp:gallery {\"linkTo\":\"none\"} -->\n<figure class=\"wp-block-gallery has-nested-images columns-default is-cropped\"></figure>\n<!-- /wp:gallery -->\n",
 		],
 		'kontakt'                => [
 			'Kontakt',
+			'', // Bez perexu má Kontakt výchozí výzvu z šablony.
 			// Adresa, telefon, otevírací doba, mapa a fakturační údaje jsou z Nastavení, tady jen popis příjezdu.
 			$paragraph( '[Jak k nám dojedete: odbočka, orientační body a kde zaparkovat, doplní Provozovatel.]' ),
 		],
 		'ochrana-osobnich-udaju' => [
 			'Ochrana osobních údajů',
+			'Jak zacházíme s údaji, které nám svěříte při rezervaci.',
+			// Správce (firma, adresa, IČ, e‑mail) vypíše šablona z Nastavení.
 			$paragraph( '[Zástupné znění. Finální text napíše vývojář a schválí Provozovatel.]' )
-				. $heading( 'Správce osobních údajů' )
-				. $paragraph( 'Správcem je Provozovatel uvedený v patičce webu (název, adresa, IČ a kontakt).' )
 				. $heading( 'Jaké údaje zpracováváme a proč' )
 				. $list(
 					[
