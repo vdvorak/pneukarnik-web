@@ -1,6 +1,7 @@
 <?php
 /**
- * Rezervace termínu: výběr jedné nebo víc Služeb, dne a Termínu, kontaktní údaje.
+ * Rezervace termínu: výběr jedné nebo víc Služeb (s platnou Akcí i s akční cenou), dne a Termínu,
+ * kontaktní údaje.
  * Data a pravidla dodává plugin (REST), tady je jen formulář. Vpravo souhrn a karta
  * „Raději zavoláte?“, na mobilu je souhrn nad tlačítkem Rezervovat.
  *
@@ -86,12 +87,13 @@ get_header();
 
 				<form id="rezervace-form" class="card rezervace__form" novalidate>
 					<?php
-					$pneukarnik_service_options = static function ( int $selected ) use ( $pneukarnik_config ): void {
+					$pneukarnik_promotions      = Pneukarnik_Promotion::current();
+					$pneukarnik_service_options = static function ( int $selected ) use ( $pneukarnik_config, $pneukarnik_promotions ): void {
 						?>
 						<option value=""><?php esc_html_e( 'Vyberte službu', 'pneukarnik' ); ?></option>
 						<?php foreach ( $pneukarnik_config['services'] as $pneukarnik_item ) : ?>
 							<?php $pneukarnik_service = Pneukarnik_Service::find( $pneukarnik_item['id'] ); ?>
-							<option value="<?php echo (int) $pneukarnik_item['id']; ?>" <?php selected( $selected, $pneukarnik_item['id'] ); ?>><?php echo esc_html( $pneukarnik_item['name'] . ( $pneukarnik_service ? ' (' . pneukarnik_price_label( $pneukarnik_service ) . ')' : '' ) ); ?></option>
+							<option value="<?php echo (int) $pneukarnik_item['id']; ?>" <?php selected( $selected, $pneukarnik_item['id'] ); ?>><?php echo esc_html( $pneukarnik_service ? pneukarnik_service_option_label( $pneukarnik_service, $pneukarnik_promotions[ $pneukarnik_service->id ] ?? null ) : $pneukarnik_item['name'] ); ?></option>
 						<?php endforeach; ?>
 						<?php
 					};

@@ -8,10 +8,10 @@ test.beforeEach(async ({ page }) => {
 /** Karta Služby v rozcestníku. */
 const card = (page: Page, title: string) => page.locator('.karta-sluzby').filter({ hasText: title });
 
-test('Platná Akce má štítek na kartě a blok s cenou a platností v detailu', async ({ page }) => {
+test('Platná Akce má štítek na kartě, blok s cenou a platností v detailu a akční cenu v rezervaci', async ({ page }) => {
 	test.slow(); // Služba a Akce přes administraci, při souběhu všech testů trvá déle.
 	const service = uniqueTitle('Dekarbonizace');
-	await publishService(page, { title: service, category: 'Autoservis', perex: 'Čištění motoru.', price: 1500, duration: 60 });
+	await publishService(page, { title: service, category: 'Autoservis', perex: 'Čištění motoru.', price: 1500, duration: 60, bookable: true });
 	const title = uniqueTitle('Zaváděcí cena');
 	const to = dayFromToday(1);
 	await publishPromotion(page, {
@@ -34,6 +34,10 @@ test('Platná Akce má štítek na kartě a blok s cenou a platností v detailu'
 	const [y, m, d] = to.split('-').map(Number);
 	await expect(block.getByText(`Akce platí do ${d}. ${m}. ${y}.`)).toBeVisible();
 	await expect(page.getByText('1 500 Kč')).toBeVisible();
+
+	// Ve výběru Služby v rezervaci je akční cena a za ní běžná.
+	await page.goto('/rezervace/');
+	await expect(page.locator('#rez-sluzba-1 option').filter({ hasText: service })).toHaveText(`${service} (akce 990\u00a0Kč, běžně 1\u00a0500\u00a0Kč)`);
 });
 
 test('Služba s platnou Akcí je ve své Kategorii napřed', async ({ page }) => {

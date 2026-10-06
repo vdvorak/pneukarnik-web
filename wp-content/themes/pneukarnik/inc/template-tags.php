@@ -20,6 +20,22 @@ function pneukarnik_price_label( Pneukarnik_Service $service ): string {
 }
 
 /**
+ * Položka Služby ve výběru rezervace: název a cena, s platnou Akcí akční cena a za ní běžná,
+ * např. „Dekarbonizace (akce 1 290 Kč, běžně od 1 690 Kč)“. U „Cena dle vozu“ jen akční cena.
+ */
+function pneukarnik_service_option_label( Pneukarnik_Service $service, ?Pneukarnik_Promotion $promotion ): string {
+	if ( null === $promotion || null === $promotion->price ) {
+		return sprintf( '%s (%s)', $service->title, pneukarnik_price_label( $service ) );
+	}
+	$by_vehicle = $service->price_by_vehicle || null === $service->price;
+	return $by_vehicle
+		/* translators: 1: název Služby, 2: akční cena */
+		? sprintf( __( '%1$s (akce %2$s)', 'pneukarnik' ), $service->title, pneukarnik_amount( $promotion->price ) )
+		/* translators: 1: název Služby, 2: akční cena, 3: běžná cena, např. od 1 690 Kč */
+		: sprintf( __( '%1$s (akce %2$s, běžně %3$s)', 'pneukarnik' ), $service->title, pneukarnik_amount( $promotion->price ), pneukarnik_price_label( $service ) );
+}
+
+/**
  * Částka v Kč pro web, např. „1 200 Kč“ (s nezlomitelnými mezerami).
  */
 function pneukarnik_amount( int $amount ): string {

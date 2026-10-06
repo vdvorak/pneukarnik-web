@@ -1,7 +1,7 @@
 <?php
 /**
  * Akce: zobrazení jen v platnosti (oba dny včetně, podle hodin pluginu), souběžné Akce,
- * skrytí s nezveřejněnou Službou a pravidlo zveřejnění.
+ * skrytí s nezveřejněnou Službou, akční cena ve výběru Služby v rezervaci a pravidlo zveřejnění.
  */
 
 declare(strict_types=1);
@@ -88,6 +88,23 @@ class PromotionTest extends Pneukarnik_REST_Test_Case {
 			],
 			array_map( static fn( Pneukarnik_Promotion $p ): int => $p->id, $current )
 		);
+	}
+
+	public function test_booking_form_offers_service_with_current_promotion_price(): void {
+		require_once dirname( __DIR__, 2 ) . '/wp-content/themes/pneukarnik/inc/template-tags.php';
+		$this->promotion( '2027-03-01', '2027-03-31' );
+		Pneukarnik_Clock::freeze( '2027-03-15 10:00' );
+		$service   = Pneukarnik_Service::find( $this->service );
+		$promotion = Pneukarnik_Promotion::current_for( $this->service );
+		$this->assertNotNull( $service );
+
+		$this->assertSame( "Dekarbonizace (akce 990\u{00A0}Kč, běžně 600\u{00A0}Kč)", pneukarnik_service_option_label( $service, $promotion ) );
+		$this->assertSame( "Dekarbonizace (600\u{00A0}Kč)", pneukarnik_service_option_label( $service, null ) );
+
+		update_post_meta( $this->service, '_service_price_by_vehicle', '1' );
+		$by_vehicle = Pneukarnik_Service::find( $this->service );
+		$this->assertNotNull( $by_vehicle );
+		$this->assertSame( "Dekarbonizace (akce 990\u{00A0}Kč)", pneukarnik_service_option_label( $by_vehicle, $promotion ) );
 	}
 
 	/**

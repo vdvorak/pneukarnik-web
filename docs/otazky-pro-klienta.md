@@ -33,6 +33,7 @@ Až přijde odpověď, zapište ji pod otázku a otázku označte `[x]`.
 - [ ] **Prodej pneumatik:** Prodáváte pneumatiky? Jaké značky? Chcete na webu formulář „Poptat pneumatiky“ (rozměr, sezóna, počet kusů)?
 - [ ] **Chybějící služby:** Děláte něco, co na webu není? Např. opravy defektů, vyvažování, plnění dusíkem, pneu pro motocykly, dodávky, SUV, prodej disků.
 - [ ] **Délka služeb:** Jak dlouho trvají jednotlivé služby (kvůli rezervaci termínů)?
+- [ ] **Akce a termín:** Platí akční cena, když se zákazník objedná v době akce, ale na termín až po jejím konci? Web zatím ukazuje akční cenu ve výběru služby podle dne objednání, ne podle termínu.
 
 ## Rezervace
 
