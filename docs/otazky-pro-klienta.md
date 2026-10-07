@@ -11,6 +11,7 @@ Provozovateli jdou tyto otázky jako rozhovor s ChatGPT, viz `docs/podklady-od-k
 - [ ] **Od kdy firma funguje?** Na webu je „od roku 1991“. Platí to?
 - [ ] **Barum Continental:** Jste pořád „jediná znojemská franšíza Barum Continental“? Pokud ne, jaký je teď vztah k Barum/Continental?
 - [ ] **BestDrive:** Jste pořád pobočkou nebo partnerem sítě BestDrive? Platí věrnostní karta BestDrive i u vás? Máte k tomu od BestDrive nějaké podklady (logo, texty, podmínky)?
+  > Částečně z webu BestDrive: pobočku vede jako „Franšízová pobočka sítě BestDrive – Jan Kárník, Znojmo“, text O nás z toho vychází. O věrnostní kartě a o Barum tam nic není. Výčet nabídky (pneumatiky, litá i ocelová kola, autodoplňky) je obecný pro celou síť „dle zaměření pobočky“, pro Znojmo nepotvrzený.
 - [ ] **Nonstop pohotovost:** Funguje pořád? Na jakém čísle, co pokrývá (defekt na cestě, odtah, výjezd) a v jaké oblasti?
 - [ ] **Tým:** Kolik lidí v servisu pracuje? Chcete je na webu představit (jméno, fotka, čím se zabývá)?
 - [ ] **Vybavení:** Jaké stroje a technologie stojí za zmínku (geometrie, diagnostika, vyvažovačka, plnění klimatizace…)? Konkrétní značky a typy zákazníky přesvědčí víc než obecné „profesionální stroje“.

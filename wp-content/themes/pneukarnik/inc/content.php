@@ -84,7 +84,7 @@ function pneukarnik_default_pages(): array {
 				. $paragraph( '[Kdo se o vaše auto postará: jména, role a zkušenosti, doplní Provozovatel.]' )
 				. $highlighted(
 					$heading( 'BestDrive a Barum', 'bestdrive' )
-					. $paragraph( '[Vztah k síti BestDrive a ke značce Barum (pobočka, partner, prodej pneumatik) upřesní Provozovatel.]' )
+					. $paragraph( 'Jsme franšízová pobočka sítě BestDrive, jedné z největších pneuservisních sítí v Česku a na Slovensku. [Co z nabídky sítě najdete i u nás (prodej pneumatik, litá a ocelová kola, autodoplňky) a vztah ke značce Barum upřesní Provozovatel.]' )
 					. $paragraph( '<strong>Věrnostní karta BestDrive:</strong> [jaké výhody karta dává, kde ji Zákazník získá a jak ji u nás uplatní, doplní Provozovatel podle podkladů BestDrive.]' )
 				)
 				. $heading( 'Galerie', 'galerie' )
