@@ -2,6 +2,7 @@
 
 Otázky na Provozovatele, které vývojář sám nerozhodne. Průběžně doplňované během přípravy nového webu.
 Až přijde odpověď, zapište ji pod otázku a otázku označte `[x]`.
+Provozovateli jdou tyto otázky jako rozhovor s ChatGPT, viz `docs/podklady-od-klienta/`.
 
 ---
 

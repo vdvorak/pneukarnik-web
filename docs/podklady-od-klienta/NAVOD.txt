@@ -1,0 +1,19 @@
+Podklady pro nový web: jak na to
+
+Texty na web napíšeme my. Potřebujeme od vás jen fakta, a ta z vás vytáhne ChatGPT otázkami. Odpovídáte krátce, klidně jen „ano“, „b“ nebo „nevím“.
+
+Jsou to 3 díly, každý zabere asi 15–30 minut. Můžete je dělat v různé dny.
+  1-firma-a-o-nas.txt
+  2-sluzby-a-ceny.txt
+  3-rezervace-a-provoz.txt
+
+Postup pro každý díl:
+1. Otevřete chatgpt.com a přihlaste se. Stačí verze zdarma.
+2. Klikněte na „Nový chat“. Každý díl dělejte v novém chatu.
+3. Otevřete soubor dílu, označte všechno (Ctrl+A), zkopírujte (Ctrl+C), vložte do ChatGPT (Ctrl+V) a odešlete.
+4. Odpovídejte na otázky. Nemusíte psát: klikněte na ikonku mikrofonu a odpověď nadiktujte.
+   „nevím“ a „přeskoč“ jsou v pořádku.
+5. Na konci ChatGPT vypíše šedý blok textu. Klikněte u něj na „Kopírovat“, vložte do e-mailu a pošlete nám ho.
+
+Když musíte odběhnout, napište „pauza“. ChatGPT vypíše, co zatím má, a to nám pošlete. Chat se vám uloží vlevo v seznamu, můžete se k němu vrátit.
+Když ChatGPT napíše, že jste vyčerpali limit, zkuste to za pár hodin ve stejném chatu.
