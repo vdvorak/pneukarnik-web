@@ -25,6 +25,7 @@ final class Pneukarnik_Old_Urls {
 		'zasady-cookies-eu'     => '/ochrana-osobnich-udaju/',
 		'dategenerator'         => '/',
 		'2020/10/01/o-nas'      => '/o-nas/',
+		'2020/10/01/bestdrive'  => '/o-nas/#bestdrive',
 		'service'               => '/',
 	];
 

@@ -10,7 +10,7 @@ Search Console zatím k dispozici není. Až bude, doplnit sem adresy z přehled
 
 Přesměrování dělá `Pneukarnik_Old_Urls` v pluginu (301, podle cesty, takže funguje se starým obsahem v databázi i bez něj) a kotvy skript `pneukarnik_old_anchors()` na Úvodu. Pravidla:
 
-- příspěvky `/rok/měsíc/den/slug/` a `?p=ID`: o dekarbonizaci na detail Služby Dekarbonizace (slug `dekarbonizace`, bez ní na Autoservis), ostatní na Úvod,
+- příspěvky `/rok/měsíc/den/slug/` a `?p=ID`: o dekarbonizaci na detail Služby Dekarbonizace (slug `dekarbonizace`, bez ní na Autoservis), o BestDrive na blok BestDrive na O nás, ostatní na Úvod,
 - archivy podle data, rubriky, autora a štítku na Úvod,
 - `/service/{slug}/` na zveřejněnou Službu se stejným slugem, jinak na zveřejněnou Službu převedenou z té staré (#21), jinak na Úvod,
 - `/galery/…` na galerii stránky O nás, ostatní staré typy obsahu (`/closed/`, `/warning/` …) a `/nova/` na Úvod,
@@ -30,7 +30,7 @@ Playwright (`tests/e2e/stare-url.spec.ts`) projde obě tabulky. Cíle Služeb pl
 | `/?p=290` | `/` | příspěvek „Elektrokoloběžky“ |
 | `/?p=957` | `/autoservis/dekarbonizace/` | příspěvek |
 | `/?p=976` | `/autoservis/dekarbonizace/` | příspěvek |
-| `/2020/10/01/bestdrive/` | `/` | Yoast |
+| `/2020/10/01/bestdrive/` | `/o-nas/#bestdrive` | Yoast |
 | `/2020/10/01/o-nas/` | `/o-nas/` | Yoast |
 | `/2020/10/02/img/` | `/` | Yoast |
 | `/2023/12/` | `/` | archiv podle data |

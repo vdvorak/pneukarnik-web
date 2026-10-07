@@ -85,7 +85,9 @@ function pneukarnik_default_pages(): array {
 				. $highlighted(
 					$heading( 'BestDrive a Barum', 'bestdrive' )
 					. $paragraph( 'Jsme franšízová pobočka sítě BestDrive, jedné z největších pneuservisních sítí v Česku a na Slovensku. [Co z nabídky sítě najdete i u nás (prodej pneumatik, litá a ocelová kola, autodoplňky) a vztah ke značce Barum upřesní Provozovatel.]' )
-					. $paragraph( '<strong>Věrnostní karta BestDrive:</strong> [jaké výhody karta dává, kde ji Zákazník získá a jak ji u nás uplatní, doplní Provozovatel podle podkladů BestDrive.]' )
+					// Výhody klubu jen odkazem, mění je BestDrive a tady by zastaraly.
+					. $paragraph( '<strong>Věrnostní karta BestDrive</strong> platí i u nás. Zaregistrujte se do Klubu BestDrive, dostanete číslo karty a s ním u nás uplatníte klubové slevy. [Že karta u nás platí a kdy číslo karty nahlásit (při rezervaci, při placení), potvrdí Provozovatel.]' )
+					. $paragraph( 'Aktuální výhody a registrace: <a href="https://www.bestdrive.cz/klub.html">Klub BestDrive</a>.' )
 				)
 				. $heading( 'Galerie', 'galerie' )
 				. "<!-- wp:gallery {\"linkTo\":\"none\"} -->\n<figure class=\"wp-block-gallery has-nested-images columns-default is-cropped\"></figure>\n<!-- /wp:gallery -->\n",
