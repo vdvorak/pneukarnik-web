@@ -114,8 +114,7 @@ function pneukarnik_service_price_card( Pneukarnik_Service $service ): void {
  * Adresa rezervačního formuláře, u online rezervovatelné Služby s ní předvybranou.
  */
 function pneukarnik_booking_url( ?Pneukarnik_Service $service = null ): string {
-	$url = home_url( '/rezervace/' );
-	return $service && $service->bookable ? add_query_arg( 'sluzba', $service->slug, $url ) : $url;
+	return $service ? $service->booking_url() : home_url( '/rezervace/' );
 }
 
 /**

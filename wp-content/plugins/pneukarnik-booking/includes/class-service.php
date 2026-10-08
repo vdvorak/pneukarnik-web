@@ -278,6 +278,14 @@ final class Pneukarnik_Service {
 		return (string) get_permalink( $this->id );
 	}
 
+	/**
+	 * Adresa rezervačního formuláře, u online rezervovatelné Služby s ní předvybranou.
+	 */
+	public function booking_url(): string {
+		$url = home_url( '/rezervace/' );
+		return $this->bookable ? add_query_arg( 'sluzba', $this->slug, $url ) : $url;
+	}
+
 	public function category_label(): string {
 		return self::categories()[ $this->category ] ?? '';
 	}

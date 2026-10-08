@@ -185,8 +185,8 @@ class Pneukarnik_GDPR {
 		global $wpdb;
 		$table = Pneukarnik_DB::bookings_table();
 
-		// Nabídky a připomínky (souhlasy, nároky, odmítnutí i návštěva) a starý odběr se smažou celé.
-		$subscriptions = 1 === $page ? Pneukarnik_Subscriptions::erase( $email_address ) : 0;
+		// Nabídky a připomínky (souhlasy, nároky, odmítnutí i návštěva), starý odběr a komu odešly Rozesílky se smažou celé.
+		$subscriptions = 1 === $page ? Pneukarnik_Subscriptions::erase( $email_address ) + Pneukarnik_Mailing::erase( $email_address ) : 0;
 
 		// Anonymizované Rezervace už e‑mail nemají, další dávka proto začíná vždy od začátku.
 		$per_page = 25;

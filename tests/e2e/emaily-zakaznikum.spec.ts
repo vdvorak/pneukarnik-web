@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { login } from './support/admin';
+import { dayFromToday, login, publishPromotion, publishService, uniqueTitle } from './support/admin';
 import { waitForMail } from './support/mailpit';
 import { getOption, setJsonOption, setOptions } from './support/wp';
 
@@ -100,5 +100,50 @@ test('Žádost o hodnocení se zapíná a nastavuje na stránce E‑maily Zákaz
 		if (intro) setOptions({ pneukarnik_review_request_intro: intro });
 		else setJsonOption('pneukarnik_review_request_intro', null);
 		setOptions({ pneukarnik_email: contact, pneukarnik_reviews_place_id: placeId });
+	}
+});
+
+test('Rozesílka se složí z Akce na stránce E‑maily Zákazníkům a zkušební odejde Provozovateli', async ({ page, request }) => {
+	test.slow(); // Služba a Akce přes administraci, při souběhu všech testů trvá déle.
+	const contact = getOption('pneukarnik_email');
+	const provozovatel = `e2e-provozovatel-${Date.now()}@example.test`;
+	const service = uniqueTitle('Geometrie');
+	const promotion = uniqueTitle('Kontrola brzd zdarma');
+	const intro = uniqueTitle('Úvodní věta Rozesílky');
+	setOptions({ pneukarnik_email: provozovatel });
+	try {
+		await login(page);
+		await publishService(page, { title: service, category: 'Pneuservis', perex: 'Seřízení geometrie.', price: 1200, duration: 60, bookable: true });
+		await publishPromotion(page, { title: promotion, service, from: dayFromToday(-1), to: dayFromToday(10) });
+
+		await page.goto('/wp-admin/admin.php?page=pneukarnik-customer-emails');
+		await page.getByRole('link', { name: 'Nová Rozesílka' }).click();
+		await expect(page.getByRole('heading', { level: 1 })).toHaveText('Nová Rozesílka');
+		await expect(page.getByText(/Počet příjemců: \d+/)).toBeVisible();
+		await page.getByLabel(`${service}: ${promotion}`).check();
+		await page.getByLabel('Úvodní věta').fill(intro);
+		await expect(page.getByRole('button', { name: /^Odeslat hned/ })).toBeDisabled();
+		await page.getByRole('button', { name: `Uložit a poslat zkušební e‑mail na ${provozovatel}` }).click();
+
+		await expect(page.getByText(`Zkušební Rozesílka odeslaná na ${provozovatel}.`)).toBeVisible();
+		await expect(page.getByLabel(`${service}: ${promotion}`)).toBeChecked();
+		await expect(page.getByLabel('Úvodní věta')).toHaveValue(intro);
+		await expect(page.getByRole('button', { name: /^Odeslat hned/ })).toBeEnabled();
+		await expect(page.frameLocator('iframe[title="Náhled e‑mailu"]').getByText(promotion)).toBeVisible();
+		const mail = await waitForMail(request, provozovatel, new RegExp(`^\\[Zkouška\\] Akce: ${service}`));
+		expect(mail.text).toContain(intro);
+		expect(mail.text).toContain(`Akce: ${promotion}`);
+		expect(mail.text).toMatch(/Rezervovat: \S+\/rezervace\/\?sluzba=/);
+
+		await page.goto('/wp-admin/admin.php?page=pneukarnik-customer-emails');
+		const row = page.getByRole('row', { name: new RegExp(promotion) });
+		await expect(row).toContainText('rozepsaná');
+		await row.getByRole('link').click();
+		page.once('dialog', (dialog) => dialog.accept());
+		await page.getByRole('button', { name: 'Smazat' }).click();
+		await expect(page.getByText('Rozepsaná Rozesílka je smazaná.')).toBeVisible();
+		await expect(page.getByRole('row', { name: new RegExp(promotion) })).toHaveCount(0);
+	} finally {
+		setOptions({ pneukarnik_email: contact });
 	}
 });

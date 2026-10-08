@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Pneukarnik_DB {
 
 	private const DB_VERSION_OPTION = 'pneukarnik_db_version';
-	private const DB_VERSION        = '1.14';
+	private const DB_VERSION        = '1.15';
 
 	/** Testy běží uvnitř transakce WP test suite, transakce pluginu pak používají savepoint. */
 	private static bool $savepoints = false;
@@ -319,10 +319,38 @@ class Pneukarnik_DB {
 			KEY idx_purpose (purpose, withdrawn_at)
 		) ENGINE=InnoDB $charset_collate;";
 
+		// Rozesílky (Pneukarnik_Mailing): úvodní věta, vybrané Akce (ID oddělená čárkou) a stav odesílání.
+		$mailings = "CREATE TABLE {$wpdb->prefix}pneukarnik_mailings (
+			id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			intro         TEXT            NOT NULL,
+			promotion_ids VARCHAR(255)    NOT NULL DEFAULT '',
+			status        VARCHAR(20)     NOT NULL DEFAULT 'draft',
+			test_sent_at  DATETIME        DEFAULT NULL,
+			created_at    DATETIME        NOT NULL,
+			started_at    DATETIME        DEFAULT NULL,
+			finished_at   DATETIME        DEFAULT NULL,
+			sent_count    INT UNSIGNED    NOT NULL DEFAULT 0,
+			PRIMARY KEY  (id),
+			KEY idx_status (status)
+		) ENGINE=InnoDB $charset_collate;";
+
+		// Komu Rozesílka odešla, jeden řádek na e‑mail. Zapíše se před odesláním, aby nic neodešlo dvakrát.
+		$mailing_recipients = "CREATE TABLE {$wpdb->prefix}pneukarnik_mailing_recipients (
+			id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			mailing_id BIGINT UNSIGNED NOT NULL,
+			email      VARCHAR(255)    NOT NULL,
+			sent_at    DATETIME        NOT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY uq_mailing_email (mailing_id, email),
+			KEY idx_email (email)
+		) ENGINE=InnoDB $charset_collate;";
+
 		dbDelta( $bookings );
 		dbDelta( $day_exceptions );
 		dbDelta( $booking_services );
 		dbDelta( $subscriptions );
+		dbDelta( $mailings );
+		dbDelta( $mailing_recipients );
 	}
 
 	// Vrátí plný název tabulky rezervací
@@ -339,6 +367,16 @@ class Pneukarnik_DB {
 	public static function subscriptions_table(): string {
 		global $wpdb;
 		return $wpdb->prefix . 'pneukarnik_subscriptions';
+	}
+
+	public static function mailings_table(): string {
+		global $wpdb;
+		return $wpdb->prefix . 'pneukarnik_mailings';
+	}
+
+	public static function mailing_recipients_table(): string {
+		global $wpdb;
+		return $wpdb->prefix . 'pneukarnik_mailing_recipients';
 	}
 
 	public static function day_exceptions_table(): string {

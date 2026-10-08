@@ -81,10 +81,57 @@ final class Pneukarnik_Promotion {
 	}
 
 	/**
+	 * Zveřejněné Akce zveřejněných Služeb, které platí dnes nebo začnou nejpozději za $days dní,
+	 * podle začátku platnosti. Služba jich může mít víc.
+	 *
+	 * @return list<self>
+	 */
+	public static function upcoming( int $days ): array {
+		$today      = Pneukarnik_Clock::today();
+		$posts      = get_posts(
+			[
+				'post_type'      => self::POST_TYPE,
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Akcí je pár.
+				'meta_query'     => [
+					[
+						'key'     => '_promotion_valid_from',
+						'value'   => $today->modify( "+{$days} days" )->format( 'Y-m-d' ),
+						'compare' => '<=',
+						'type'    => 'DATE',
+					],
+					[
+						'key'     => '_promotion_valid_to',
+						'value'   => $today->format( 'Y-m-d' ),
+						'compare' => '>=',
+						'type'    => 'DATE',
+					],
+				],
+			]
+		);
+		$promotions = array_filter(
+			array_map( [ self::class, 'from_post' ], $posts ),
+			static fn( self $promotion ): bool => 'publish' === $promotion->service()?->status
+		);
+		usort( $promotions, static fn( self $a, self $b ): int => [ $a->valid_from, $a->id ] <=> [ $b->valid_from, $b->id ] );
+		return $promotions;
+	}
+
+	/**
 	 * Akce, která u Služby právě platí (viz current()).
 	 */
 	public static function current_for( int $service_id ): ?self {
 		return self::current()[ $service_id ] ?? null;
+	}
+
+	/**
+	 * Platnost od–do, např. „1. 3. – 31. 3. 2027“, přes konec roku s oběma roky.
+	 */
+	public function validity_label(): string {
+		$from = Pneukarnik_Clock::at( $this->valid_from );
+		$to   = Pneukarnik_Clock::at( $this->valid_to );
+		return $from->format( $from->format( 'Y' ) === $to->format( 'Y' ) ? 'j. n.' : 'j. n. Y' ) . ' – ' . $to->format( 'j. n. Y' );
 	}
 
 	/**

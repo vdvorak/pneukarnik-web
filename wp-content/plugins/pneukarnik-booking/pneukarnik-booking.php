@@ -40,6 +40,7 @@ spl_autoload_register(
 			'Pneukarnik_Reminder'              => 'includes/class-reminder.php',
 			'Pneukarnik_Termin_Reminder'       => 'includes/class-termin-reminder.php',
 			'Pneukarnik_Review_Request'        => 'includes/class-review-request.php',
+			'Pneukarnik_Mailing'               => 'includes/class-mailing.php',
 			'Pneukarnik_Rest_Reminder'         => 'api/class-rest-reminder.php',
 			'Pneukarnik_Sitemap_Provider'      => 'includes/class-sitemap-provider.php',
 			'Pneukarnik_Notice'                => 'includes/class-notice.php',
@@ -113,6 +114,7 @@ function pneukarnik_deactivate(): void {
 	wp_clear_scheduled_hook( Pneukarnik_Reminder::CRON_HOOK );
 	wp_clear_scheduled_hook( Pneukarnik_Termin_Reminder::CRON_HOOK );
 	wp_clear_scheduled_hook( Pneukarnik_Review_Request::CRON_HOOK );
+	wp_clear_scheduled_hook( Pneukarnik_Mailing::CRON_HOOK );
 }
 
 function pneukarnik_ensure_capabilities(): void {
@@ -125,6 +127,7 @@ Pneukarnik_Reviews::init();
 Pneukarnik_Reminder::init();
 Pneukarnik_Termin_Reminder::init();
 Pneukarnik_Review_Request::init();
+Pneukarnik_Mailing::init();
 
 // Bootstrap
 add_action( 'plugins_loaded', [ 'Pneukarnik_DB', 'maybe_upgrade' ] );
