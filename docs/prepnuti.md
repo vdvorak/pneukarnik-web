@@ -89,7 +89,7 @@ Stejné jako v sekci Přepnutí níže (bez kroku 1, zálohou kopie je `kopie/`)
   (cd wp-content/themes && zip -rq ../../pneukarnik.zip pneukarnik)
   (cd wp-content/plugins && zip -rq ../../pneukarnik-booking.zip pneukarnik-booking)
   ```
-  Vzhled → Motivy → Přidat → Nahrát `pneukarnik.zip`. Pluginy → Přidat → Nahrát `pneukarnik-booking.zip`. Plugin ze starého pokusu tam už je, zvolit **„Nahradit stávající“**. Jiná cesta je SFTP: starý adresář `wp-content/plugins/pneukarnik-booking` nejdřív smazat, ať nezůstanou staré soubory.
+  Vzhled → Motivy → Přidat → Nahrát `pneukarnik.zip`. Pluginy → Přidat → Nahrát `pneukarnik-booking.zip`. Plugin ze starého pokusu tam už je, zvolit **„Nahradit stávající“**. Jiná cesta je SFTP: starý adresář `wp-content/plugins/pneukarnik-booking` nejdřív smazat, ať nezůstanou staré soubory. Pro opakované nahrávání jen šablony a pluginu (po dalších commitech) jde použít `make deploy-test` (`docker/deploy/deploy-test.sh`, přístup napevno pro `test.pneukarnik.cz`): přes FTPS zrcadlí oba adresáře i s mazáním starých souborů, heslo zadáš interaktivně. Jiný přístup jde přepsat přes `HOST=… FTP_USER=… REMOTE=… make deploy-test`.
 - [ ] Aktivovat šablonu Pneukarník a plugin Pneukarnik Booking (krok 4).
 - [ ] Nastavení → Trvalé odkazy → Uložit (krok 5). WordPress doplní svůj blok do `.htaccess`, blok s heslem musí zůstat nahoře.
 - [ ] Rezervace → Převod ze starého webu **bez e‑mailu Zákazníkům** (krok 6) a projít report (krok 7).

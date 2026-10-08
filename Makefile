@@ -9,7 +9,7 @@ export BASE_URL := http://localhost:$(WP_PORT)
 COMPOSE := docker compose
 TOOLS   := $(COMPOSE) run --rm tools
 
-.PHONY: help up down reset logs wp test test-php test-e2e lint fix check zkouska zkouska-down kopie
+.PHONY: help up down reset logs wp test test-php test-e2e lint fix check zkouska zkouska-down kopie deploy-test
 
 help: ## Vypíše příkazy
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-10s %s\n", $$1, $$2}'
@@ -70,3 +70,6 @@ zkouska-down: ## Smaže prostředí zkoušky i s daty (jsou v něm osobní údaj
 
 kopie: ## Testovací kopie pro hosting s jednou databází (prefix tstpk_), make kopie ZALOHA=…_archive.zip
 	ZALOHA="$(ZALOHA)" sh docker/kopie/kopie.sh
+
+deploy-test: ## Nahraje šablonu a plugin na testovací kopii přes FTPS (heslo se vyžádá interaktivně)
+	HOST="$(HOST)" FTP_USER="$(FTP_USER)" REMOTE="$(REMOTE)" PORT="$(PORT)" sh docker/deploy/deploy-test.sh
