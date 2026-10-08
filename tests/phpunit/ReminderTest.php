@@ -267,7 +267,7 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 		$this->assertCount( 2, $this->mails );
 	}
 
-	public function test_booking_after_unsubscribing_does_not_subscribe_again(): void {
+	public function test_booking_after_unsubscribing_subscribes_again(): void {
 		$this->book_online( 'jan@example.test' );
 		$this->run_reminders_at( self::BEFORE_SPRING );
 		$this->rest( 'POST', '/unsubscribe', [ 'token' => $this->unsubscribe_token_from( $this->mail_to( 'jan@example.test' ) ) ] );
@@ -277,7 +277,23 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 		$this->mails = [];
 		$this->run_reminders_at( '2027-10-05 10:00' );
 
-		$this->assertSame( [], $this->mails );
+		$this->assertCount( 1, $this->mails );
+	}
+
+	public function test_link_from_before_unsubscribing_and_booking_again_no_longer_works(): void {
+		$this->book_online( 'jan@example.test' );
+		$this->run_reminders_at( self::BEFORE_SPRING );
+		$old = $this->unsubscribe_token_from( $this->mail_to( 'jan@example.test' ) );
+		$this->rest( 'POST', '/unsubscribe', [ 'token' => $old ] );
+		Pneukarnik_Clock::freeze( '2027-06-01 12:00' );
+		$this->book_online( 'jan@example.test', '09:00', '2027-06-10' );
+
+		$response = $this->rest( 'POST', '/unsubscribe', [ 'token' => $old ] );
+
+		$this->assertSame( 404, $response->get_status() );
+		$this->mails = [];
+		$this->run_reminders_at( '2027-10-05 10:00' );
+		$this->assertCount( 1, $this->mails );
 	}
 
 	public function test_link_from_before_unsubscribing_and_consenting_again_no_longer_works(): void {

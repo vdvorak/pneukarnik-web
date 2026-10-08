@@ -5,6 +5,7 @@ Připomínka přezutí, Žádost o hodnocení a Rozesílky chodí Zákazníkovi,
 ## Consequences
 
 - Platí jen pro skutečné zákazníky: e‑maily začnou chodit až po proběhlém Termínu nezrušené Rezervace. Kdo se jen objednal, nic nedostane.
+- Odmítnutí ve formuláři i odhlášení z e‑mailu platí do další online rezervace, ve které Zákazník „Neposílat“ nezaškrtne: měl v ní možnost odmítnout znovu a nevyužil ji. Odhlásit se jde i pak v každém e‑mailu.
 - Zákazník zadaný Provozovatelem (telefonicky) odmítnout nemohl, proto se k Nabídkám a připomínkám dostane jen výslovným souhlasem odkazem z potvrzení Rezervace.
 - Zákazníci převedení ze starého webu odmítnout nemohli: nedostanou nic, dokud se neobjednají přes nový web. Výjimka: souhlas „informace o slevách“ ze starého webu platí pro Rozesílky.
 - Před spuštěním ověřit u právníka.

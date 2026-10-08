@@ -1,9 +1,9 @@
 <?php
 /**
  * Nabídky a připomínky (ADR 0003): kdo nezaškrtne „Neposílat“ v online rezervaci, dostane je
- * až po proběhlém Termínu nezrušené Rezervace. Zaškrtnuté „Neposílat“ je odmítne a další
- * Rezervace to nezmění. Rezervace zadaná Provozovatelem nárok nezakládá. Nárok po návštěvě
- * přežije anonymizaci Rezervace, výmaz osobních údajů ho smaže.
+ * až po proběhlém Termínu nezrušené Rezervace. Zaškrtnuté „Neposílat“ je odmítne, platí to do
+ * další online Rezervace s nezaškrtnutým „Neposílat“. Rezervace zadaná Provozovatelem nárok
+ * nezakládá. Nárok po návštěvě přežije anonymizaci Rezervace, výmaz osobních údajů ho smaže.
  *
  * Zatím z nich chodí jen Připomínka přezutí, na ní se to tu ověřuje.
  */
@@ -61,13 +61,25 @@ class OffersTest extends Pneukarnik_REST_Test_Case {
 		$this->assertSame( [], $this->mails );
 	}
 
-	public function test_later_booking_without_refusal_keeps_the_refusal(): void {
+	public function test_later_booking_without_refusal_lifts_the_refusal(): void {
 		$this->book_online( 'jan@example.test', true, '2027-02-10', '09:00' );
 		$this->book_online( 'JAN@example.test', false, '2027-02-11', '09:00' );
 
 		$this->run_reminders_at( self::BEFORE_SPRING );
 
-		$this->assertSame( [], $this->mails );
+		$this->assertSame( [ [ 'jan@example.test' ] ], array_column( $this->mails, 'to' ) );
+	}
+
+	public function test_booking_after_withdrawn_consent_gives_a_claim_not_the_old_consent(): void {
+		Pneukarnik_Subscriptions::consent( 'jan@example.test', Pneukarnik_Subscriptions::REMINDER, 'test' );
+		Pneukarnik_Subscriptions::refuse( 'jan@example.test', 'test' );
+		$this->book_online( 'jan@example.test', false, '2027-03-10' );
+
+		$this->run_reminders_at( self::BEFORE_SPRING );
+		$this->assertSame( [], $this->mails, 'Nový nárok platí až po návštěvě' );
+
+		$this->run_reminders_at( '2027-03-10 09:30' );
+		$this->assertStringContainsString( 'neodmítli', $this->mail_to( 'jan@example.test' )['text'] );
 	}
 
 	public function test_refusal_in_a_later_booking_stops_offers(): void {

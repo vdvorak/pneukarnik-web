@@ -17,14 +17,15 @@ if ( ! defined( 'ABSPATH' ) ) {
  *                 Platí až po návštěvě: Termín nezrušené Rezervace s tímto e‑mailem proběhl, nebo visited_at.
  *   consented_at  výslovný souhlas (consent_source), platí hned.
  *   withdrawn_at  odmítnutí ve formuláři nebo odvolání (withdrawn_source: rezervace, odkaz, stary-odkaz).
- *                 Má přednost a změní ho jen nový výslovný souhlas, další Rezervace ne.
+ *                 Má přednost, dokud ho nezmění nový výslovný souhlas nebo další online Rezervace
+ *                 s nezaškrtnutým „Neposílat“ (ta založí nový nárok místo dřívějšího souhlasu).
  *   visited_at    Termín proběhlé Rezervace zapamatovaný při její anonymizaci, aby nárok přežil.
  * Rezervace zadaná Provozovatelem nárok nezakládá, za návštěvu se ale počítá.
  * Výmaz osobních údajů smaže všechny řádky e‑mailu.
  *
  * Odhlašovací odkaz /odhlaseni/?t={id}.{podpis} nese id řádku podepsané HMAC-SHA256 tajným klíčem
- * webu spolu s časem souhlasu (nebo nároku), e‑mail v něm není. Po odvolání a novém souhlasu staré
- * odkazy přestanou platit. Starý odkaz /cancel-subscription?email=… odhlašuje jen LEGACY
+ * webu spolu s časem souhlasu (nebo nároku), e‑mail v něm není. Po odvolání a novém souhlasu nebo
+ * nároku staré odkazy přestanou platit. Starý odkaz /cancel-subscription?email=… odhlašuje jen LEGACY
  * a zapamatuje si i e‑mail, který zatím nezná, aby ho převod starých souhlasů (#21) znovu
  * nepřihlásil: převod proto existující záznam nikdy nepřepisuje.
  */
@@ -56,8 +57,9 @@ final class Pneukarnik_Subscriptions {
 	}
 
 	/**
-	 * Online Rezervace: zaškrtnuté „Neposílat“ odmítne všechny druhy, nezaškrtnuté založí nárok
-	 * u druhů, ke kterým e‑mail ještě nemá vztah. Odmítnutí ani souhlas nepřepíše.
+	 * Online Rezervace: zaškrtnuté „Neposílat“ odmítne všechny druhy, nezaškrtnuté založí nárok.
+	 * Platný souhlas nebo nárok zůstane, jak byl, odmítnutý nebo odvolaný druh dostane nový nárok
+	 * od teď (Zákazník mohl „Neposílat“ zaškrtnout a nechal ho prázdné).
 	 */
 	public static function after_online_booking( string $email, bool $refused ): void {
 		if ( $refused ) {
@@ -74,7 +76,12 @@ final class Pneukarnik_Subscriptions {
 			$wpdb->query(
 				$wpdb->prepare(
 					'INSERT INTO %i (email, purpose, claimed_at) VALUES (%s, %s, %s)
-					 ON DUPLICATE KEY UPDATE claimed_at = COALESCE(claimed_at, VALUES(claimed_at))',
+					 ON DUPLICATE KEY UPDATE
+					   consent_source = IF(withdrawn_at IS NULL, consent_source, NULL),
+					   consented_at = IF(withdrawn_at IS NULL, consented_at, NULL),
+					   claimed_at = IF(withdrawn_at IS NULL, COALESCE(claimed_at, VALUES(claimed_at)), VALUES(claimed_at)),
+					   withdrawn_source = NULL,
+					   withdrawn_at = NULL',
 					Pneukarnik_DB::subscriptions_table(),
 					$email,
 					$purpose,
