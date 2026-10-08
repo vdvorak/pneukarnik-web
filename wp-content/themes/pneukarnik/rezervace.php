@@ -241,23 +241,21 @@ get_header();
 								</span>
 							</div>
 							<span class="pole__chyba rezervace__chyba-souhlasu" id="chyba-consent_gdpr"></span>
-							<?php // Nabídky a připomínky (ADR 0003): nezaškrtnuté chodí až po návštěvě, „i“ vypíše, co chodí. ?>
+							<?php // Nabídky a připomínky (ADR 0003): nezaškrtnuté chodí až po návštěvě, „i“ za textem ukáže v bublině, co chodí. ?>
 							<div class="zaskrtavaci">
 								<input type="checkbox" name="refuse_offers" value="1" id="rez-refuse_offers" aria-describedby="napoveda-refuse_offers">
 								<div>
 									<label for="rez-refuse_offers"><?php esc_html_e( 'Neposílat nabídky a připomínky.', 'pneukarnik' ); ?></label>
-									<details class="zaskrtavaci__info">
-										<summary><span class="ikona-info"><?php echo pneukarnik_icon( 'info' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SVG ze šablony. ?></span><?php esc_html_e( 'Co posíláme', 'pneukarnik' ); ?></summary>
-										<div id="napoveda-refuse_offers">
-											<p><?php esc_html_e( 'Když políčko nezaškrtnete, pošleme vám po vaší návštěvě e‑mailem:', 'pneukarnik' ); ?></p>
-											<ul>
-												<li><?php esc_html_e( 'Připomínku přezutí před každou sezónou,', 'pneukarnik' ); ?></li>
-												<li><?php esc_html_e( 'naše akce,', 'pneukarnik' ); ?></li>
-												<li><?php esc_html_e( 'jednou po první návštěvě prosbu o hodnocení na Googlu.', 'pneukarnik' ); ?></li>
-											</ul>
-											<p><?php esc_html_e( 'Odhlásit se jde v každém z nich.', 'pneukarnik' ); ?></p>
-										</div>
-									</details>
+									<button type="button" class="zaskrtavaci__info" popovertarget="napoveda-refuse_offers"><?php echo pneukarnik_icon( 'info' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SVG ze šablony. ?><span class="screen-reader-text"><?php esc_html_e( 'Co posíláme', 'pneukarnik' ); ?></span></button>
+									<div class="zaskrtavaci__bublina" id="napoveda-refuse_offers" popover>
+										<p><?php esc_html_e( 'Když políčko nezaškrtnete, pošleme vám po vaší návštěvě e‑mailem:', 'pneukarnik' ); ?></p>
+										<ul>
+											<li><?php esc_html_e( 'Připomínku přezutí před každou sezónou,', 'pneukarnik' ); ?></li>
+											<li><?php esc_html_e( 'naše akce,', 'pneukarnik' ); ?></li>
+											<li><?php esc_html_e( 'jednou po první návštěvě prosbu o hodnocení na Googlu.', 'pneukarnik' ); ?></li>
+										</ul>
+										<p><?php esc_html_e( 'Odhlásit se jde v každém z nich.', 'pneukarnik' ); ?></p>
+									</div>
 								</div>
 							</div>
 						</div>
