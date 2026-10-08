@@ -77,6 +77,7 @@ Hosting má **jedinou databázi**, kopie proto bydlí ve stejné databázi jako 
 - [ ] Kontrola: přibylo 58 tabulek `tstpk_`, počet `hwjcw_` se nezměnil, živý web běží.
 - [ ] `https://test.pneukarnik.cz/` (s heslem) ukáže starý web s adresami `test.pneukarnik.cz`. Přihlášení `…/wp-admin/` je stejné jako na živém webu.
 - [ ] Nastavení → Obecné: obě adresy `https://test.pneukarnik.cz`. Nastavení → Čtení: „Požádat vyhledávače, aby neindexovaly tento web“ je zaškrtnuté.
+- Hlášení „Action Scheduler: … past-due actions found“ v administraci kopie nevadí. Úlohy údržby WP Mail SMTP ze zálohy čekají na WP‑Cron, který má kopie vypnutý. Hlášku jde zavřít, WP Mail SMTP kvůli ní nevypínat (kopie má zůstat jako živý web).
 
 ### 7. Kroky přepnutí na kopii
 
