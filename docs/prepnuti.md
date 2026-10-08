@@ -16,6 +16,8 @@ make zkouska-down                   # po zkoušce smazat, jsou tam osobní údaj
 
 - **Kde připravit obsah.** Co Provozovatel nastaví na testovací kopii (perexy Služeb, Nastavení, Průvodci, stránky), se samo na ostrý web nepřenese. Doporučení: připravit vše na testovací kopii a při přepnutí její databázi nasadit na ostrý web, do ní nahrát čerstvou tabulku `hwjcw_reservations` ze živého webu a převod spustit znovu. Převod je opakovatelný, takže přidá jen Rezervace a souhlasy, které mezitím na starém webu přibyly.
 - **E‑mail s novým odkazem na Zrušení** převedeným budoucím Rezervacím: ano/ne (Provozovatel).
+- **Zálohy ostrého webu.** Všechny Rezervace a souhlasy jsou jen v databázi. Zjistit u Webglobe, jak často a jak dlouho databázi zálohují a jak se záloha obnoví. Když to nestačí (třeba jen týden zpětně), domluvit vlastní pravidelný export.
+- **Cron na hostingu.** Zjistit, jestli Webglobe umí spouštět naplánovaný příkaz (cron). Plánované úlohy pluginu (anonymizace, Připomínky přezutí, recenze) jinak běží přes WP‑Cron, tedy jen když někdo otevře web a web si úspěšně zavolá sám sebe.
 
 ## Testovací kopie (hosting Webglobe)
 
@@ -131,6 +133,8 @@ Stejné jako v sekci Přepnutí níže (bez kroku 1, zálohou kopie je `kopie/`)
 9. [ ] Kontrola přesměrování: všechny adresy z `docs/stare-url.md` vrátí 301 na stránku s 200. Ověřeno (45 z 45).
 10. [ ] Sitemapa (`/wp-sitemap.xml`) do Search Console. Adresy z přehledu Stránky doplnit do `docs/stare-url.md`.
 11. [ ] Archivovat `hwjcw_reservations` (export SQL mimo web) a zapsat datum ručního smazání tabulky za rok (zadání).
+12. [ ] Plánované úlohy běží: Nástroje → Stav webu bez chyby „smyčkový požadavek“ (loopback) a v pluginu WP Crontrol žádná úloha `pneukarnik_…` po termínu. Když hosting cron umí: do `wp-config.php` `define( 'DISABLE_WP_CRON', true );` a na hostingu každých 15 minut spouštět `wp-cron.php` (např. `wget -q -O - https://pneukarnik.cz/wp-cron.php?doing_wp_cron`). Pak znovu ověřit ve WP Crontrol.
+13. [ ] Zálohy podle rozhodnutí výše (Webglobe, případně vlastní export) běží a jedna obnova je vyzkoušená.
 
 ## Návrat zpět
 
