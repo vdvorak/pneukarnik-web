@@ -61,7 +61,7 @@ První verzi textů napíše vývojář, Provozovatel je zkontroluje.
 - Termíny začínají na **mřížce** s krokem nastavitelným v adminu (např. 30 min). Termín je volný, jen když je volný celý úsek a vejde se do jednoho bloku Pracovní doby. Dnes jen s nastavitelným předstihem.
 - V **Sezóně** lze online rezervovat jen sezónní Služby.
 - **Leasingový zákazník**: zaškrtne „vozidlo je na leasing“ + uvede společnost. Systém vynutí leasingové datum Sezóny (k čemu se datum vztahuje, upřesní Provozovatel).
-- **Formulář:** jméno/firma, telefon, e‑mail, SPZ, značka a model (volitelné), poznámka, leasing + společnost, „kola mám uskladněná u vás“ (u pneuslužeb, pokud to Provozovatel chce), souhlas GDPR, dvě nezaškrtnutá políčka souhlasu s Připomínkou přezutí a s Akcemi (ADR 0004).
+- **Formulář:** jméno/firma, telefon, e‑mail, SPZ, značka a model (volitelné), poznámka, leasing + společnost, „kola mám uskladněná u vás“ (u pneuslužeb, pokud to Provozovatel chce), souhlas GDPR, nezaškrtnuté políčko souhlasu s Připomínkou přezutí a Akcemi (ADR 0004).
 - Bez registrace a účtů (ADR 0002). Místo toho:
   - předvyplnění údajů v prohlížeči,
   - odkaz „Objednat znovu“ v e‑mailu (předvyplní údaje, Služby a uskladněná kola, Termín vybírá Zákazník znovu),
@@ -80,7 +80,7 @@ První verzi textů napíše vývojář, Provozovatel je zkontroluje.
 
 ## Provoz, právo, převod
 
-- **GDPR:** Rezervace starší než 1 rok se automaticky anonymizují. **Nabídky a připomínky** (Připomínka přezutí, Akce e‑mailem) chodí jen se souhlasem, každý druh zvlášť: zaškrtnutím při online rezervaci (ADR 0004). Zákazníkovi zadanému Provozovatelem nabídne potvrzení Rezervace odkaz na stránku se stejnými dvěma políčky, pokud jeho e‑mail ještě nemá souhlas ani odvolání. Odkaz z každého z e‑mailů vede na stránku nastavení e‑mailů: zvlášť Připomínka přezutí a Akce, nebo Neposílat nic (opětovné zapnutí je souhlas), hlavička `List-Unsubscribe` odhlásí vše. Souhlas přežije anonymizaci Rezervace, výmaz osobních údajů ho smaže. Text zásad napíše vývojář, Provozovatel schválí.
+- **GDPR:** Rezervace starší než 1 rok se automaticky anonymizují. **Nabídky a připomínky** (Připomínka přezutí, Akce e‑mailem) chodí jen se souhlasem, jedním políčkem pro obojí při online rezervaci (ADR 0004). Zákazníkovi zadanému Provozovatelem nabídne potvrzení Rezervace tlačítko „Ano, posílejte“, pokud jeho e‑mail ještě nemá souhlas ani odvolání. Odkaz z každého z e‑mailů vede na stránku nastavení e‑mailů: zvlášť Připomínka přezutí a Akce, nebo Neposílat nic (opětovné zapnutí je souhlas), hlavička `List-Unsubscribe` odhlásí vše. Souhlas přežije anonymizaci Rezervace, výmaz osobních údajů ho smaže. Text zásad napíše vývojář, Provozovatel schválí.
 - **Bez cookies vyžadujících souhlas:**
   - analytika Matomo v cookieless režimu + Google Search Console,
   - mapa jako obrázek nebo načtení až po kliknutí,

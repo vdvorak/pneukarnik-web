@@ -222,7 +222,7 @@ class Pneukarnik_Admin_Customer_Emails {
 				</table>
 
 				<h2><?php esc_html_e( 'Nabídky a připomínky', 'pneukarnik-booking' ); ?></h2>
-				<p class="description"><?php esc_html_e( 'Chodí jen Zákazníkům, kteří s nimi souhlasili, každý druh zvlášť: zaškrtnutím při online rezervaci, nebo odkazem z potvrzení Rezervace, kterou jste zadali vy. Každý si v e‑mailu může nastavit, co dostávat chce.', 'pneukarnik-booking' ); ?></p>
+				<p class="description"><?php esc_html_e( 'Chodí jen Zákazníkům, kteří s nimi souhlasili: zaškrtnutím při online rezervaci, nebo odkazem z potvrzení Rezervace, kterou jste zadali vy. Každý si v e‑mailu může nastavit, co dostávat chce.', 'pneukarnik-booking' ); ?></p>
 				<table class="widefat striped" style="max-width:48rem">
 					<thead>
 						<tr>

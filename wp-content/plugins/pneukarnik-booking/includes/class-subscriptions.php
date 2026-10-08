@@ -15,8 +15,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  *   consented_at  souhlas (consent_source: rezervace, potvrzeni, nastaveni, stary-web), platí hned.
  *   withdrawn_at  odvolání (withdrawn_source: nastaveni, jedno-kliknuti, odkaz, stary-odkaz).
  *                 Má přednost, dokud ho nezmění nový souhlas.
- * Souhlas dává Zákazník zvlášť pro každý druh nezaškrtnutým políčkem v online Rezervaci, nebo
- * na stránce z odkazu v potvrzení Rezervace zadané Provozovatelem. Nezaškrtnuté políčko nic nemění.
+ * Souhlas dává Zákazník s Připomínkou přezutí i s Akcemi najednou: jedním políčkem v online Rezervaci,
+ * nebo tlačítkem „Ano, posílejte“ na stránce z odkazu v potvrzení Rezervace zadané Provozovatelem.
+ * Nezaškrtnuté políčko nic nemění. Odvolat jde každý druh zvlášť na stránce nastavení.
  * Výmaz osobních údajů smaže všechny řádky e‑mailu.
  *
  * Stránka nastavení e‑mailů /odhlaseni/?k={id}.{podpis}: klíč nese id některého řádku e‑mailu
@@ -24,9 +25,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  * výmaz osobních údajů řádky e‑mailu nesmaže. Zvlášť jde vypnout a zapnout Připomínku přezutí
  * a Akce (i LEGACY), „Neposílat nic“ odvolá všechny druhy. Zapnutí je výslovný souhlas (nastaveni).
  *
- * Souhlasy /odhlaseni/?s={id}.{podpis} z potvrzení Rezervace zadané Provozovatelem, když e‑mail
+ * „Ano, posílejte“ /odhlaseni/?s={id}.{podpis} z potvrzení Rezervace zadané Provozovatelem, když e‑mail
  * k Nabídkám a připomínkám ještě nemá žádný záznam: podpis id Rezervace spolu s jejím e‑mailem, platí do
- * anonymizace Rezervace. Otevření nic nezapíše, souhlas se zaškrtnutými druhy (potvrzeni) zapíše až tlačítko.
+ * anonymizace Rezervace. Otevření nic nezapíše, souhlas s oběma druhy (potvrzeni) zapíše až tlačítko na stránce.
  *
  * Odkazy odeslané dřív fungují dál se stejným účinkem: /odhlaseni/?t={id}.{podpis} z Připomínek
  * před stránkou nastavení odvolá Připomínku přezutí řádku id (podpis s časem souhlasu, po odvolání
@@ -50,15 +51,15 @@ final class Pneukarnik_Subscriptions {
 	public const RECEIVES_SQL = 's.consented_at IS NOT NULL AND s.withdrawn_at IS NULL';
 
 	/**
-	 * Online Rezervace: zaškrtnutá políčka zapíšou souhlas s Připomínkou přezutí a s Akcemi.
+	 * Online Rezervace: zaškrtnuté políčko zapíše souhlas s Připomínkou přezutí i s Akcemi.
 	 * Nezaškrtnuté nic nemění, dřívější souhlas ani odvolání.
 	 */
-	public static function after_online_booking( string $email, bool $reminder, bool $promotions ): void {
-		if ( $reminder ) {
-			self::consent( $email, self::REMINDER, 'rezervace' );
+	public static function after_online_booking( string $email, bool $consented ): void {
+		if ( ! $consented ) {
+			return;
 		}
-		if ( $promotions ) {
-			self::consent( $email, self::PROMOTIONS, 'rezervace' );
+		foreach ( self::KINDS as $purpose ) {
+			self::consent( $email, $purpose, 'rezervace' );
 		}
 	}
 
@@ -90,7 +91,7 @@ final class Pneukarnik_Subscriptions {
 	}
 
 	/**
-	 * Odkaz na stránku se souhlasy do potvrzení Rezervace zadané Provozovatelem, prázdný pro webovou
+	 * Odkaz „Ano, posílejte“ do potvrzení Rezervace zadané Provozovatelem, prázdný pro webovou
 	 * Rezervaci a pro e‑mail, který už souhlas nebo odvolání má (i starý souhlas).
 	 *
 	 * @param array<string,mixed> $booking Rezervace (Pneukarnik_Booking::get_by_id).
@@ -104,7 +105,7 @@ final class Pneukarnik_Subscriptions {
 	}
 
 	/**
-	 * E‑mail podle odkazu z potvrzení Rezervace zadané Provozovatelem, null = neplatný odkaz. Nic nezapíše.
+	 * E‑mail podle odkazu „Ano, posílejte“, null = neplatný odkaz. Nic nezapíše.
 	 */
 	public static function offer( mixed $token ): ?string {
 		if ( ! is_string( $token ) || ! preg_match( '/^([1-9][0-9]*)\.[0-9a-f]{64}$/', $token, $m ) ) {
@@ -117,21 +118,17 @@ final class Pneukarnik_Subscriptions {
 	}
 
 	/**
-	 * Souhlasy ze stránky z odkazu v potvrzení Rezervace zadané Provozovatelem, platí hned.
+	 * „Ano, posílejte“: souhlas s Připomínkou přezutí i s Akcemi, platí hned.
 	 *
-	 * @return string|null Adresa stránky nastavení e‑mailu, prázdná, když Zákazník nic nezaškrtl
-	 *                     (nic se nezapíše), null = neplatný odkaz (nic se nezapíše).
+	 * @return string|null Adresa stránky nastavení e‑mailu, null = neplatný odkaz (nic se nezapíše).
 	 */
-	public static function accept_offer( mixed $token, bool $reminder, bool $promotions ): ?string {
+	public static function accept_offer( mixed $token ): ?string {
 		$email = self::offer( $token );
 		if ( null === $email ) {
 			return null;
 		}
-		if ( $reminder ) {
-			self::consent( $email, self::REMINDER, 'potvrzeni' );
-		}
-		if ( $promotions ) {
-			self::consent( $email, self::PROMOTIONS, 'potvrzeni' );
+		foreach ( self::KINDS as $purpose ) {
+			self::consent( $email, $purpose, 'potvrzeni' );
 		}
 		return self::settings_url( $email );
 	}

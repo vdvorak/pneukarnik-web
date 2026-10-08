@@ -1,7 +1,7 @@
 <?php
 /**
- * Nabídky a připomínky (ADR 0004): chodí jen se souhlasem, každý druh zvlášť zaškrtnutým políčkem
- * v online rezervaci. Souhlas platí hned. Nezaškrtnuté políčko nic nemění, dřívější souhlas ani
+ * Nabídky a připomínky (ADR 0004): chodí jen se souhlasem, jedno zaškrtnuté políčko v online
+ * rezervaci souhlasí s Připomínkou přezutí i s Akcemi. Souhlas platí hned. Nezaškrtnuté políčko nic nemění, dřívější souhlas ani
  * odvolání. Rezervace zadaná Provozovatelem souhlas nezapíše. Souhlas přežije anonymizaci
  * Rezervace, výmaz osobních údajů ho smaže.
  *
@@ -45,32 +45,30 @@ class OffersTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	public function test_consent_counts_right_away_even_before_the_visit(): void {
-		$this->book_online( 'jan@example.test', '2027-03-10', reminder: true );
+		$this->book_online( 'jan@example.test', '2027-03-10', consent: true );
 
 		$this->run_reminders_at( self::BEFORE_SPRING );
 
 		$this->assertSame( [ [ 'jan@example.test' ] ], array_column( $this->mails, 'to' ) );
 	}
 
-	public function test_each_box_consents_to_its_own_kind_with_time_and_source(): void {
-		$this->book_online( 'Jan@Example.test', '2027-02-10', reminder: true );
-		$this->book_online( 'eva@example.test', '2027-02-10', '10:00', promotions: true );
+	public function test_ticked_box_consents_to_both_kinds_with_time_and_source(): void {
+		$this->book_online( 'Jan@Example.test', '2027-02-10', consent: true );
 
-		$this->assertTrue( Pneukarnik_Subscriptions::is_active( 'jan@example.test', Pneukarnik_Subscriptions::REMINDER ) );
-		$this->assertFalse( Pneukarnik_Subscriptions::is_active( 'jan@example.test', Pneukarnik_Subscriptions::PROMOTIONS ) );
-		$this->assertFalse( Pneukarnik_Subscriptions::is_active( 'eva@example.test', Pneukarnik_Subscriptions::REMINDER ) );
-		$this->assertTrue( Pneukarnik_Subscriptions::is_active( 'eva@example.test', Pneukarnik_Subscriptions::PROMOTIONS ) );
-		$this->assertSame(
-			[
-				'consent_source' => 'rezervace',
-				'consented_at'   => '2027-02-01 12:00:00',
-			],
-			$this->row( 'jan@example.test', Pneukarnik_Subscriptions::REMINDER )
-		);
+		foreach ( Pneukarnik_Subscriptions::KINDS as $purpose ) {
+			$this->assertSame(
+				[
+					'consent_source' => 'rezervace',
+					'consented_at'   => '2027-02-01 12:00:00',
+				],
+				$this->row( 'jan@example.test', $purpose ),
+				$purpose
+			);
+		}
 	}
 
 	public function test_cancelled_booking_keeps_the_consent(): void {
-		$this->cancel_booking( $this->book_online( 'jan@example.test', '2027-02-10', reminder: true ) );
+		$this->cancel_booking( $this->book_online( 'jan@example.test', '2027-02-10', consent: true ) );
 
 		$this->run_reminders_at( self::BEFORE_SPRING );
 
@@ -78,7 +76,7 @@ class OffersTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	public function test_later_booking_without_ticked_boxes_keeps_the_consent(): void {
-		$this->book_online( 'jan@example.test', '2027-02-10', '09:00', reminder: true );
+		$this->book_online( 'jan@example.test', '2027-02-10', '09:00', consent: true );
 		Pneukarnik_Clock::freeze( '2027-02-02 12:00' );
 		$this->book_online( 'jan@example.test', '2027-02-11' );
 
@@ -86,7 +84,7 @@ class OffersTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	public function test_later_booking_without_ticked_boxes_keeps_the_withdrawal(): void {
-		$this->book_online( 'jan@example.test', '2027-02-10', '09:00', reminder: true );
+		$this->book_online( 'jan@example.test', '2027-02-10', '09:00', consent: true );
 		$this->withdraw_everything( 'jan@example.test' );
 		$this->book_online( 'jan@example.test', '2027-02-11' );
 
@@ -96,10 +94,10 @@ class OffersTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	public function test_ticked_box_after_withdrawal_is_a_new_consent(): void {
-		$this->book_online( 'jan@example.test', '2027-02-10', '09:00', reminder: true );
+		$this->book_online( 'jan@example.test', '2027-02-10', '09:00', consent: true );
 		$this->withdraw_everything( 'jan@example.test' );
 		Pneukarnik_Clock::freeze( '2027-02-02 12:00' );
-		$this->book_online( 'jan@example.test', '2027-02-11', reminder: true );
+		$this->book_online( 'jan@example.test', '2027-02-11', consent: true );
 
 		$this->run_reminders_at( self::BEFORE_SPRING );
 
@@ -115,9 +113,8 @@ class OffersTest extends Pneukarnik_REST_Test_Case {
 				'2027-02-10',
 				'09:00',
 				[
-					'email'              => 'jan@example.test',
-					'consent_reminder'   => true,
-					'consent_promotions' => true,
+					'email'          => 'jan@example.test',
+					'consent_offers' => true,
 				]
 			)
 		);
@@ -131,7 +128,7 @@ class OffersTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	public function test_footer_says_why_the_customer_gets_the_email(): void {
-		$this->book_online( 'jan@example.test', '2027-02-10', reminder: true );
+		$this->book_online( 'jan@example.test', '2027-02-10', consent: true );
 
 		$this->run_reminders_at( self::BEFORE_SPRING );
 
@@ -139,7 +136,7 @@ class OffersTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	public function test_consent_survives_anonymisation_of_the_booking(): void {
-		$this->book_online( 'jan@example.test', '2027-02-10', reminder: true );
+		$this->book_online( 'jan@example.test', '2027-02-10', consent: true );
 		$this->anonymise_at( '2028-02-11 03:00' );
 
 		$this->run_reminders_at( '2028-03-05 10:00' );
@@ -148,7 +145,7 @@ class OffersTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	public function test_erasing_personal_data_removes_the_consent(): void {
-		$this->book_online( 'jan@example.test', '2027-02-10', reminder: true, promotions: true );
+		$this->book_online( 'jan@example.test', '2027-02-10', consent: true );
 
 		$eraser = apply_filters( 'wp_privacy_personal_data_erasers', [] )['pneukarnik-bookings']['callback'];
 		$result = $eraser( 'jan@example.test', 1 );
@@ -160,19 +157,18 @@ class OffersTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	/**
-	 * Online Rezervace se zaškrtnutými políčky souhlasu.
+	 * Online Rezervace se zaškrtnutým souhlasem s Nabídkami a připomínkami, nebo bez něj.
 	 *
 	 * @return string Token Zrušení z potvrzení.
 	 */
-	private function book_online( string $email, string $date, string $time = '09:00', bool $reminder = false, bool $promotions = false ): string {
+	private function book_online( string $email, string $date, string $time = '09:00', bool $consent = false ): string {
 		$response = $this->book(
 			$this->tyres,
 			$date,
 			$time,
 			[
-				'email'              => $email,
-				'consent_reminder'   => $reminder,
-				'consent_promotions' => $promotions,
+				'email'          => $email,
+				'consent_offers' => $consent,
 			]
 		);
 		$this->assertSame( 201, $response->get_status(), (string) wp_json_encode( $response->get_data() ) );

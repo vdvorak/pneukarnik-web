@@ -197,12 +197,12 @@ final class Pneukarnik_Notifications {
 			/* translators: %s: telefon Provozovatele */
 			->paragraph( '' !== $phone ? sprintf( __( 'Potřebujete něco změnit? Zavolejte nám na %s.', 'pneukarnik-booking' ), $phone ) : '' )
 			->link( __( 'Objednat znovu', 'pneukarnik-booking' ), Pneukarnik_Prefill::url( (int) $booking['id'] ) );
-		// Zákazník zadaný Provozovatelem neviděl políčka souhlasů z online rezervace (ADR 0004).
+		// Zákazník zadaný Provozovatelem neviděl políčko souhlasu z online rezervace (ADR 0004).
 		$offer = Pneukarnik_Subscriptions::offer_url( $booking );
 		if ( '' !== $offer ) {
 			$email
-				->paragraph( __( 'Chcete před sezónou připomenout přezutí nebo dostávat naše akce?', 'pneukarnik-booking' ) )
-				->button( __( 'Vybrat e‑maily', 'pneukarnik-booking' ), $offer );
+				->paragraph( __( 'Chcete před sezónou připomenout přezutí a dostávat naše akce?', 'pneukarnik-booking' ) )
+				->button( __( 'Ano, posílejte', 'pneukarnik-booking' ), $offer );
 		}
 		return $email
 			->signature( self::text( 'signature' ) . "\n" . self::contact() )

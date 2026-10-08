@@ -645,8 +645,7 @@ function init() {
 			leasing_company: leasing.checked ? values.get('leasing_company') : '',
 			stored_wheels: !uskladnena.hidden && values.get('stored_wheels') === '1',
 			consent_gdpr: values.get('consent_gdpr') === '1',
-			consent_reminder: values.get('consent_reminder') === '1',
-			consent_promotions: values.get('consent_promotions') === '1',
+			consent_offers: values.get('consent_offers') === '1',
 		};
 		setSending(true);
 		let leaving = false;

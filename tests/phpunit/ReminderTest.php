@@ -477,7 +477,7 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	/**
-	 * Online Rezervace se zaškrtnutými políčky souhlasu, nebo bez nich. Den mimo Sezónu, aby šla
+	 * Online Rezervace se zaškrtnutým souhlasem s Nabídkami a připomínkami, nebo bez něj. Den mimo Sezónu, aby šla
 	 * i nesezónní pravidla.
 	 */
 	private function book_online( string $email, string $time = '09:00', string $date = '2027-02-10', bool $consent = true ): void {
@@ -486,9 +486,8 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 			$date,
 			$time,
 			[
-				'email'              => $email,
-				'consent_reminder'   => $consent,
-				'consent_promotions' => $consent,
+				'email'          => $email,
+				'consent_offers' => $consent,
 			]
 		);
 		$this->assertSame( 201, $response->get_status(), (string) wp_json_encode( $response->get_data() ) );
@@ -496,13 +495,13 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	/**
-	 * Online Rezervace Služeb se souhlasem s Připomínkou přezutí, další údaje podle $overrides.
+	 * Online Rezervace Služeb se souhlasem s Nabídkami a připomínkami, další údaje podle $overrides.
 	 *
 	 * @param list<int>            $services
 	 * @param array<string, mixed> $overrides
 	 */
 	private function book_services( array $services, array $overrides = [], string $date = '2027-02-10' ): void {
-		$response = $this->book( $services, $date, '09:00', $overrides + [ 'consent_reminder' => true ] );
+		$response = $this->book( $services, $date, '09:00', $overrides + [ 'consent_offers' => true ] );
 		$this->assertSame( 201, $response->get_status(), (string) wp_json_encode( $response->get_data() ) );
 		$this->mails = [];
 	}

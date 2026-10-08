@@ -71,15 +71,13 @@ test('Zákazník si z detailu Služby zarezervuje Termín, uvidí potvrzení a p
 	await page.getByLabel('SPZ').fill(customer.plate);
 	await page.getByLabel('Značka a model').fill('Škoda Fabia');
 	await page.getByLabel(/Souhlasím se zpracováním/).check();
-	// Nabídky a připomínky jen se souhlasem, každý druh zvlášť.
-	const reminder = page.getByLabel('Připomenout mi e‑mailem přezutí před každou sezónou.');
-	const promotions = page.getByLabel('Posílat mi e‑mailem vaše akce.');
-	await expect(reminder).not.toBeChecked();
-	await expect(promotions).not.toBeChecked();
-	await reminder.check();
+	// Nabídky a připomínky jen se souhlasem.
+	const offers = page.getByLabel('Posílat mi e‑mailem připomínku přezutí před sezónou a vaše akce.');
+	await expect(offers).not.toBeChecked();
+	await offers.check();
 	const [sent] = await Promise.all([page.waitForRequest(/\/pneukarnik\/v1\/bookings$/), page.getByRole('button', { name: 'Rezervovat' }).click()]);
 
-	expect(sent.postDataJSON()).toMatchObject({ consent_gdpr: true, consent_reminder: true, consent_promotions: false });
+	expect(sent.postDataJSON()).toMatchObject({ consent_gdpr: true, consent_offers: true });
 	await expect(page).toHaveURL(/\/rezervace\/potvrzeni\/\?r=[0-9a-f]{64}$/);
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Rezervace přijata');
 	await expect(page.locator('dd').filter({ hasText: serviceTitle })).toBeVisible();

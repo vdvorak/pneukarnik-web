@@ -1,8 +1,8 @@
 <?php
 /**
- * Souhlasy z potvrzení Rezervace zadané Provozovatelem (ADR 0004): Zákazník neviděl políčka z online
- * rezervace, proto mu je potvrzení nabídne, když jeho e‑mail ještě nemá souhlas ani odvolání. Odkaz
- * otevře stránku se dvěma nezaškrtnutými políčky, souhlas se zaškrtnutými druhy zapíše až tlačítko.
+ * „Ano, posílejte“ (ADR 0004): Zákazník zadaný Provozovatelem neviděl políčko souhlasu z online
+ * rezervace, proto mu potvrzení Rezervace Nabídky a připomínky nabídne, když jeho e‑mail ještě nemá
+ * souhlas ani odvolání. Odkaz otevře stránku s tlačítkem, souhlas s oběma druhy zapíše až tlačítko.
  */
 
 declare(strict_types=1);
@@ -41,65 +41,51 @@ class OfferConsentTest extends Pneukarnik_REST_Test_Case {
 		parent::tear_down();
 	}
 
-	public function test_confirmation_of_a_booking_by_provozovatel_offers_the_choice(): void {
+	public function test_confirmation_of_a_booking_by_provozovatel_offers_yes_send(): void {
 		$this->book_by_provozovatel( self::CUSTOMER );
 
 		$mail = $this->mail_to( self::CUSTOMER );
 
 		$url = home_url( '/odhlaseni/?s=' . $this->offer_token_from( $mail ) );
 		foreach ( [ $mail['html'], $mail['text'] ] as $body ) {
-			$this->assertStringContainsString( 'Chcete před sezónou připomenout přezutí nebo dostávat naše akce?', $body );
-			$this->assertStringContainsString( 'Vybrat e‑maily', $body );
+			$this->assertStringContainsString( 'Chcete před sezónou připomenout přezutí a dostávat naše akce?', $body );
+			$this->assertStringContainsString( 'Ano, posílejte', $body );
 		}
 		$this->assertStringContainsString( $url, $mail['text'] );
 	}
 
-	public function test_ticked_kinds_get_consent_that_counts_right_away(): void {
+	public function test_yes_send_gives_the_reminder_without_a_visit(): void {
 		$this->book_by_provozovatel( self::CUSTOMER, '2027-03-20' );
 		$token = $this->offer_token_from( $this->mail_to( self::CUSTOMER ) );
 		Pneukarnik_Clock::freeze( '2027-02-02 18:30' );
 
-		$redirects = $this->save_offer( $token, [ 'reminder' => '1' ] );
+		$redirects = $this->press_yes( $token );
 
-		$this->assertSame( [ [ 303, add_query_arg( 'ulozeno', '1', Pneukarnik_Subscriptions::settings_url( self::CUSTOMER ) ) ] ], $redirects->list );
-		$this->assertSame(
-			[
-				'consent_source' => 'potvrzeni',
-				'consented_at'   => '2027-02-02 18:30:00',
-			],
-			$this->row( self::CUSTOMER, Pneukarnik_Subscriptions::REMINDER, 'consent_source, consented_at' )
-		);
-		$this->assertNull( $this->row( self::CUSTOMER, Pneukarnik_Subscriptions::PROMOTIONS, 'id' ), 'Akce nezaškrtl' );
+		$this->assertSame( [ [ 303, add_query_arg( 'souhlas', '1', Pneukarnik_Subscriptions::settings_url( self::CUSTOMER ) ) ] ], $redirects->list );
+		foreach ( Pneukarnik_Subscriptions::KINDS as $purpose ) {
+			$this->assertSame(
+				[
+					'consent_source' => 'potvrzeni',
+					'consented_at'   => '2027-02-02 18:30:00',
+				],
+				$this->row( self::CUSTOMER, $purpose, 'consent_source, consented_at' ),
+				$purpose
+			);
+		}
 		$this->mails = [];
 		$this->run_reminders_at( self::BEFORE_SPRING );
 		$this->assertSame( [ [ self::CUSTOMER ] ], array_column( $this->mails, 'to' ), 'Termín 20. 3. ještě neproběhl' );
 	}
 
-	public function test_settings_page_after_saving_shows_the_choice(): void {
+	public function test_settings_page_after_yes_send_says_thanks(): void {
 		$this->book_by_provozovatel( self::CUSTOMER );
-		$this->save_offer(
-			$this->offer_token_from( $this->mail_to( self::CUSTOMER ) ),
-			[
-				'reminder'   => '1',
-				'promotions' => '1',
-			]
-		);
+		$this->press_yes( $this->offer_token_from( $this->mail_to( self::CUSTOMER ) ) );
 
-		$this->go_to( add_query_arg( 'ulozeno', '1', Pneukarnik_Subscriptions::settings_url( self::CUSTOMER ) ) );
+		$this->go_to( add_query_arg( 'souhlas', '1', Pneukarnik_Subscriptions::settings_url( self::CUSTOMER ) ) );
 		$page = Pneukarnik_Booking_Pages::email_settings();
 
-		$this->assertSame( [ 'settings', 'saved' ], [ $page['state'], $page['notice'] ] );
+		$this->assertSame( [ 'settings', 'consented' ], [ $page['state'], $page['notice'] ] );
 		$this->assertSame( [ true, true ], [ $page['settings']['reminder'], $page['settings']['promotions'] ] );
-	}
-
-	public function test_saving_with_nothing_ticked_writes_nothing_and_stays_on_the_page(): void {
-		$this->book_by_provozovatel( self::CUSTOMER );
-		$token = $this->offer_token_from( $this->mail_to( self::CUSTOMER ) );
-
-		$redirects = $this->save_offer( $token, [] );
-
-		$this->assertSame( [ [ 303, home_url( '/odhlaseni/?s=' . $token ) ] ], $redirects->list );
-		$this->assertSame( '', Pneukarnik_Subscriptions::settings_url( self::CUSTOMER ) );
 	}
 
 	public function test_opening_the_link_only_asks_and_writes_nothing(): void {
@@ -128,13 +114,13 @@ class OfferConsentTest extends Pneukarnik_REST_Test_Case {
 				'2027-02-10',
 				sprintf( '%02d:00', 9 + $i ),
 				[
-					'email'            => $email,
-					'consent_reminder' => $consent,
+					'email'          => $email,
+					'consent_offers' => $consent,
 				]
 			);
 			$this->assertSame( 201, $response->get_status(), (string) wp_json_encode( $response->get_data() ) );
 
-			$this->assertStringNotContainsString( 'Vybrat e‑maily', $this->mail_to( $email )['text'] );
+			$this->assertStringNotContainsString( 'Ano, posílejte', $this->mail_to( $email )['text'] );
 		}
 	}
 
@@ -168,7 +154,7 @@ class OfferConsentTest extends Pneukarnik_REST_Test_Case {
 		$this->book_by_provozovatel( 'Jan@Example.test', '2027-02-11' );
 
 		$this->assertCount( 1, $this->mails );
-		$this->assertStringNotContainsString( 'Vybrat e‑maily', $this->mails[0]['text'] );
+		$this->assertStringNotContainsString( 'Ano, posílejte', $this->mails[0]['text'] );
 	}
 
 	public function test_cancellation_email_has_no_offer(): void {
@@ -178,7 +164,7 @@ class OfferConsentTest extends Pneukarnik_REST_Test_Case {
 
 		$this->assertSame( 200, $this->cancel( $token )->get_status() );
 
-		$this->assertStringNotContainsString( 'Vybrat e‑maily', $this->mail_to( self::CUSTOMER )['text'] );
+		$this->assertStringNotContainsString( 'Ano, posílejte', $this->mail_to( self::CUSTOMER )['text'] );
 	}
 
 	/**
@@ -199,7 +185,7 @@ class OfferConsentTest extends Pneukarnik_REST_Test_Case {
 		$booking = $this->book_by_provozovatel( self::CUSTOMER );
 		$token   = str_replace( '{id}', (string) $booking['id'], $token );
 
-		$redirects = $this->save_offer( $token, [ 'reminder' => '1' ] );
+		$redirects = $this->press_yes( $token );
 
 		$this->assertSame( [ [ 303, home_url( '/odhlaseni/?s=' . $token ) ] ], $redirects->list );
 		$this->assertSame( '', Pneukarnik_Subscriptions::settings_url( self::CUSTOMER ) );
@@ -212,7 +198,7 @@ class OfferConsentTest extends Pneukarnik_REST_Test_Case {
 		[ , $signature ] = explode( '.', $this->offer_token_from( $this->mail_to( self::CUSTOMER ) ) );
 		$eva             = $this->book_by_provozovatel( 'eva@example.test', '2027-02-11' );
 
-		$this->save_offer( $eva['id'] . '.' . $signature, [ 'reminder' => '1' ] );
+		$this->press_yes( $eva['id'] . '.' . $signature );
 
 		$this->assertSame( '', Pneukarnik_Subscriptions::settings_url( 'eva@example.test' ) );
 	}
@@ -223,8 +209,8 @@ class OfferConsentTest extends Pneukarnik_REST_Test_Case {
 			'2027-02-10',
 			'09:00',
 			[
-				'email'            => self::CUSTOMER,
-				'consent_reminder' => true,
+				'email'          => self::CUSTOMER,
+				'consent_offers' => true,
 			]
 		);
 		$this->assertSame( 201, $response->get_status(), (string) wp_json_encode( $response->get_data() ) );
@@ -244,16 +230,15 @@ class OfferConsentTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	/**
-	 * Uložení zaškrtnutých políček na stránce z odkazu.
+	 * Stisk „Ano, posílejte“ na stránce z odkazu.
 	 *
-	 * @param array<string,string> $ticked
 	 * @return object{list:list<array{0:int,1:string}>}
 	 */
-	private function save_offer( string $token, array $ticked ): object {
+	private function press_yes( string $token ): object {
 		$redirects = $this->catch_redirects();
 		$this->go_to( home_url( '/odhlaseni/?s=' . $token ) );
 		$_SERVER['REQUEST_METHOD'] = 'POST';
-		$_POST                     = [ 'volba' => 'ulozit' ] + $ticked;
+		$_POST                     = [ 'volba' => 'ano' ];
 		Pneukarnik_Booking_Pages::handle_offer_form();
 		unset( $_SERVER['REQUEST_METHOD'] );
 		$_POST = [];
@@ -264,7 +249,7 @@ class OfferConsentTest extends Pneukarnik_REST_Test_Case {
 	 * @param array{html:string} $mail
 	 */
 	private function offer_token_from( array $mail ): string {
-		$this->assertSame( 1, preg_match( '~"http[^"]*/odhlaseni/\?s=([0-9]+\.[0-9a-f]{64})"~', $mail['html'], $m ), 'Odkaz na souhlasy' );
+		$this->assertSame( 1, preg_match( '~"http[^"]*/odhlaseni/\?s=([0-9]+\.[0-9a-f]{64})"~', $mail['html'], $m ), 'Odkaz „Ano, posílejte“' );
 		return $m[1];
 	}
 

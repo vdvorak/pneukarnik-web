@@ -93,7 +93,7 @@ E‑mail o jedné nebo více platných Akcích, který Provozovatel pošle Záka
 _Avoid_: newsletter, kampaň, hromadný e‑mail
 
 **Nabídky a připomínky**:
-E‑maily, které Zákazník dostává mimo své Rezervace: Připomínka přezutí a Rozesílka. Chodí jen se souhlasem Zákazníka, každý druh zvlášť: zaškrtnutím políčka v online rezervaci, nebo odkazem z potvrzení Rezervace zadané Provozovatelem (ADR 0004). Odvolat je jde kdykoli odkazem z každého z těchto e‑mailů, všechny nebo jen některé druhy. E‑maily k Rezervaci (potvrzení, Zrušení, Připomínka Termínu) mezi ně nepatří a odmítnout nejdou.
+E‑maily, které Zákazník dostává mimo své Rezervace: Připomínka přezutí a Rozesílka. Chodí jen se souhlasem Zákazníka, jedním pro oba druhy: zaškrtnutím políčka v online rezervaci, nebo odkazem „Ano, posílejte“ z potvrzení Rezervace zadané Provozovatelem (ADR 0004). Odvolat je jde kdykoli odkazem z každého z těchto e‑mailů, všechny nebo jen některé druhy. E‑maily k Rezervaci (potvrzení, Zrušení, Připomínka Termínu) mezi ně nepatří a odmítnout nejdou.
 _Avoid_: newsletter, odběr, marketingové e‑maily, sdělení (tím je Oznámení)
 
 ## Relationships

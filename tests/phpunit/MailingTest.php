@@ -614,7 +614,7 @@ class MailingTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	/**
-	 * Online Rezervace se zaškrtnutým souhlasem s Akcemi, nebo bez něj.
+	 * Online Rezervace se zaškrtnutým souhlasem s Nabídkami a připomínkami, nebo bez něj.
 	 */
 	private function book_online( string $email, string $date, string $time = '09:00', bool $consent = true, ?int $service = null ): void {
 		$response = $this->book(
@@ -622,8 +622,8 @@ class MailingTest extends Pneukarnik_REST_Test_Case {
 			$date,
 			$time,
 			[
-				'email'              => $email,
-				'consent_promotions' => $consent,
+				'email'          => $email,
+				'consent_offers' => $consent,
 			]
 		);
 		$this->assertSame( 201, $response->get_status(), (string) wp_json_encode( $response->get_data() ) );

@@ -241,14 +241,10 @@ get_header();
 								</span>
 							</div>
 							<span class="pole__chyba rezervace__chyba-souhlasu" id="chyba-consent_gdpr"></span>
-							<?php // Nabídky a připomínky (ADR 0004): každý druh zvlášť, jen se zaškrtnutím. ?>
+							<?php // Nabídky a připomínky (ADR 0004): jen se zaškrtnutím, odvolat jde každý druh zvlášť v e‑mailu. ?>
 							<div class="zaskrtavaci">
-								<input type="checkbox" name="consent_reminder" value="1" id="rez-consent_reminder">
-								<label for="rez-consent_reminder"><?php esc_html_e( 'Připomenout mi e‑mailem přezutí před každou sezónou.', 'pneukarnik' ); ?></label>
-							</div>
-							<div class="zaskrtavaci">
-								<input type="checkbox" name="consent_promotions" value="1" id="rez-consent_promotions">
-								<label for="rez-consent_promotions"><?php esc_html_e( 'Posílat mi e‑mailem vaše akce.', 'pneukarnik' ); ?></label>
+								<input type="checkbox" name="consent_offers" value="1" id="rez-consent_offers">
+								<label for="rez-consent_offers"><?php esc_html_e( 'Posílat mi e‑mailem připomínku přezutí před sezónou a vaše akce.', 'pneukarnik' ); ?></label>
 							</div>
 						</div>
 					</section>
