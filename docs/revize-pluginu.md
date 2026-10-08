@@ -25,7 +25,7 @@ Pojmy viz `CONTEXT.md`.
 | `/sitemap-slugs` | Pozůstatek headless webu. Sitemapu řeší WordPress a ticket #18. |
 | `/settings` + sekce „Obsah webu“ (hero, O nás) v Nastavení | Pozůstatek headless webu. Šablona vykresluje obsah serverově (ADR 0001). |
 | `/contact` + šablony e‑mailů kontaktního formuláře | Kontaktní formulář není v zadání. |
-| Připomínka den před Termínem (cron + šablona) | Není v zadání. Zadání má jen Připomínku přezutí (#19). Pokud ji Provozovatel bude chtít, vrátí se ze starého repa. |
+| Připomínka den před Termínem (cron + šablona) | Není v zadání. Zadání má jen Připomínku přezutí (#19). Pokud ji Provozovatel bude chtít, vrátí se ze starého repa. Vrátila se jako Připomínka Termínu (#42). |
 | Staré testy | Volají interní třídy. Nové testy jdou přes REST (spec #1, Testing Decisions). Ve starém repu zůstávají jako reference: souběh, cancel token, zachytávání e‑mailů přes `pre_wp_mail`. |
 
 ## Co se změnilo při převzetí

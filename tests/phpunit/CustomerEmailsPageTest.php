@@ -1,7 +1,7 @@
 <?php
 /**
- * Stránka administrace E‑maily Zákazníkům: kolika Zákazníkům může který druh Nabídek a připomínek
- * dnes přijít, Připomínka přezutí přesunutá z Nastavení, oprávnění jako Nastavení.
+ * Stránka administrace E‑maily Zákazníkům: Připomínka Termínu, kolika Zákazníkům může který druh
+ * Nabídek a připomínek dnes přijít, Připomínka přezutí přesunutá z Nastavení, oprávnění jako Nastavení.
  * Ukládání a zkušební odeslání z formuláře ověřuje Playwright (emaily-zakaznikum.spec.ts).
  */
 
@@ -57,7 +57,21 @@ class CustomerEmailsPageTest extends Pneukarnik_REST_Test_Case {
 		$this->assertStringContainsString( 'Vlastní úvod Připomínky</textarea>', $page );
 		$this->assertStringContainsString( 'Jarní Sezóna začíná 15. 3. 2027, Připomínky se začnou posílat 1. 3. 2027.', $page );
 		$this->assertStringContainsString( 'Počet příjemců: 1', $page );
-		$this->assertStringContainsString( 'Po uložení poslat zkušební Připomínku na servis@example.test', $page );
+		$this->assertStringContainsString( 'Po uložení poslat zkušební Připomínku přezutí na servis@example.test', $page );
+	}
+
+	public function test_page_has_the_termin_reminder_switch_and_hour(): void {
+		$page = $this->render( false );
+
+		$this->assertMatchesRegularExpression( '/name="termin_reminder_enabled" value="1"\s+checked/', $page );
+		$this->assertMatchesRegularExpression( '/<option value="16"\s+selected/', $page );
+		$this->assertStringContainsString( 'Po uložení poslat zkušební Připomínku Termínu na servis@example.test', $page );
+
+		Pneukarnik_Termin_Reminder::save( false, 9 );
+		$page = $this->render( false );
+
+		$this->assertDoesNotMatchRegularExpression( '/name="termin_reminder_enabled" value="1"\s+checked/', $page );
+		$this->assertMatchesRegularExpression( '/<option value="9"\s+selected/', $page );
 	}
 
 	public function test_reminder_uses_the_intro_from_the_page(): void {

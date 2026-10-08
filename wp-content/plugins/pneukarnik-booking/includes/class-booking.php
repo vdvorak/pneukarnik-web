@@ -183,7 +183,7 @@ class Pneukarnik_Booking {
 		$time_end = Pneukarnik_Slot_Engine::minutes_to_hhmm( Pneukarnik_Slot_Engine::hhmm_to_minutes( $input['time'] ) + $duration );
 		$result   = Pneukarnik_DB::with_day_lock(
 			$input['date'],
-			static fn(): array => self::move_if_free( $id, $input, $services, $time_end )
+			static fn(): array => self::move_if_free( $id, $input, $services, $time_end, $input['date'] !== $current['date'] )
 		);
 		if ( null === $result ) {
 			return self::error( 'booking.busy', 503 );
@@ -637,13 +637,14 @@ class Pneukarnik_Booking {
 
 	/**
 	 * Přesun Rezervace na jiný Termín nebo změna jejích Služeb: se zámkem dne a v transakci
-	 * ověřit, že úsek nepřekrývá jinou potvrzenou Rezervaci, a zapsat.
+	 * ověřit, že úsek nepřekrývá jinou potvrzenou Rezervaci, a zapsat. Na jiný den se pošle
+	 * Připomínka Termínu znovu, k novému Termínu.
 	 *
 	 * @param array{service_ids:list<int>,date:string,time:string,name:string,company:string,phone:string,email:string,plate:string,vehicle:string,note:string,leasing:bool,leasing_company:string,stored_wheels:bool,consent_gdpr:bool,refuse_offers:bool} $input
 	 * @param list<Pneukarnik_Service>|null $services Nové Služby, null = beze změny.
 	 * @return array{ok:true}|array{ok:false,code:string,status:int}
 	 */
-	private static function move_if_free( int $id, array $input, ?array $services, string $time_end ): array {
+	private static function move_if_free( int $id, array $input, ?array $services, string $time_end, bool $new_day ): array {
 		global $wpdb;
 		Pneukarnik_DB::begin();
 		try {
@@ -657,7 +658,7 @@ class Pneukarnik_Booking {
 					'booking_date' => $input['date'],
 					'time_start'   => $input['time'],
 					'time_end'     => $time_end,
-				] + self::contact_columns( $input ),
+				] + ( $new_day ? [ 'reminder_sent' => 0 ] : [] ) + self::contact_columns( $input ),
 				[
 					'id'     => $id,
 					'status' => self::STATUS_CONFIRMED,

@@ -68,6 +68,7 @@ První verzi textů napíše vývojář, Provozovatel je zkontroluje.
   - **Připomínka přezutí** před každou Sezónou s odkazem, který předvyplní údaje a sezónní Služby a uskladněná kola z minulé sezónní Rezervace (Termín vybírá Zákazník sám).
 - **Zrušení** odkazem z e‑mailu do Lhůty zrušení (nastavitelná, default 24 h). Po lhůtě se zobrazí telefon. Změna Termínu = Zrušení + nová Rezervace s předvyplněnými údaji.
 - Potvrzení e‑mailem zákazníkovi. Upozornění Provozovateli podle jeho odpovědi.
+- **Připomínka Termínu** e‑mailem den před Termínem v nastavenou hodinu (default 16:00), ke každé Rezervaci s e‑mailem i zadané Provozovatelem, ne k vytvořené méně než 24 h předem. Odkaz na Zrušení, po Lhůtě zrušení telefon. Provozovatel ji vypíná na stránce E‑maily Zákazníkům.
 - **Rezervace do kalendáře** Zákazníka: soubor `.ics` s jednou událostí (tlačítko „Přidat do kalendáře“ na stránce Potvrzení a příloha potvrzovacího e‑mailu). Bez jména, kontaktu a poznámky Zákazníka.
 
 ## Administrace rezervací

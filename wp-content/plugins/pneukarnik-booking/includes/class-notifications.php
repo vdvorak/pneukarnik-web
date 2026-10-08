@@ -6,8 +6,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * E‑maily k Rezervaci: Zákazníkovi potvrzení a Zrušení, Provozovateli nová a zrušená
- * online Rezervace (zapínatelné). Šablony jsou tady, Provozovatel upravuje jen klíčové
+ * E‑maily k Rezervaci: Zákazníkovi potvrzení, Zrušení a Připomínka Termínu (kdy ji poslat řeší
+ * Pneukarnik_Termin_Reminder), Provozovateli nová a zrušená online Rezervace (zapínatelné). Šablony jsou tady, Provozovatel upravuje jen klíčové
  * texty (úvod, podpis, co si vzít s sebou). Chyba odeslání Rezervaci nevrací.
  */
 final class Pneukarnik_Notifications {
@@ -92,6 +92,83 @@ final class Pneukarnik_Notifications {
 		if ( $by_customer && self::enabled( self::OPTION_NOTIFY_CANCELLED ) ) {
 			self::provozovatel_cancelled( $booking )->send( self::provozovatel_email(), $booking['customer_email'] );
 		}
+	}
+
+	/**
+	 * Připomínka Termínu den před ním. Odkaz na Zrušení je podepsaný (token z potvrzení se neukládá).
+	 *
+	 * @param array<string,mixed> $booking Rezervace (Pneukarnik_Booking::get_by_id).
+	 * @return bool Jestli e‑mail odešel.
+	 */
+	public static function on_termin_reminder( array $booking ): bool {
+		return self::termin_reminder( $booking, Pneukarnik_Cancellation::signed_url( (int) $booking['id'] ) )
+			->send( $booking['customer_email'], self::provozovatel_email() );
+	}
+
+	/**
+	 * Zkušební Připomínka Termínu s ukázkovou Rezervací na zítra, pro Provozovatele.
+	 *
+	 * @return bool Jestli e‑mail odešel.
+	 */
+	public static function termin_reminder_test( string $to ): bool {
+		$sample = [
+			'id'              => 0,
+			'services'        => [
+				[
+					'service_id' => 0,
+					'name'       => __( 'Přezutí', 'pneukarnik-booking' ),
+				],
+			],
+			'customer_plate'  => '1AB 2345',
+			'vehicle'         => null,
+			'leasing'         => false,
+			'leasing_company' => null,
+			'stored_wheels'   => false,
+			'booking_date'    => Pneukarnik_Clock::today()->modify( '+1 day' )->format( 'Y-m-d' ),
+			'time_start'      => '09:00',
+			'time_end'        => '10:00',
+		];
+		return self::termin_reminder( $sample, home_url( '/rezervace/zruseni/' ), __( '[Zkouška] ', 'pneukarnik-booking' ) )
+			->paragraph( __( 'Toto je zkušební Připomínka Termínu pro Provozovatele s ukázkovou Rezervací. Odkaz na Zrušení v ní nic nezruší.', 'pneukarnik-booking' ) )
+			->send( $to );
+	}
+
+	/**
+	 * @param array<string,mixed> $booking
+	 * @param string              $cancel_url Prázdný = bez odkazu na Zrušení.
+	 */
+	private static function termin_reminder( array $booking, string $cancel_url, string $subject_prefix = '' ): Pneukarnik_Email {
+		$deadline = Pneukarnik_Cancellation::deadline( $booking );
+		$phone    = pneukarnik_phone();
+		$time     = self::time( $booking['time_start'] );
+
+		/* translators: %s: čas Termínu, např. 9:00 */
+		$email = ( new Pneukarnik_Email( $subject_prefix . sprintf( __( 'Připomínka: zítra v %s vás čekáme', 'pneukarnik-booking' ), $time ) ) )
+			->heading( __( 'Zítra vás čekáme', 'pneukarnik-booking' ) )
+			/* translators: %s: čas Termínu, např. 9:00 */
+			->paragraph( sprintf( __( "Dobrý den,\npřipomínáme vaši rezervaci zítra v %s.", 'pneukarnik-booking' ), $time ) )
+			->details(
+				self::visit( $booking ) + [
+					__( 'Adresa', 'pneukarnik-booking' ) => Pneukarnik_Contact::address(),
+				]
+			)
+			->items( __( 'Co si vzít s sebou', 'pneukarnik-booking' ), self::bring( $booking ) );
+		if ( '' !== $cancel_url && $deadline >= Pneukarnik_Clock::now() ) {
+			$email
+				/* translators: %s: den a čas, do kdy jde Rezervaci zrušit */
+				->paragraph( sprintf( __( 'Když nemůžete přijet, zrušte prosím rezervaci nejpozději %s.', 'pneukarnik-booking' ), $deadline->format( 'j. n. Y \v G:i' ) ) )
+				->button( __( 'Zrušit rezervaci', 'pneukarnik-booking' ), $cancel_url, Pneukarnik_Email::BUTTON_DANGER )
+				/* translators: %s: telefon Provozovatele */
+				->paragraph( '' !== $phone ? sprintf( __( 'Potřebujete něco změnit? Zavolejte nám na %s.', 'pneukarnik-booking' ), $phone ) : '' );
+		} else {
+			$email->paragraph(
+				'' !== $phone
+					/* translators: %s: telefon Provozovatele */
+					? sprintf( __( 'Když nemůžete přijet nebo potřebujete něco změnit, zavolejte nám prosím na %s.', 'pneukarnik-booking' ), $phone )
+					: __( 'Rezervaci už nejde zrušit online.', 'pneukarnik-booking' )
+			);
+		}
+		return $email->signature( self::text( 'signature' ) . "\n" . self::contact() );
 	}
 
 	/**

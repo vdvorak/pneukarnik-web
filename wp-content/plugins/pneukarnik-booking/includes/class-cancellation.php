@@ -8,7 +8,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Zrušení Rezervace (viz CONTEXT.md).
  *
- * Zákazník: odkazem z e‑mailu s tokenem (v DB jen jeho hash). Odkaz platí do Termínu a zrušit
+ * Zákazník: odkazem z e‑mailu s tokenem (v DB jen jeho hash). Připomínka Termínu, odeslaná až
+ * později, má místo tokenu id Rezervace podepsané spolu s hashem tokenu (signed_url), takže
+ * odkaz z potvrzení platí dál a anonymizace oba odkazy zneplatní. Odkaz platí do Termínu a zrušit
  * jde nejpozději ve Lhůtě zrušení před Termínem. Zrušit jde jen jednou, opakovaný odkaz pak
  * hlásí „už zrušeno“. Provozovatel: kdykoli, bez Lhůty.
  * Zrušená Rezervace hned přestane zabírat dílnu (Termíny počítají jen potvrzené).
@@ -32,6 +34,15 @@ final class Pneukarnik_Cancellation {
 
 	public static function url( string $token ): string {
 		return add_query_arg( 'r', $token, home_url( '/rezervace/zruseni/' ) );
+	}
+
+	/**
+	 * Odkaz na Zrušení bez tokenu z potvrzení (ten se neukládá), pro Připomínku Termínu.
+	 * Prázdný, když Rezervace neexistuje nebo je anonymizovaná.
+	 */
+	public static function signed_url( int $booking_id ): string {
+		$hash = self::token_hash( $booking_id );
+		return null === $hash ? '' : self::url( self::signed_token( $booking_id, $hash ) );
 	}
 
 	/**
@@ -169,6 +180,10 @@ final class Pneukarnik_Cancellation {
 	 * @return array<string,mixed>|null
 	 */
 	private static function find( mixed $token ): ?array {
+		if ( is_string( $token ) && preg_match( '/^([1-9][0-9]*)-[0-9a-f]{64}$/', $token, $m ) ) {
+			$hash = self::token_hash( (int) $m[1] );
+			return null !== $hash && hash_equals( self::signed_token( (int) $m[1], $hash ), $token ) ? Pneukarnik_Booking::get_by_id( (int) $m[1] ) : null;
+		}
 		if ( ! is_string( $token ) || ! preg_match( '/^[0-9a-f]{64}$/', $token ) ) {
 			return null;
 		}
@@ -181,6 +196,19 @@ final class Pneukarnik_Cancellation {
 			)
 		);
 		return null === $id ? null : Pneukarnik_Booking::get_by_id( (int) $id );
+	}
+
+	/**
+	 * Pomlčka, ne tečka: stránka Zrušení čte token přes sanitize_key.
+	 */
+	private static function signed_token( int $booking_id, string $token_hash ): string {
+		return $booking_id . '-' . hash_hmac( 'sha256', 'cancel|' . $booking_id . '|' . $token_hash, wp_salt( 'pneukarnik' ) );
+	}
+
+	private static function token_hash( int $booking_id ): ?string {
+		global $wpdb;
+		$hash = $wpdb->get_var( $wpdb->prepare( 'SELECT cancel_token_hash FROM %i WHERE id = %d', Pneukarnik_DB::bookings_table(), $booking_id ) );
+		return null === $hash || '' === $hash ? null : (string) $hash;
 	}
 
 	/**
