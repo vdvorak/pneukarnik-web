@@ -619,11 +619,9 @@ a.card--muted:hover,a.card--tint:hover{box-shadow:var(--shadow-tile-hover)}
 .zaskrtavaci input{flex:none;width:20px;height:20px;margin:0;accent-color:var(--brand-primary)}
 .zaskrtavaci label{cursor:pointer}
 .zaskrtavaci a{font-weight:700}
-/* „i“ hned za textem otevře bublinu (popover) pod checkboxem; bez anchor positioning je bublina uprostřed obrazovky. */
-.zaskrtavaci__info{position:relative;display:inline-grid;place-items:center;width:20px;height:20px;margin-left:2px;padding:0;border:1.5px solid currentColor;border-radius:50%;background:#fff;color:var(--brand-primary);vertical-align:-4px;cursor:pointer}
-.zaskrtavaci__info::before{content:"";position:absolute;inset:-12px}
-.zaskrtavaci__info:hover,.zaskrtavaci__info:has(+ :popover-open){background:var(--brand-primary);color:#fff;border-color:var(--brand-primary)}
-.zaskrtavaci__info svg{width:14px;height:14px}
+/* „i“ jako na kartě Služby hned za textem otevře bublinu (popover) pod checkboxem; bez anchor positioning je bublina uprostřed obrazovky. */
+.zaskrtavaci__info{margin:-6px 0 -6px 2px;padding:0;border:0;vertical-align:middle;cursor:pointer}
+.zaskrtavaci__info:hover,.zaskrtavaci__info:has(+ :popover-open){background:var(--brand-primary);color:var(--text-on-primary)}
 .zaskrtavaci:has(.zaskrtavaci__info){anchor-name:--zaskrtavaci-info}
 .zaskrtavaci__bublina{width:min(360px,calc(100vw - 32px));margin:auto;padding:14px 16px;border:1px solid var(--border-input);border-radius:var(--radius-sm);background:var(--surface-card);color:var(--text-body);box-shadow:var(--shadow-float);font-size:14px;line-height:1.45}
 @supports (anchor-name:--a){.zaskrtavaci__bublina{position-anchor:--zaskrtavaci-info;inset:auto;top:anchor(bottom);left:anchor(left);width:min(360px,anchor-size(width));margin:8px 0;position-try-fallbacks:flip-block}}

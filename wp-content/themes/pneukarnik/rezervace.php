@@ -246,7 +246,7 @@ get_header();
 								<input type="checkbox" name="refuse_offers" value="1" id="rez-refuse_offers" aria-describedby="napoveda-refuse_offers">
 								<div>
 									<label for="rez-refuse_offers"><?php esc_html_e( 'Neposílat nabídky a připomínky.', 'pneukarnik' ); ?></label>
-									<button type="button" class="zaskrtavaci__info" popovertarget="napoveda-refuse_offers"><?php echo pneukarnik_icon( 'info' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SVG ze šablony. ?><span class="screen-reader-text"><?php esc_html_e( 'Co posíláme', 'pneukarnik' ); ?></span></button>
+									<button type="button" class="ikona-info zaskrtavaci__info" popovertarget="napoveda-refuse_offers"><?php echo pneukarnik_icon( 'info' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SVG ze šablony. ?><span class="screen-reader-text"><?php esc_html_e( 'Co posíláme', 'pneukarnik' ); ?></span></button>
 									<div class="zaskrtavaci__bublina" id="napoveda-refuse_offers" popover>
 										<p><?php esc_html_e( 'Když políčko nezaškrtnete, pošleme vám po vaší návštěvě e‑mailem:', 'pneukarnik' ); ?></p>
 										<ul>
