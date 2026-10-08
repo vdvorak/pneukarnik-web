@@ -264,7 +264,7 @@ class LegacyImportTest extends Pneukarnik_REST_Test_Case {
 		global $wpdb;
 		$this->assertSame(
 			[ '2022-04-20 10:00:00', 'stary-web' ],
-			array_values( (array) $wpdb->get_row( $wpdb->prepare( 'SELECT consented_at, source FROM %i WHERE email = %s', Pneukarnik_DB::subscriptions_table(), 'jan@example.test' ), ARRAY_A ) ),
+			array_values( (array) $wpdb->get_row( $wpdb->prepare( 'SELECT consented_at, consent_source FROM %i WHERE email = %s', Pneukarnik_DB::subscriptions_table(), 'jan@example.test' ), ARRAY_A ) ),
 			'souhlas platí od první Rezervace se souhlasem'
 		);
 	}

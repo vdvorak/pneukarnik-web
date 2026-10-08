@@ -51,7 +51,7 @@ class Pneukarnik_Admin_Legacy_Import {
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Převod ze starého webu', 'pneukarnik-booking' ); ?></h1>
-			<p><?php esc_html_e( 'Převede Služby ze starého webu jako koncepty, všechny budoucí Rezervace a minulé do 1 roku a souhlasy „informace o slevách“ (jen s původním účelem, ne jako souhlas s Připomínkou přezutí). Zrušené Rezervace se nepřevádějí. Převod jde spustit opakovaně: co už převedené je, zůstane, jak je.', 'pneukarnik-booking' ); ?></p>
+			<p><?php esc_html_e( 'Převede Služby ze starého webu jako koncepty, všechny budoucí Rezervace a minulé do 1 roku a souhlasy „informace o slevách“ (jen s původním účelem, tedy pro Akce, ne pro Připomínku přezutí). Zrušené Rezervace se nepřevádějí. Převod jde spustit opakovaně: co už převedené je, zůstane, jak je.', 'pneukarnik-booking' ); ?></p>
 
 			<?php if ( isset( $_GET['error'] ) ) : ?>
 				<div class="notice notice-error"><p><?php esc_html_e( 'Stará tabulka Rezervací v databázi není.', 'pneukarnik-booking' ); ?></p></div>

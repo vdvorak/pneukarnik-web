@@ -71,10 +71,17 @@ test('Zákazník si z detailu Služby zarezervuje Termín, uvidí potvrzení a p
 	await page.getByLabel('SPZ').fill(customer.plate);
 	await page.getByLabel('Značka a model').fill('Škoda Fabia');
 	await page.getByLabel(/Souhlasím se zpracováním/).check();
-	await page.getByLabel(/Připomeňte mi před každou sezónou/).check();
+	// Nabídky a připomínky chodí, dokud je Zákazník neodmítne, „i“ vypíše, co chodí.
+	const refuse = page.getByLabel(/Neposílat nabídky a připomínky/);
+	await expect(refuse).not.toBeChecked();
+	await expect(page.getByText(/prosbu o hodnocení na Googlu/)).toBeHidden();
+	await page.getByText('Co posíláme').click();
+	await expect(page.getByText(/Připomínku přezutí před každou sezónou/)).toBeVisible();
+	await expect(page.getByText(/prosbu o hodnocení na Googlu/)).toBeVisible();
+	await refuse.check();
 	const [sent] = await Promise.all([page.waitForRequest(/\/pneukarnik\/v1\/bookings$/), page.getByRole('button', { name: 'Rezervovat' }).click()]);
 
-	expect(sent.postDataJSON()).toMatchObject({ consent_gdpr: true, consent_reminder: true });
+	expect(sent.postDataJSON()).toMatchObject({ consent_gdpr: true, refuse_offers: true });
 	await expect(page).toHaveURL(/\/rezervace\/potvrzeni\/\?r=[0-9a-f]{64}$/);
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Rezervace přijata');
 	await expect(page.locator('dd').filter({ hasText: serviceTitle })).toBeVisible();

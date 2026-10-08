@@ -66,7 +66,8 @@ class Pneukarnik_Booking {
 	 * Vstup: service_ids (seznam 1..n), date (Y-m-d), time (HH:MM), name, phone, email, plate,
 	 * volitelně company, vehicle, note, leasing + leasing_company (povinná s leasingem),
 	 * stored_wheels (z webu se uloží, jen když se na ně ptá některá ze Služeb), consent_gdpr (povinný jen z webu),
-	 * consent_reminder (nepovinný souhlas s Připomínkou přezutí, jen z webu, platí pro e‑mail Rezervace).
+	 * refuse_offers (zaškrtnuté „Neposílat Nabídky a připomínky“, jen z webu, platí pro e‑mail Rezervace,
+	 * nezaškrtnuté založí nárok, viz Pneukarnik_Subscriptions).
 	 * Sezóna a leasingové datum platí jen pro online Rezervace. Provozovatel: viz popis třídy.
 	 *
 	 * @param array<mixed> $data Neověřený vstup.
@@ -118,8 +119,8 @@ class Pneukarnik_Booking {
 		if ( null === $booking ) {
 			return self::error( 'booking.internal_error', 500 );
 		}
-		if ( $input['consent_reminder'] ) {
-			Pneukarnik_Subscriptions::consent( $booking['customer_email'], Pneukarnik_Subscriptions::REMINDER, $source );
+		if ( $online ) {
+			Pneukarnik_Subscriptions::after_online_booking( $booking['customer_email'], $input['refuse_offers'] );
 		}
 		Pneukarnik_Notifications::on_booking_created( $booking, $result['cancel_token'] );
 
@@ -477,7 +478,7 @@ class Pneukarnik_Booking {
 	}
 
 	/**
-	 * @param array{service_ids:list<int>,date:string,time:string,name:string,company:string,phone:string,email:string,plate:string,vehicle:string,note:string,leasing:bool,leasing_company:string,stored_wheels:bool,consent_gdpr:bool,consent_reminder:bool} $input
+	 * @param array{service_ids:list<int>,date:string,time:string,name:string,company:string,phone:string,email:string,plate:string,vehicle:string,note:string,leasing:bool,leasing_company:string,stored_wheels:bool,consent_gdpr:bool,refuse_offers:bool} $input
 	 * @param list<Pneukarnik_Service> $services
 	 * @return array{ok:true,id:int,cancel_token:string,confirmation_token:string}|array{ok:false,code:string,status:int}
 	 */
@@ -494,7 +495,7 @@ class Pneukarnik_Booking {
 	/**
 	 * Část insert_if_free uvnitř otevřené transakce. Vždy ji ukončí (commit nebo rollback).
 	 *
-	 * @param array{service_ids:list<int>,date:string,time:string,name:string,company:string,phone:string,email:string,plate:string,vehicle:string,note:string,leasing:bool,leasing_company:string,stored_wheels:bool,consent_gdpr:bool,consent_reminder:bool} $input
+	 * @param array{service_ids:list<int>,date:string,time:string,name:string,company:string,phone:string,email:string,plate:string,vehicle:string,note:string,leasing:bool,leasing_company:string,stored_wheels:bool,consent_gdpr:bool,refuse_offers:bool} $input
 	 * @param list<Pneukarnik_Service> $services
 	 * @return array{ok:true,id:int,cancel_token:string,confirmation_token:string}|array{ok:false,code:string,status:int}
 	 */
@@ -638,7 +639,7 @@ class Pneukarnik_Booking {
 	 * Přesun Rezervace na jiný Termín nebo změna jejích Služeb: se zámkem dne a v transakci
 	 * ověřit, že úsek nepřekrývá jinou potvrzenou Rezervaci, a zapsat.
 	 *
-	 * @param array{service_ids:list<int>,date:string,time:string,name:string,company:string,phone:string,email:string,plate:string,vehicle:string,note:string,leasing:bool,leasing_company:string,stored_wheels:bool,consent_gdpr:bool,consent_reminder:bool} $input
+	 * @param array{service_ids:list<int>,date:string,time:string,name:string,company:string,phone:string,email:string,plate:string,vehicle:string,note:string,leasing:bool,leasing_company:string,stored_wheels:bool,consent_gdpr:bool,refuse_offers:bool} $input
 	 * @param list<Pneukarnik_Service>|null $services Nové Služby, null = beze změny.
 	 * @return array{ok:true}|array{ok:false,code:string,status:int}
 	 */
@@ -750,7 +751,7 @@ class Pneukarnik_Booking {
 	 * Provozovatel je zadat nemusí.
 	 *
 	 * @param array<mixed> $data
-	 * @return array{0:array{service_ids:list<int>,date:string,time:string,name:string,company:string,phone:string,email:string,plate:string,vehicle:string,note:string,leasing:bool,leasing_company:string,stored_wheels:bool,consent_gdpr:bool,consent_reminder:bool},1:array<string,string>}
+	 * @return array{0:array{service_ids:list<int>,date:string,time:string,name:string,company:string,phone:string,email:string,plate:string,vehicle:string,note:string,leasing:bool,leasing_company:string,stored_wheels:bool,consent_gdpr:bool,refuse_offers:bool},1:array<string,string>}
 	 */
 	private static function validate_fields( array $data, bool $online ): array {
 		$errors = [];
@@ -833,21 +834,21 @@ class Pneukarnik_Booking {
 
 		return [
 			[
-				'service_ids'      => $service_ids,
-				'date'             => $date,
-				'time'             => $time,
-				'name'             => $name,
-				'company'          => $company,
-				'phone'            => $phone,
-				'email'            => $email,
-				'plate'            => $plate,
-				'vehicle'          => $vehicle,
-				'note'             => $note,
-				'leasing'          => $leasing,
-				'leasing_company'  => $leasing_company,
-				'stored_wheels'    => self::checked( $data['stored_wheels'] ?? null ),
-				'consent_gdpr'     => $consent,
-				'consent_reminder' => $online && self::checked( $data['consent_reminder'] ?? null ),
+				'service_ids'     => $service_ids,
+				'date'            => $date,
+				'time'            => $time,
+				'name'            => $name,
+				'company'         => $company,
+				'phone'           => $phone,
+				'email'           => $email,
+				'plate'           => $plate,
+				'vehicle'         => $vehicle,
+				'note'            => $note,
+				'leasing'         => $leasing,
+				'leasing_company' => $leasing_company,
+				'stored_wheels'   => self::checked( $data['stored_wheels'] ?? null ),
+				'consent_gdpr'    => $consent,
+				'refuse_offers'   => $online && self::checked( $data['refuse_offers'] ?? null ),
 			],
 			$errors,
 		];

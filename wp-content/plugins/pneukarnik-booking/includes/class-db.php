@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Pneukarnik_DB {
 
 	private const DB_VERSION_OPTION = 'pneukarnik_db_version';
-	private const DB_VERSION        = '1.12';
+	private const DB_VERSION        = '1.13';
 
 	/** Testy běží uvnitř transakce WP test suite, transakce pluginu pak používají savepoint. */
 	private static bool $savepoints = false;
@@ -37,6 +37,12 @@ class Pneukarnik_DB {
 			$wpdb->query(
 				"UPDATE {$wpdb->prefix}pneukarnik_bookings SET status = UPPER(status)"
 			);
+		}
+
+		// 1.12 → 1.13: Nabídky a připomínky (ADR 0003), source je zdroj souhlasu a vedle něj přibude zdroj
+		// odmítnutí. Přejmenovat před dbDelta, ta by jinak přidala nový sloupec vedle starého.
+		if ( $installed && version_compare( (string) $installed, '1.13', '<' ) ) {
+			self::rename_subscription_source();
 		}
 
 		self::create_tables();
@@ -93,8 +99,33 @@ class Pneukarnik_DB {
 			self::move_social_links_to_contact();
 		}
 
+		// 1.12 → 1.13: odvolání dřívějších souhlasů s Připomínkou přezutí bylo odkazem, starého odběru
+		// starým odkazem. Souhlasy s Připomínkou zůstanou výslovnými souhlasy (jen vývojová data).
+		if ( $installed && version_compare( (string) $installed, '1.13', '<' ) ) {
+			global $wpdb;
+			$wpdb->query(
+				$wpdb->prepare(
+					'UPDATE %i SET
+					   consent_source = IF(consented_at IS NULL, NULL, consent_source),
+					   withdrawn_source = IF(withdrawn_at IS NULL, NULL, IF(purpose = %s, %s, %s))',
+					self::subscriptions_table(),
+					Pneukarnik_Subscriptions::LEGACY,
+					'stary-odkaz',
+					'odkaz'
+				)
+			);
+		}
+
 		update_option( self::DB_VERSION_OPTION, self::DB_VERSION );
 		pneukarnik_ensure_capabilities();
+	}
+
+	private static function rename_subscription_source(): void {
+		global $wpdb;
+		$table = self::subscriptions_table();
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, 'source' ) ) ) {
+			$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i CHANGE COLUMN source consent_source VARCHAR(20) DEFAULT NULL', $table ) );
+		}
 	}
 
 	private static function move_social_links_to_contact(): void {
@@ -268,17 +299,20 @@ class Pneukarnik_DB {
 			KEY idx_service (service_id)
 		) ENGINE=InnoDB $charset_collate;";
 
-		// Souhlasy se zasíláním e‑mailů, jeden řádek na e‑mail a účel (Pneukarnik_Subscriptions).
-		// withdrawn_at = souhlas odvolaný, consented_at NULL = souhlas nikdy nebyl (jen odhlášení starým odkazem),
+		// Vztah e‑mailu k Nabídkám a připomínkám, jeden řádek na e‑mail a druh (Pneukarnik_Subscriptions):
+		// nárok z online Rezervace, výslovný souhlas, odmítnutí nebo odvolání a zapamatovaná návštěva.
 		// last_season = Sezóna poslední odeslané Připomínky (např. 2027-spring).
 		$subscriptions = "CREATE TABLE {$wpdb->prefix}pneukarnik_subscriptions (
-			id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-			email        VARCHAR(255)    NOT NULL,
-			purpose      VARCHAR(20)     NOT NULL,
-			source       VARCHAR(20)     NOT NULL,
-			consented_at DATETIME        DEFAULT NULL,
-			withdrawn_at DATETIME        DEFAULT NULL,
-			last_season  VARCHAR(20)     DEFAULT NULL,
+			id               BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			email            VARCHAR(255)    NOT NULL,
+			purpose          VARCHAR(20)     NOT NULL,
+			consent_source   VARCHAR(20)     DEFAULT NULL,
+			claimed_at       DATETIME        DEFAULT NULL,
+			consented_at     DATETIME        DEFAULT NULL,
+			withdrawn_at     DATETIME        DEFAULT NULL,
+			withdrawn_source VARCHAR(20)     DEFAULT NULL,
+			visited_at       DATETIME        DEFAULT NULL,
+			last_season      VARCHAR(20)     DEFAULT NULL,
 			PRIMARY KEY  (id),
 			UNIQUE KEY uq_email_purpose (email, purpose),
 			KEY idx_purpose (purpose, withdrawn_at)

@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *               Starý klíč pro zrušení neplatí, Rezervace dostane nový token pro Zrušení
  *               a na přání Provozovatele e‑mail s odkazem (jen budoucí).
  *   Souhlasy    „informace o slevách“ (allow_newsletters) jen s původním účelem
- *               (Pneukarnik_Subscriptions::LEGACY), ne jako souhlas s Připomínkou přezutí.
+ *               (Pneukarnik_Subscriptions::LEGACY), tedy pro Akce, ne pro Připomínku přezutí.
  *
  * Převod jde spouštět opakovaně: co už převedené je (Služba podle ID, Rezervace podle hashe
  * starého klíče, souhlas podle e‑mailu), se přeskočí a nikdy nepřepíše.

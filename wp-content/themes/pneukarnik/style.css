@@ -619,6 +619,12 @@ a.card--muted:hover,a.card--tint:hover{box-shadow:var(--shadow-tile-hover)}
 .zaskrtavaci input{flex:none;width:20px;height:20px;margin:0;accent-color:var(--brand-primary)}
 .zaskrtavaci label{cursor:pointer}
 .zaskrtavaci a{font-weight:700}
+.zaskrtavaci__info{margin-top:4px}
+.zaskrtavaci__info summary{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--text-link);cursor:pointer;list-style:none}
+.zaskrtavaci__info summary::-webkit-details-marker{display:none}
+.zaskrtavaci__info .ikona-info{width:22px;height:22px}
+.zaskrtavaci__info p,.zaskrtavaci__info ul{margin:6px 0 0}
+.zaskrtavaci__info ul{padding-left:18px}
 
 /* 1 Služba */
 .rezervace__sluzby{display:flex;flex-direction:column;gap:16px}

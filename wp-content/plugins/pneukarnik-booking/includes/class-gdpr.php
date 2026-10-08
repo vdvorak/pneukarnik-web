@@ -14,6 +14,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * údajů): zmizí jméno, firma, telefon, e‑mail, SPZ, vůz, poznámka, leasingová společnost
  * i důvod Zrušení a přestanou platit odkazy na potvrzení, Zrušení a „Objednat znovu“.
  * Statistika zůstane: Služby, Termín, stav, zdroj, příznaky leasingu a uskladněných kol.
+ * Návštěva se předtím zapamatuje k Nabídkám a připomínkám e‑mailu (Pneukarnik_Subscriptions),
+ * výmaz osobních údajů je smaže celé.
  */
 class Pneukarnik_GDPR {
 
@@ -183,7 +185,7 @@ class Pneukarnik_GDPR {
 		global $wpdb;
 		$table = Pneukarnik_DB::bookings_table();
 
-		// Souhlasy s e‑maily (Připomínka přezutí, starý odběr) se smažou celé.
+		// Nabídky a připomínky (souhlasy, nároky, odmítnutí i návštěva) a starý odběr se smažou celé.
 		$subscriptions = 1 === $page ? Pneukarnik_Subscriptions::erase( $email_address ) : 0;
 
 		// Anonymizované Rezervace už e‑mail nemají, další dávka proto začíná vždy od začátku.
@@ -242,6 +244,7 @@ class Pneukarnik_GDPR {
 				self::ANONYMISED_EMAIL
 			)
 		);
+		Pneukarnik_Subscriptions::remember_visits( $ids );
 		self::anonymise( $ids );
 	}
 

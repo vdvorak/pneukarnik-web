@@ -61,7 +61,7 @@ První verzi textů napíše vývojář, Provozovatel je zkontroluje.
 - Termíny začínají na **mřížce** s krokem nastavitelným v adminu (např. 30 min). Termín je volný, jen když je volný celý úsek a vejde se do jednoho bloku Pracovní doby. Dnes jen s nastavitelným předstihem.
 - V **Sezóně** lze online rezervovat jen sezónní Služby.
 - **Leasingový zákazník**: zaškrtne „vozidlo je na leasing“ + uvede společnost. Systém vynutí leasingové datum Sezóny (k čemu se datum vztahuje, upřesní Provozovatel).
-- **Formulář:** jméno/firma, telefon, e‑mail, SPZ, značka a model (volitelné), poznámka, leasing + společnost, „kola mám uskladněná u vás“ (u pneuslužeb, pokud to Provozovatel chce), souhlas GDPR, souhlas s Připomínkou přezutí (nepovinný).
+- **Formulář:** jméno/firma, telefon, e‑mail, SPZ, značka a model (volitelné), poznámka, leasing + společnost, „kola mám uskladněná u vás“ (u pneuslužeb, pokud to Provozovatel chce), souhlas GDPR, nezaškrtnuté „Neposílat Nabídky a připomínky“ s „i“, co chodí (ADR 0003).
 - Bez registrace a účtů (ADR 0002). Místo toho:
   - předvyplnění údajů v prohlížeči,
   - odkaz „Objednat znovu“ v e‑mailu (předvyplní údaje, Služby a uskladněná kola, Termín vybírá Zákazník znovu),
@@ -79,14 +79,14 @@ První verzi textů napíše vývojář, Provozovatel je zkontroluje.
 
 ## Provoz, právo, převod
 
-- **GDPR:** Rezervace starší než 1 rok se automaticky anonymizují. Souhlas s Připomínkou přezutí je samostatný. Text zásad napíše vývojář, Provozovatel schválí.
+- **GDPR:** Rezervace starší než 1 rok se automaticky anonymizují. **Nabídky a připomínky** (Připomínka přezutí, Akce e‑mailem, Žádost o hodnocení) chodí bez souhlasu Zákazníkovi, který u Provozovatele už byl a při online rezervaci je neodmítl (ADR 0003). Nárok po návštěvě přežije anonymizaci Rezervace, výmaz osobních údajů ho smaže. Text zásad napíše vývojář, Provozovatel schválí.
 - **Bez cookies vyžadujících souhlas:**
   - analytika Matomo v cookieless režimu + Google Search Console,
   - mapa jako obrázek nebo načtení až po kliknutí,
   - recenze stahované na serveru.
   - (Změní se, pokud Provozovatel bude platit reklamu.)
 - **E‑maily** z adresy na doméně, SMTP + SPF/DKIM.
-- **Převod dat:** všechny budoucí Rezervace + minulé do 1 roku. Souhlasy „informace o slevách“ se převedou jen s původním účelem, pro Připomínku přezutí se sbírá nový souhlas. Stará tabulka se archivuje a po roce smaže.
+- **Převod dat:** všechny budoucí Rezervace + minulé do 1 roku. Souhlasy „informace o slevách“ se převedou jen s původním účelem (Akce). Jinak převedení Zákazníci nedostanou Nabídky a připomínky, dokud se neobjednají přes nový web. Stará tabulka se archivuje a po roce smaže.
 - **Přesměrování 301:**
   - příspěvky o dekarbonizaci → detail Služby,
   - ostatní příspěvky → Úvod,

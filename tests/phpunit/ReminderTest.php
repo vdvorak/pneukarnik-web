@@ -1,7 +1,7 @@
 <?php
 /**
- * Připomínka přezutí: souhlas z rezervace, výběr příjemců, nejvýš jedna Připomínka na e‑mail
- * a Sezónu, odhlášení podepsaným odkazem i starým /cancel-subscription?email=…,
+ * Připomínka přezutí: příjemci podle Nabídek a připomínek (podrobně OffersTest), nejvýš jedna
+ * Připomínka na e‑mail a Sezónu, odhlášení podepsaným odkazem i starým /cancel-subscription?email=…,
  * náhled a zkušební odeslání Provozovateli.
  */
 
@@ -37,9 +37,9 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 		$this->capture_mails();
 	}
 
-	public function test_reminder_goes_only_to_customers_who_consented(): void {
-		$this->book_with_consent( 'ano@example.test', true, '09:00' );
-		$this->book_with_consent( 'ne@example.test', false, '11:00' );
+	public function test_reminder_goes_only_to_customers_who_did_not_refuse(): void {
+		$this->book_online( 'ano@example.test', '09:00' );
+		$this->book_online( 'ne@example.test', '11:00', refuse: true );
 
 		$this->run_reminders_at( self::BEFORE_SPRING );
 
@@ -47,8 +47,8 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	public function test_one_reminder_per_email_and_season_even_with_more_bookings(): void {
-		$this->book_with_consent( 'jan@example.test', true, '09:00' );
-		$this->book_with_consent( 'JAN@example.test', true, '11:00' );
+		$this->book_online( 'jan@example.test', '09:00' );
+		$this->book_online( 'JAN@example.test', '11:00' );
 
 		$this->run_reminders_at( self::BEFORE_SPRING );
 		$this->run_reminders_at( '2027-03-06 10:00' );
@@ -57,7 +57,7 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	public function test_next_season_gets_its_own_reminder(): void {
-		$this->book_with_consent( 'jan@example.test', true );
+		$this->book_online( 'jan@example.test' );
 		$this->run_reminders_at( self::BEFORE_SPRING );
 
 		$this->run_reminders_at( '2027-10-05 10:00' );
@@ -82,7 +82,7 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	 * @dataProvider outside_of_the_window
 	 */
 	public function test_nothing_is_sent_outside_of_the_days_before_a_season( string $now ): void {
-		$this->book_with_consent( 'jan@example.test', true );
+		$this->book_online( 'jan@example.test' );
 
 		$this->run_reminders_at( $now );
 
@@ -90,7 +90,7 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	public function test_first_day_of_the_window_is_sent(): void {
-		$this->book_with_consent( 'jan@example.test', true );
+		$this->book_online( 'jan@example.test' );
 
 		$this->run_reminders_at( '2027-03-01 00:30' );
 
@@ -98,7 +98,7 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	public function test_zero_days_before_season_turns_reminders_off(): void {
-		$this->book_with_consent( 'jan@example.test', true );
+		$this->book_online( 'jan@example.test' );
 		update_option( 'pneukarnik_reminder_days', 0 );
 
 		$this->run_reminders_at( self::BEFORE_SPRING );
@@ -107,7 +107,7 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	public function test_reminder_has_prefilled_booking_and_unsubscribe_link(): void {
-		$this->book_with_consent( 'jan@example.test', true );
+		$this->book_online( 'jan@example.test' );
 
 		$this->run_reminders_at( self::BEFORE_SPRING );
 
@@ -124,7 +124,7 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	public function test_reminder_link_prefills_seasonal_services_and_stored_wheels_but_not_the_date(): void {
 		$storage = $this->create_service( 30, true, 'Uskladnění' );
 		update_post_meta( $this->tyres, '_service_ask_stored_wheels', '1' );
-		$this->book_services_with_consent( [ $this->tyres, $storage ], [ 'stored_wheels' => true ] );
+		$this->book_services( [ $this->tyres, $storage ], [ 'stored_wheels' => true ] );
 
 		$prefill = $this->reminder_prefill();
 
@@ -145,8 +145,8 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	public function test_services_come_from_the_last_seasonal_booking_and_contacts_from_the_last_booking(): void {
 		$oil = $this->create_service( 30, false, 'Výměna oleje' );
 		update_post_meta( $this->tyres, '_service_ask_stored_wheels', '1' );
-		$this->book_services_with_consent( [ $oil, $this->tyres ], [ 'stored_wheels' => true ] );
-		$this->book_services_with_consent( [ $oil ], [ 'phone' => '+420 777 000 111' ], '2027-02-11' );
+		$this->book_services( [ $oil, $this->tyres ], [ 'stored_wheels' => true ] );
+		$this->book_services( [ $oil ], [ 'phone' => '+420 777 000 111' ], '2027-02-11' );
 
 		$prefill = $this->reminder_prefill();
 
@@ -157,18 +157,18 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 
 	public function test_seasonal_services_are_read_when_the_link_is_opened(): void {
 		$oil = $this->create_service( 30, false, 'Výměna oleje' );
-		$this->book_services_with_consent( [ $oil ] );
+		$this->book_services( [ $oil ] );
 		$this->run_reminders_at( self::BEFORE_SPRING );
 		$token = $this->prefill_token_from( $this->mail_to( 'jan@example.test' ) );
 
 		$this->assertArrayNotHasKey( 'service_ids', $this->prefill( $token )->get_data() );
-		$this->book_services_with_consent( [ $this->tyres ], [], '2027-03-08' );
+		$this->book_services( [ $this->tyres ], [], '2027-03-08' );
 		$this->assertSame( [ $this->tyres ], $this->prefill( $token )->get_data()['service_ids'] );
 	}
 
 	public function test_without_seasonal_booking_the_link_prefills_only_contacts(): void {
 		$oil = $this->create_service( 30, false, 'Výměna oleje' );
-		$this->book_services_with_consent( [ $oil ] );
+		$this->book_services( [ $oil ] );
 
 		$prefill = $this->reminder_prefill();
 
@@ -179,7 +179,7 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 
 	public function test_seasonal_service_no_longer_bookable_online_is_left_out(): void {
 		$storage = $this->create_service( 30, true, 'Uskladnění' );
-		$this->book_services_with_consent( [ $this->tyres, $storage ] );
+		$this->book_services( [ $this->tyres, $storage ] );
 		update_post_meta( $storage, '_service_bookable', '' );
 
 		$this->assertSame( [ $this->tyres ], $this->reminder_prefill()['service_ids'] );
@@ -189,7 +189,7 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	public function test_reminder_link_stops_working_once_the_booking_is_anonymised_or_forged(): void {
-		$this->book_with_consent( 'jan@example.test', true );
+		$this->book_online( 'jan@example.test' );
 		$this->run_reminders_at( self::BEFORE_SPRING );
 		$token = $this->prefill_token_from( $this->mail_to( 'jan@example.test' ) );
 
@@ -201,7 +201,7 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	public function test_unsubscribe_link_withdraws_consent_right_away(): void {
-		$this->book_with_consent( 'jan@example.test', true );
+		$this->book_online( 'jan@example.test' );
 		$this->run_reminders_at( self::BEFORE_SPRING );
 		$token = $this->unsubscribe_token_from( $this->mail_to( 'jan@example.test' ) );
 
@@ -218,7 +218,7 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	public function test_unsubscribe_page_withdraws_consent_on_opening(): void {
-		$this->book_with_consent( 'jan@example.test', true );
+		$this->book_online( 'jan@example.test' );
 		$this->run_reminders_at( self::BEFORE_SPRING );
 
 		$this->go_to( $this->unsubscribe_url_from( $this->mail_to( 'jan@example.test' ) ) );
@@ -254,8 +254,8 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	public function test_token_of_one_customer_cannot_be_changed_to_another(): void {
-		$this->book_with_consent( 'jan@example.test', true, '09:00' );
-		$this->book_with_consent( 'eva@example.test', true, '11:00' );
+		$this->book_online( 'jan@example.test', '09:00' );
+		$this->book_online( 'eva@example.test', '11:00' );
 		$this->run_reminders_at( self::BEFORE_SPRING );
 		[ $id, $signature ] = explode( '.', $this->unsubscribe_token_from( $this->mail_to( 'jan@example.test' ) ) );
 
@@ -267,54 +267,46 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 		$this->assertCount( 2, $this->mails );
 	}
 
-	public function test_new_consent_after_unsubscribing_subscribes_again(): void {
-		$this->book_with_consent( 'jan@example.test', true );
+	public function test_booking_after_unsubscribing_does_not_subscribe_again(): void {
+		$this->book_online( 'jan@example.test' );
 		$this->run_reminders_at( self::BEFORE_SPRING );
 		$this->rest( 'POST', '/unsubscribe', [ 'token' => $this->unsubscribe_token_from( $this->mail_to( 'jan@example.test' ) ) ] );
 
 		Pneukarnik_Clock::freeze( '2027-06-01 12:00' );
-		$this->book_with_consent( 'jan@example.test', true, '09:00', '2027-06-10' );
+		$this->book_online( 'jan@example.test', '09:00', '2027-06-10' );
 		$this->mails = [];
 		$this->run_reminders_at( '2027-10-05 10:00' );
 
-		$this->assertCount( 1, $this->mails );
+		$this->assertSame( [], $this->mails );
 	}
 
 	public function test_link_from_before_unsubscribing_and_consenting_again_no_longer_works(): void {
-		$this->book_with_consent( 'jan@example.test', true );
+		$this->book_online( 'jan@example.test' );
 		$this->run_reminders_at( self::BEFORE_SPRING );
 		$old = $this->unsubscribe_token_from( $this->mail_to( 'jan@example.test' ) );
 		$this->rest( 'POST', '/unsubscribe', [ 'token' => $old ] );
 		Pneukarnik_Clock::freeze( '2027-06-01 12:00' );
-		$this->book_with_consent( 'jan@example.test', true, '09:00', '2027-06-10' );
+		Pneukarnik_Subscriptions::consent( 'jan@example.test', Pneukarnik_Subscriptions::REMINDER, 'test' );
 
 		$response = $this->rest( 'POST', '/unsubscribe', [ 'token' => $old ] );
 
 		$this->assertSame( 404, $response->get_status() );
+		$this->mails = [];
 		$this->run_reminders_at( '2027-10-05 10:00' );
 		$this->assertCount( 1, $this->mails );
 	}
 
-	public function test_another_booking_with_consent_keeps_the_unsubscribe_link_working(): void {
-		$this->book_with_consent( 'jan@example.test', true, '09:00' );
+	public function test_another_booking_keeps_the_unsubscribe_link_working(): void {
+		$this->book_online( 'jan@example.test', '09:00' );
 		$this->run_reminders_at( self::BEFORE_SPRING );
 		$token = $this->unsubscribe_token_from( $this->mail_to( 'jan@example.test' ) );
 		Pneukarnik_Clock::freeze( '2027-03-06 12:00' );
-		$this->book_with_consent( 'jan@example.test', true, '09:00', '2027-03-10' );
+		$this->book_online( 'jan@example.test', '09:00', '2027-03-10' );
 
 		$this->assertSame( 'unsubscribe.done', $this->rest( 'POST', '/unsubscribe', [ 'token' => $token ] )->get_data()['code'] );
 		$this->mails = [];
 		$this->run_reminders_at( '2027-10-05 10:00' );
 		$this->assertSame( [], $this->mails );
-	}
-
-	public function test_booking_without_consent_keeps_earlier_consent(): void {
-		$this->book_with_consent( 'jan@example.test', true, '09:00' );
-		$this->book_with_consent( 'jan@example.test', false, '11:00' );
-
-		$this->run_reminders_at( self::BEFORE_SPRING );
-
-		$this->assertCount( 1, $this->mails );
 	}
 
 	public function test_old_cancel_subscription_link_unsubscribes_from_the_old_list(): void {
@@ -353,7 +345,7 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	public function test_old_link_does_not_touch_reminder_consent(): void {
-		$this->book_with_consent( 'jan@example.test', true );
+		$this->book_online( 'jan@example.test' );
 		Pneukarnik_Subscriptions::consent( 'jan@example.test', Pneukarnik_Subscriptions::LEGACY, 'import' );
 
 		$response = $this->rest( 'POST', '/unsubscribe', [ 'email' => 'jan@example.test' ] );
@@ -379,9 +371,10 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	public function test_preview_shows_season_start_and_number_of_recipients(): void {
-		$this->book_with_consent( 'jan@example.test', true, '09:00' );
-		$this->book_with_consent( 'eva@example.test', true, '11:00' );
-		$this->book_with_consent( 'ne@example.test', false, '13:00' );
+		$this->book_online( 'jan@example.test', '09:00' );
+		$this->book_online( 'eva@example.test', '11:00' );
+		$this->book_online( 'ne@example.test', '13:00', refuse: true );
+		Pneukarnik_Clock::freeze( '2027-02-20 12:00' ); // Po návštěvě.
 		$this->log_in_as( 'pneukarnik_manager' );
 
 		$response = $this->rest( 'GET', '/admin/reminder' );
@@ -401,16 +394,17 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	public function test_preview_counts_only_those_still_waiting_for_this_season(): void {
-		$this->book_with_consent( 'jan@example.test', true, '09:00' );
+		$this->book_online( 'jan@example.test', '09:00' );
 		$this->run_reminders_at( self::BEFORE_SPRING );
-		$this->book_with_consent( 'eva@example.test', true, '11:00', '2027-03-08' );
+		$this->book_online( 'eva@example.test', '11:00', '2027-03-08' );
+		Pneukarnik_Clock::freeze( '2027-03-09 10:00' ); // Eva už u nás byla.
 		$this->log_in_as( 'pneukarnik_manager' );
 
 		$this->assertSame( 1, $this->rest( 'GET', '/admin/reminder' )->get_data()['recipients'] );
 	}
 
 	public function test_test_reminder_goes_only_to_the_provozovatel(): void {
-		$this->book_with_consent( 'jan@example.test', true );
+		$this->book_online( 'jan@example.test' );
 		$this->log_in_as( 'pneukarnik_manager' );
 		$this->mails = [];
 
@@ -469,16 +463,17 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	/**
-	 * Online Rezervace s/bez souhlasu s Připomínkou. Den mimo Sezónu, aby šla i nesezónní pravidla.
+	 * Online Rezervace s/bez odmítnutí Nabídek a připomínek. Den mimo Sezónu, aby šla i nesezónní
+	 * pravidla, a před Připomínkami, aby Zákazník u nás už byl.
 	 */
-	private function book_with_consent( string $email, bool $consent, string $time = '09:00', string $date = '2027-02-10' ): void {
+	private function book_online( string $email, string $time = '09:00', string $date = '2027-02-10', bool $refuse = false ): void {
 		$response = $this->book(
 			$this->tyres,
 			$date,
 			$time,
 			[
-				'email'            => $email,
-				'consent_reminder' => $consent,
+				'email'         => $email,
+				'refuse_offers' => $refuse,
 			]
 		);
 		$this->assertSame( 201, $response->get_status(), (string) wp_json_encode( $response->get_data() ) );
@@ -486,13 +481,13 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	/**
-	 * Online Rezervace Služeb se souhlasem s Připomínkou, další údaje podle $overrides.
+	 * Online Rezervace Služeb, další údaje podle $overrides.
 	 *
 	 * @param list<int>            $services
 	 * @param array<string, mixed> $overrides
 	 */
-	private function book_services_with_consent( array $services, array $overrides = [], string $date = '2027-02-10' ): void {
-		$response = $this->book( $services, $date, '09:00', $overrides + [ 'consent_reminder' => true ] );
+	private function book_services( array $services, array $overrides = [], string $date = '2027-02-10' ): void {
+		$response = $this->book( $services, $date, '09:00', $overrides );
 		$this->assertSame( 201, $response->get_status(), (string) wp_json_encode( $response->get_data() ) );
 		$this->mails = [];
 	}

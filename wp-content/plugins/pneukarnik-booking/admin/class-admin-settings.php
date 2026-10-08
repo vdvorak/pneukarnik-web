@@ -218,7 +218,7 @@ class Pneukarnik_Admin_Settings {
 						<th><label for="pnk-reminder-days"><?php esc_html_e( 'Kolik dní před Sezónou', 'pneukarnik-booking' ); ?></label></th>
 						<td>
 							<input id="pnk-reminder-days" type="number" name="reminder_days" value="<?php echo esc_attr( (string) $reminder['days_before'] ); ?>" min="0" max="90" step="1" class="small-text">
-							<p class="description"><?php esc_html_e( 'Připomínka odchází Zákazníkům, kteří s ní při rezervaci souhlasili, nejvýš jednou za Sezónu. 0 = neposílat. Úvod e‑mailu je v textech výše.', 'pneukarnik-booking' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Připomínka odchází Zákazníkům, kteří u vás už byli a při online rezervaci Nabídky a připomínky neodmítli, nejvýš jednou za Sezónu. 0 = neposílat. Úvod e‑mailu je v textech výše.', 'pneukarnik-booking' ); ?></p>
 						</td>
 					</tr>
 					<tr>

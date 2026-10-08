@@ -29,7 +29,7 @@ get_header();
 					);
 					?>
 				</p>
-				<p class="vysledek__poznamka"><?php esc_html_e( 'Kdybyste si to rozmysleli, stačí při příští rezervaci zaškrtnout souhlas s připomínkou.', 'pneukarnik' ); ?></p>
+				<p class="vysledek__poznamka"><?php esc_html_e( 'Kdybyste si to rozmysleli, stačí nám zavolat nebo napsat.', 'pneukarnik' ); ?></p>
 			<?php else : ?>
 				<h1><?php esc_html_e( 'Odhlášení se nepovedlo', 'pneukarnik' ); ?></h1>
 				<p class="notice notice--danger" role="alert"><?php esc_html_e( 'Odkaz pro odhlášení je neplatný nebo už vypršel.', 'pneukarnik' ); ?></p>

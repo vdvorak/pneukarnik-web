@@ -241,12 +241,24 @@ get_header();
 								</span>
 							</div>
 							<span class="pole__chyba rezervace__chyba-souhlasu" id="chyba-consent_gdpr"></span>
+							<?php // Nabídky a připomínky (ADR 0003): nezaškrtnuté chodí až po návštěvě, „i“ vypíše, co chodí. ?>
 							<div class="zaskrtavaci">
-								<input type="checkbox" name="consent_reminder" value="1" id="rez-consent_reminder" aria-describedby="napoveda-consent_reminder">
-								<span>
-									<label for="rez-consent_reminder"><?php esc_html_e( 'Připomeňte mi před každou sezónou, že je čas přezout (nepovinné).', 'pneukarnik' ); ?></label>
-									<span id="napoveda-consent_reminder"><?php esc_html_e( 'Přijde e‑mailem dvakrát do roka, odhlásit se jde jedním kliknutím v každé připomínce.', 'pneukarnik' ); ?></span>
-								</span>
+								<input type="checkbox" name="refuse_offers" value="1" id="rez-refuse_offers" aria-describedby="napoveda-refuse_offers">
+								<div>
+									<label for="rez-refuse_offers"><?php esc_html_e( 'Neposílat nabídky a připomínky.', 'pneukarnik' ); ?></label>
+									<details class="zaskrtavaci__info">
+										<summary><span class="ikona-info"><?php echo pneukarnik_icon( 'info' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SVG ze šablony. ?></span><?php esc_html_e( 'Co posíláme', 'pneukarnik' ); ?></summary>
+										<div id="napoveda-refuse_offers">
+											<p><?php esc_html_e( 'Když políčko nezaškrtnete, pošleme vám po vaší návštěvě e‑mailem:', 'pneukarnik' ); ?></p>
+											<ul>
+												<li><?php esc_html_e( 'Připomínku přezutí před každou sezónou,', 'pneukarnik' ); ?></li>
+												<li><?php esc_html_e( 'naše akce,', 'pneukarnik' ); ?></li>
+												<li><?php esc_html_e( 'jednou po první návštěvě prosbu o hodnocení na Googlu.', 'pneukarnik' ); ?></li>
+											</ul>
+											<p><?php esc_html_e( 'Odhlásit se jde v každém z nich.', 'pneukarnik' ); ?></p>
+										</div>
+									</details>
+								</div>
 							</div>
 						</div>
 					</section>
