@@ -242,7 +242,7 @@ class Pneukarnik_Admin_Settings {
 						<th><label for="pnk-maps"><?php esc_html_e( 'Google Maps embed URL', 'pneukarnik-booking' ); ?></label></th>
 						<td>
 							<input id="pnk-maps" type="url" name="pneukarnik_maps_embed_url" value="<?php echo esc_attr( $maps_embed_url ); ?>" class="large-text">
-							<p class="description"><?php esc_html_e( 'URL z Google Maps → Sdílet → Vložit mapu → atribut src iframe. Prázdné = mapa podle adresy. Mapa se na webu načte až po kliknutí Zákazníka.', 'pneukarnik-booking' ); ?></p>
+							<p class="description"><?php esc_html_e( 'URL z Google Maps → Sdílet → Vložit mapu → atribut src iframe. Prázdné = místo z Google recenzí (ID místa), bez nich mapa podle adresy. Mapa se na webu načte až po kliknutí Zákazníka.', 'pneukarnik-booking' ); ?></p>
 						</td>
 					</tr>
 					<?php foreach ( Pneukarnik_Contact::social_networks() as $network => $label ) : ?>

@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * od Googlu nic nenačítá a klíč API zůstává jen na serveru. Chyba API cache nesmaže,
  * jen se zapíše do stavu pro Nastavení. Při vypnutí se nic nestahuje ani nezobrazuje.
  *
- * @phpstan-type Summary array{rating:float,count:int,url:string,reviews:list<array{author:string,author_url:string,rating:int,text:string,date:string}>}
+ * @phpstan-type Summary array{rating:float,count:int,url:string,cid:string,reviews:list<array{author:string,author_url:string,rating:int,text:string,date:string}>}
  */
 final class Pneukarnik_Reviews {
 
@@ -191,10 +191,14 @@ final class Pneukarnik_Reviews {
 		// Nejvyšší hodnocení, mezi stejnými nejnovější.
 		usort( $reviews, static fn( array $a, array $b ): int => [ $b['review']['rating'], $b['time'] ] <=> [ $a['review']['rating'], $a['time'] ] );
 
+		// Číslo místa v Google Maps (cid) pro mapu. Vložená mapa bez klíče ID místa (Place ID) nezná.
+		$cid = preg_match( '/[?&]cid=(\d+)/', (string) ( $place['googleMapsUri'] ?? '' ), $m ) ? $m[1] : '';
+
 		return [
 			'rating'  => round( (float) $place['rating'], 1 ),
 			'count'   => (int) ( $place['userRatingCount'] ?? 0 ),
 			'url'     => esc_url_raw( (string) ( $place['googleMapsLinks']['reviewsUri'] ?? $place['googleMapsUri'] ?? '' ), [ 'https' ] ),
+			'cid'     => $cid,
 			'reviews' => array_column( array_slice( $reviews, 0, self::SHOWN_REVIEWS ), 'review' ),
 		];
 	}

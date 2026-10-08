@@ -77,15 +77,19 @@ final class Pneukarnik_Contact {
 	}
 
 	/**
-	 * Adresa mapy Google pro vložení (iframe). Bez nastavené adresy z Google Maps se složí z adresy,
-	 * bez adresy je prázdná. Načte se až po kliknutí Zákazníka.
+	 * Adresa mapy Google pro vložení (iframe). Bez nastavené adresy z Google Maps ukáže místo
+	 * z Google recenzí, bez nich se složí z adresy, bez adresy je prázdná. Načte se až po kliknutí Zákazníka.
 	 */
 	public static function map_embed_url(): string {
 		$url = self::option( self::OPTION_MAPS_EMBED_URL );
-		if ( '' !== $url || '' === self::address() ) {
+		if ( '' !== $url ) {
 			return $url;
 		}
-		return 'https://www.google.com/maps?output=embed&q=' . rawurlencode( self::address() );
+		$cid = (string) ( Pneukarnik_Reviews::summary()['cid'] ?? '' );
+		if ( '' !== $cid ) {
+			return 'https://www.google.com/maps?output=embed&cid=' . rawurlencode( $cid );
+		}
+		return '' === self::address() ? '' : 'https://www.google.com/maps?output=embed&q=' . rawurlencode( self::address() );
 	}
 
 	/** Odkaz na adresu v Google Maps (otevře se až po kliknutí), prázdný bez adresy. */

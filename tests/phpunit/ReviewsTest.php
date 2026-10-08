@@ -47,6 +47,7 @@ class ReviewsTest extends Pneukarnik_REST_Test_Case {
 				'rating'  => 4.8,
 				'count'   => 123,
 				'url'     => 'https://www.google.com/maps/place//data=reviews',
+				'cid'     => '1',
 				'reviews' => [
 					[
 						'author'     => 'Eva Nováková',

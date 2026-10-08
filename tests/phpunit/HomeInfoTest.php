@@ -1,7 +1,8 @@
 <?php
 /**
  * Údaje pro Úvod a hlavičku: otevírací doba na 7 dní (stejná pravidla jako Termíny),
- * kontakty a sociální sítě z Nastavení, Pohotovost jen po zapnutí, mapa a Služby na Úvodu (Akce napřed).
+ * kontakty a sociální sítě z Nastavení, Pohotovost jen po zapnutí, mapa (i podle místa z Google recenzí)
+ * a Služby na Úvodu (Akce napřed).
  */
 
 declare(strict_types=1);
@@ -143,10 +144,29 @@ class HomeInfoTest extends Pneukarnik_REST_Test_Case {
 		$this->assertSame( $shown ? $expected : null, Pneukarnik_Contact::emergency() );
 	}
 
-	public function test_map_falls_back_to_address_and_is_missing_without_it(): void {
+	public function test_map_prefers_set_url_then_place_from_reviews_then_address_and_is_missing_without_them(): void {
 		$this->assertSame( '', Pneukarnik_Contact::map_embed_url() );
 
 		update_option( 'pneukarnik_address', 'Dobšická 10, Znojmo' );
+		$this->assertSame( 'https://www.google.com/maps?output=embed&q=Dob%C5%A1ick%C3%A1%2010%2C%20Znojmo', Pneukarnik_Contact::map_embed_url() );
+
+		// Místo z Google recenzí se ukáže podle čísla v Google Maps (cid), vypnuté recenze ho nedají.
+		update_option(
+			'pneukarnik_reviews_cache',
+			[
+				'data'       => [
+					'rating'  => 4.8,
+					'count'   => 1,
+					'url'     => '',
+					'cid'     => '123456789',
+					'reviews' => [],
+				],
+				'updated_at' => '2027-05-10 04:00',
+			]
+		);
+		update_option( 'pneukarnik_reviews_enabled', '1' );
+		$this->assertSame( 'https://www.google.com/maps?output=embed&cid=123456789', Pneukarnik_Contact::map_embed_url() );
+		update_option( 'pneukarnik_reviews_enabled', '0' );
 		$this->assertSame( 'https://www.google.com/maps?output=embed&q=Dob%C5%A1ick%C3%A1%2010%2C%20Znojmo', Pneukarnik_Contact::map_embed_url() );
 
 		update_option( 'pneukarnik_maps_embed_url', 'https://www.google.com/maps/embed?pb=abc' );
