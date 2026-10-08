@@ -21,6 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *                 Má přednost, dokud ho nezmění nový výslovný souhlas nebo další online Rezervace
  *                 s nezaškrtnutým „Neposílat“ (ta založí nový nárok místo dřívějšího souhlasu).
  *   visited_at    Termín proběhlé Rezervace zapamatovaný při její anonymizaci, aby nárok přežil.
+ *   sent_at       kdy e‑mailu odešla Žádost o hodnocení (Pneukarnik_Review_Request), přežije anonymizaci.
  * Rezervace zadaná Provozovatelem nárok nezakládá, za návštěvu se ale počítá.
  * Výmaz osobních údajů smaže všechny řádky e‑mailu.
  *
@@ -279,7 +280,7 @@ final class Pneukarnik_Subscriptions {
 
 	/**
 	 * Kolika e‑mailům smí teď chodit jednotlivé druhy Nabídek a připomínek (Akce i ze starého
-	 * souhlasu), pro stránku E‑maily Zákazníkům.
+	 * souhlasu, Žádost o hodnocení jen těm, kterým ještě neodešla), pro stránku E‑maily Zákazníkům.
 	 *
 	 * @return array{reminder:int,promotions:int,review:int}
 	 */
@@ -295,9 +296,9 @@ final class Pneukarnik_Subscriptions {
 			// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
 			$audience[ $kind ] = (int) $wpdb->get_var(
 				$wpdb->prepare(
-					'SELECT COUNT(DISTINCT s.email) FROM %i s WHERE s.purpose IN (%s, %s) AND ' . self::RECEIVES_SQL,
+					'SELECT COUNT(DISTINCT s.email) FROM %i s WHERE s.purpose IN (%s, %s) AND (s.purpose <> %s OR s.sent_at IS NULL) AND ' . self::RECEIVES_SQL,
 					Pneukarnik_DB::subscriptions_table(),
-					...[ ...$purposes, ...self::receives_args() ]
+					...[ ...$purposes, self::REVIEW, ...self::receives_args() ]
 				)
 			);
 			// phpcs:enable
@@ -397,6 +398,19 @@ final class Pneukarnik_Subscriptions {
 		$email = self::normalize( $email );
 		$id    = $wpdb->get_var( $wpdb->prepare( 'SELECT MIN(id) FROM %i WHERE email = %s', Pneukarnik_DB::subscriptions_table(), $email ) );
 		return null === $id ? '' : self::settings_url_for_key( self::key( (int) $id, $email ) );
+	}
+
+	/**
+	 * Odhlášení přímo z pošty jedním kliknutím (RFC 8058), vyžadují ho Gmail i Seznam u hromadné pošty.
+	 * POST na stránku nastavení odvolá všechny Nabídky a připomínky (Pneukarnik_Booking_Pages).
+	 *
+	 * @return list<string>
+	 */
+	public static function unsubscribe_headers( string $settings_url ): array {
+		return [
+			'List-Unsubscribe: <' . $settings_url . '>',
+			'List-Unsubscribe-Post: List-Unsubscribe=One-Click',
+		];
 	}
 
 	public static function normalize( string $email ): string {

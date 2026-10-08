@@ -12,7 +12,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Stránka administrace E‑maily Zákazníkům: všechno, co Zákazníkům chodí mimo potvrzení a Zrušení
  * Rezervace. Připomínka Termínu (zapnutí, hodina, zkušební odeslání), kolika Zákazníkům může který
  * druh Nabídek a připomínek dnes přijít, Připomínka přezutí (kolik dní před Sezónou, úvod, náhled,
- * zkušební odeslání). Oprávnění stejné jako Nastavení.
+ * zkušební odeslání), Žádost o hodnocení (zapnutí, úvod, upozornění na chybějící Place ID, zkušební
+ * odeslání). Oprávnění stejné jako Nastavení.
  */
 class Pneukarnik_Admin_Customer_Emails {
 
@@ -39,6 +40,10 @@ class Pneukarnik_Admin_Customer_Emails {
 		if ( isset( $_POST['reminder_intro'] ) ) {
 			update_option( Pneukarnik_Reminder::OPTION_INTRO, sanitize_textarea_field( wp_unslash( $_POST['reminder_intro'] ) ) );
 		}
+		Pneukarnik_Review_Request::save(
+			! empty( $_POST['review_request_enabled'] ),
+			isset( $_POST['review_request_intro'] ) ? (string) wp_unslash( $_POST['review_request_intro'] ) : Pneukarnik_Review_Request::intro() // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitizuje save().
+		);
 
 		$result = [ 'saved' => '1' ];
 		if ( ! empty( $_POST['termin_reminder_test'] ) ) {
@@ -46,6 +51,9 @@ class Pneukarnik_Admin_Customer_Emails {
 		}
 		if ( ! empty( $_POST['reminder_test'] ) ) {
 			$result['reminder_test'] = null !== Pneukarnik_Reminder::send_test() ? 'sent' : 'failed';
+		}
+		if ( ! empty( $_POST['review_request_test'] ) ) {
+			$result['review_request_test'] = null !== Pneukarnik_Review_Request::send_test() ? 'sent' : 'failed';
 		}
 		wp_safe_redirect( add_query_arg( $result, self::url() ) );
 		exit;
@@ -61,7 +69,7 @@ class Pneukarnik_Admin_Customer_Emails {
 		$kinds              = [
 			Pneukarnik_Subscriptions::REMINDER   => [ __( 'Připomínka přezutí', 'pneukarnik-booking' ), '' ],
 			Pneukarnik_Subscriptions::PROMOTIONS => [ __( 'Akce (Rozesílky)', 'pneukarnik-booking' ), __( 'Rozesílky zatím poslat nejde. Počítají se i souhlasy „informace o slevách“ ze starého webu.', 'pneukarnik-booking' ) ],
-			Pneukarnik_Subscriptions::REVIEW     => [ __( 'Žádost o hodnocení', 'pneukarnik-booking' ), __( 'Zatím se neposílá.', 'pneukarnik-booking' ) ],
+			Pneukarnik_Subscriptions::REVIEW     => [ __( 'Žádost o hodnocení', 'pneukarnik-booking' ), __( 'Jen těm, kterým ještě neodešla.', 'pneukarnik-booking' ) ],
 		];
 		// Zkušební odeslání: parametr výsledku => hláška o odeslání a o chybě.
 		$tests = [
@@ -74,6 +82,11 @@ class Pneukarnik_Admin_Customer_Emails {
 				/* translators: %s: e‑mail Provozovatele */
 				__( 'Zkušební Připomínka přezutí odeslaná na %s.', 'pneukarnik-booking' ),
 				__( 'Zkušební Připomínku přezutí se nepodařilo odeslat.', 'pneukarnik-booking' ),
+			],
+			'review_request_test'  => [
+				/* translators: %s: e‑mail Provozovatele */
+				__( 'Zkušební Žádost o hodnocení odeslaná na %s.', 'pneukarnik-booking' ),
+				__( 'Zkušební Žádost o hodnocení se nepodařilo odeslat.', 'pneukarnik-booking' ),
 			],
 		];
 		?>
@@ -213,6 +226,61 @@ class Pneukarnik_Admin_Customer_Emails {
 								</label>
 							<?php else : ?>
 								<p class="description"><?php esc_html_e( 'Zkušební Připomínka přezutí jde poslat jen na kontaktní e‑mail, vyplňte ho v Nastavení.', 'pneukarnik-booking' ); ?></p>
+							<?php endif; ?>
+						</td>
+					</tr>
+				</table>
+
+				<h2><?php esc_html_e( 'Žádost o hodnocení', 'pneukarnik-booking' ); ?></h2>
+				<p class="description">
+					<?php
+					/* translators: %d: hodina */
+					echo esc_html( sprintf( __( 'Den po Termínu nezrušené Rezervace od %d:00 s odkazem na napsání hodnocení na Googlu, Zákazníkům, kterým smějí chodit Nabídky a připomínky. Každému e‑mailu nejvýš jednou, po dalších návštěvách už ne.', 'pneukarnik-booking' ), Pneukarnik_Review_Request::HOUR ) );
+					?>
+				</p>
+				<?php if ( '' === Pneukarnik_Review_Request::write_review_url() ) : ?>
+					<div class="notice notice-warning inline">
+						<p>
+							<?php esc_html_e( 'Žádost o hodnocení se neposílá: chybí ID místa (Place ID) v Nastavení, části Google recenze.', 'pneukarnik-booking' ); ?>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=pneukarnik-settings' ) ); ?>"><?php esc_html_e( 'Otevřít Nastavení', 'pneukarnik-booking' ); ?></a>
+						</p>
+					</div>
+				<?php endif; ?>
+				<table class="form-table">
+					<tr>
+						<th><?php esc_html_e( 'Posílat', 'pneukarnik-booking' ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" name="review_request_enabled" value="1" <?php checked( Pneukarnik_Review_Request::enabled() ); ?>>
+								<?php esc_html_e( 'Posílat Žádost o hodnocení', 'pneukarnik-booking' ); ?>
+							</label>
+							<p class="description">
+								<?php
+								/* translators: %d: počet Zákazníků */
+								echo esc_html( sprintf( __( 'Už ji dostalo: %d', 'pneukarnik-booking' ), Pneukarnik_Review_Request::sent_count() ) );
+								?>
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="pnk-review-request-intro"><?php esc_html_e( 'Úvod Žádosti o hodnocení', 'pneukarnik-booking' ); ?></label></th>
+						<td><textarea id="pnk-review-request-intro" name="review_request_intro" rows="3" class="large-text"><?php echo esc_textarea( Pneukarnik_Review_Request::intro() ); ?></textarea></td>
+					</tr>
+					<tr>
+						<th><?php esc_html_e( 'Zkouška', 'pneukarnik-booking' ); ?></th>
+						<td>
+							<?php if ( '' === $provozovatel_email ) : ?>
+								<p class="description"><?php esc_html_e( 'Zkušební Žádost o hodnocení jde poslat jen na kontaktní e‑mail, vyplňte ho v Nastavení.', 'pneukarnik-booking' ); ?></p>
+							<?php elseif ( '' === Pneukarnik_Review_Request::write_review_url() ) : ?>
+								<p class="description"><?php esc_html_e( 'Zkušební Žádost o hodnocení jde poslat až s vyplněným ID místa.', 'pneukarnik-booking' ); ?></p>
+							<?php else : ?>
+								<label>
+									<input type="checkbox" name="review_request_test" value="1">
+									<?php
+									/* translators: %s: e‑mail Provozovatele */
+									echo esc_html( sprintf( __( 'Po uložení poslat zkušební Žádost o hodnocení na %s', 'pneukarnik-booking' ), $provozovatel_email ) );
+									?>
+								</label>
 							<?php endif; ?>
 						</td>
 					</tr>

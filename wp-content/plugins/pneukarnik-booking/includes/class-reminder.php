@@ -101,7 +101,7 @@ final class Pneukarnik_Reminder {
 			}
 			$settings = Pneukarnik_Subscriptions::settings_url( $recipient['email'] );
 			$email    = self::email( $season, $recipient['email'], $settings, $recipient['consented'] );
-			if ( ! $email->send( $recipient['email'], Pneukarnik_Contact::email(), self::unsubscribe_headers( $settings ) ) ) {
+			if ( ! $email->send( $recipient['email'], Pneukarnik_Contact::email(), Pneukarnik_Subscriptions::unsubscribe_headers( $settings ) ) ) {
 				self::release( $recipient['id'], $season['key'], $recipient['last_season'] );
 			}
 		}
@@ -172,19 +172,6 @@ final class Pneukarnik_Reminder {
 				__( 'Nastavit, co vám posíláme', 'pneukarnik-booking' ),
 				$settings_url
 			);
-	}
-
-	/**
-	 * Odhlášení přímo z pošty jedním kliknutím (RFC 8058), vyžadují ho Gmail i Seznam u hromadné pošty.
-	 * POST na stránku nastavení odvolá všechny Nabídky a připomínky (Pneukarnik_Booking_Pages).
-	 *
-	 * @return list<string>
-	 */
-	private static function unsubscribe_headers( string $url ): array {
-		return [
-			'List-Unsubscribe: <' . $url . '>',
-			'List-Unsubscribe-Post: List-Unsubscribe=One-Click',
-		];
 	}
 
 	/**

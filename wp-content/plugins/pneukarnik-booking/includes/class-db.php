@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Pneukarnik_DB {
 
 	private const DB_VERSION_OPTION = 'pneukarnik_db_version';
-	private const DB_VERSION        = '1.13';
+	private const DB_VERSION        = '1.14';
 
 	/** Testy běží uvnitř transakce WP test suite, transakce pluginu pak používají savepoint. */
 	private static bool $savepoints = false;
@@ -301,7 +301,7 @@ class Pneukarnik_DB {
 
 		// Vztah e‑mailu k Nabídkám a připomínkám, jeden řádek na e‑mail a druh (Pneukarnik_Subscriptions):
 		// nárok z online Rezervace, výslovný souhlas, odmítnutí nebo odvolání a zapamatovaná návštěva.
-		// last_season = Sezóna poslední odeslané Připomínky (např. 2027-spring).
+		// last_season = Sezóna poslední odeslané Připomínky (např. 2027-spring), sent_at = kdy odešla Žádost o hodnocení.
 		$subscriptions = "CREATE TABLE {$wpdb->prefix}pneukarnik_subscriptions (
 			id               BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			email            VARCHAR(255)    NOT NULL,
@@ -313,6 +313,7 @@ class Pneukarnik_DB {
 			withdrawn_source VARCHAR(20)     DEFAULT NULL,
 			visited_at       DATETIME        DEFAULT NULL,
 			last_season      VARCHAR(20)     DEFAULT NULL,
+			sent_at          DATETIME        DEFAULT NULL,
 			PRIMARY KEY  (id),
 			UNIQUE KEY uq_email_purpose (email, purpose),
 			KEY idx_purpose (purpose, withdrawn_at)

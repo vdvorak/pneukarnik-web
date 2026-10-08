@@ -1,7 +1,8 @@
 <?php
 /**
  * Stránka administrace E‑maily Zákazníkům: Připomínka Termínu, kolika Zákazníkům může který druh
- * Nabídek a připomínek dnes přijít, Připomínka přezutí přesunutá z Nastavení, oprávnění jako Nastavení.
+ * Nabídek a připomínek dnes přijít, Připomínka přezutí přesunutá z Nastavení, Žádost o hodnocení
+ * (i upozornění na chybějící Place ID), oprávnění jako Nastavení.
  * Ukládání a zkušební odeslání z formuláře ověřuje Playwright (emaily-zakaznikum.spec.ts).
  */
 
@@ -72,6 +73,45 @@ class CustomerEmailsPageTest extends Pneukarnik_REST_Test_Case {
 
 		$this->assertDoesNotMatchRegularExpression( '/name="termin_reminder_enabled" value="1"\s+checked/', $page );
 		$this->assertMatchesRegularExpression( '/<option value="9"\s+selected/', $page );
+	}
+
+	public function test_page_has_the_review_request_switch_intro_and_test(): void {
+		update_option( 'pneukarnik_reviews_place_id', 'ChIJ-test' );
+		update_option( Pneukarnik_Review_Request::OPTION_INTRO, 'Vlastní úvod Žádosti' );
+
+		$page = $this->render( false );
+
+		$this->assertMatchesRegularExpression( '/name="review_request_enabled" value="1"\s+checked/', $page );
+		$this->assertStringContainsString( 'Vlastní úvod Žádosti</textarea>', $page );
+		$this->assertStringContainsString( 'Po uložení poslat zkušební Žádost o hodnocení na servis@example.test', $page );
+		$this->assertStringNotContainsString( 'chybí ID místa', $page );
+
+		Pneukarnik_Review_Request::save( false, 'Vlastní úvod Žádosti' );
+
+		$this->assertDoesNotMatchRegularExpression( '/name="review_request_enabled" value="1"\s+checked/', $this->render( false ) );
+	}
+
+	public function test_page_warns_that_without_place_id_no_review_request_is_sent(): void {
+		update_option( 'pneukarnik_reviews_place_id', '' );
+
+		$page = $this->render();
+
+		$this->assertStringContainsString( 'Žádost o hodnocení se neposílá: chybí ID místa (Place ID) v Nastavení', $page );
+		$this->assertStringNotContainsString( 'poslat zkušební Žádost o hodnocení', $page );
+	}
+
+	public function test_review_request_audience_leaves_out_those_who_got_it(): void {
+		update_option( 'pneukarnik_reviews_place_id', 'ChIJ-test' );
+		$this->book_online( 'dostal@example.test', '2027-02-10' );
+		$this->book_online( 'nedostal@example.test', '2027-02-12' );
+		Pneukarnik_Clock::freeze( '2027-02-11 10:00' );
+		do_action( Pneukarnik_Review_Request::CRON_HOOK );
+		Pneukarnik_Clock::freeze( '2027-02-20 12:00' );
+
+		$page = $this->render();
+
+		$this->assertMatchesRegularExpression( '/Žádost o hodnocení 1 /u', $page );
+		$this->assertStringContainsString( 'Už ji dostalo: 1', $page );
 	}
 
 	public function test_reminder_uses_the_intro_from_the_page(): void {
