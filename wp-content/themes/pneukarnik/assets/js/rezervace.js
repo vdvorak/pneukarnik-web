@@ -88,6 +88,7 @@ function storeContact(contact) {
 const humanTime = (hhmm) => hhmm.replace(/^0/, '');
 
 const dayMonth = new Intl.DateTimeFormat('cs', { day: 'numeric', month: 'numeric', timeZone: 'UTC' });
+const shortWeekday = new Intl.DateTimeFormat('cs', { weekday: 'short', timeZone: 'UTC' });
 const SEASON_NAMES = { spring: 'jarní', autumn: 'podzimní' };
 
 /**
@@ -117,6 +118,9 @@ const shortDate = new Intl.DateTimeFormat('cs', { day: 'numeric', month: 'numeri
 
 /** Den pro lidi, např. „pondělí 1. 3. 2027“. @param {string} ymd */
 const humanDay = (ymd) => `${weekday.format(utcDate(ymd))} ${shortDate.format(utcDate(ymd))}`;
+
+/** Den krátce, např. „út 14. 10.“. @param {string} ymd */
+const shortDay = (ymd) => `${shortWeekday.format(utcDate(ymd))} ${dayMonth.format(utcDate(ymd))}`;
 
 /** Během načítání místo Termínů zašedlé prázdné pilulky. */
 const LOADING_SLOTS = 6;
@@ -168,6 +172,7 @@ function init() {
 	const predchozi = /** @type {HTMLButtonElement} */ (document.getElementById('kalendar-predchozi'));
 	const dalsi = /** @type {HTMLButtonElement} */ (document.getElementById('kalendar-dalsi'));
 	const omezeni = /** @type {HTMLElement} */ (document.getElementById('kalendar-omezeni'));
+	const nejblizsi = /** @type {HTMLElement} */ (document.getElementById('kalendar-nejblizsi'));
 	const time = /** @type {HTMLInputElement} */ (form.elements.namedItem('time'));
 	const terminy = /** @type {HTMLElement} */ (document.getElementById('terminy'));
 	const terminyDen = /** @type {HTMLElement} */ (document.getElementById('terminy-den'));
@@ -234,7 +239,7 @@ function init() {
 		syncServices();
 		syncStoredWheels();
 		syncGuides();
-		loadDays();
+		loadDays({ jump: true });
 		loadTerminy();
 		return true;
 	}
@@ -324,7 +329,7 @@ function init() {
 			syncServices();
 			syncStoredWheels();
 			pridat.focus();
-			loadDays();
+			loadDays({ jump: true });
 			loadTerminy();
 			renderSummary();
 		});
@@ -386,12 +391,28 @@ function init() {
 		dny.replaceChildren(...weeks);
 	}
 
-	async function loadDays() {
+	/**
+	 * Nejbližší volný den nad kalendářem, bez něj v horizontu výzva zavolat.
+	 * @param {string | null} firstDay
+	 */
+	function showFirstDay(firstDay) {
+		const call = config.phone ? `, zavolejte nám prosím na ${config.phone}` : '';
+		setText(nejblizsi, firstDay ? `Nejbližší volný den: ${shortDay(firstDay)}` : `Online teď volný termín nemáme${call}.`);
+	}
+
+	/**
+	 * Volné dny zobrazeného měsíce. S `jump` (změna Služeb nebo leasingu) kalendář z měsíce bez
+	 * volného dne sám přejde na měsíc nejbližšího volného dne. Ruční přepnutí měsíce nepřeskakuje.
+	 *
+	 * @param {{ jump?: boolean }} [options]
+	 */
+	async function loadDays({ jump = false } = {}) {
 		const current = ++daysRequest;
 		const ids = serviceIds();
 		availableDays = new Set();
 		omezeni.replaceChildren();
 		dny.classList.remove('kalendar__dny--nacitani');
+		if (jump || ids.length === 0) setText(nejblizsi, '');
 		if (ids.length === 0) {
 			setText(stav, 'Nejdřív vyberte službu, pak uvidíte volné dny.');
 			renderCalendar();
@@ -411,10 +432,16 @@ function init() {
 				setText(stav, explain(data) ?? 'Volné dny se nepodařilo načíst.');
 				return;
 			}
-			/** @type {{ days: string[], restrictions: Restriction[] }} */
-			const { days, restrictions } = data;
+			/** @type {{ days: string[], restrictions: Restriction[], first_day: string | null }} */
+			const { days, restrictions, first_day: firstDay } = data;
+			if (jump && days.length === 0 && firstDay && firstDay.slice(0, 7) !== month) {
+				month = firstDay.slice(0, 7);
+				await loadDays();
+				return;
+			}
+			showFirstDay(firstDay);
 			availableDays = new Set(days);
-			setText(stav, availableDays.size ? 'Zašedlé dny nemají volný termín.' : 'V tomto měsíci nejsou volné termíny. Zkuste další měsíc.');
+			setText(stav, availableDays.size ? 'Zašedlé dny nemají volný termín.' : 'V tomto měsíci nejsou volné termíny.');
 			// Proč Sezóna nedovolí některé dny: leasing jako informace, jen sezónní Služby jako upozornění.
 			omezeni.replaceChildren(
 				...restrictions.flatMap((restriction) => {
@@ -597,7 +624,7 @@ function init() {
 		syncServices();
 		syncStoredWheels();
 		syncGuides();
-		loadDays();
+		loadDays({ jump: true });
 		loadTerminy();
 	});
 	terminy.addEventListener('click', (event) => {
@@ -609,7 +636,7 @@ function init() {
 	};
 	leasing.addEventListener('change', () => {
 		syncLeasing();
-		loadDays();
+		loadDays({ jump: true });
 		loadTerminy();
 	});
 	pridat.addEventListener('click', () => addService());
@@ -637,7 +664,7 @@ function init() {
 	syncStoredWheels();
 	syncGuides();
 	syncLeasing();
-	loadDays();
+	loadDays({ jump: true });
 	form.addEventListener('submit', send);
 	loadTerminy();
 }

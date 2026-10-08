@@ -311,6 +311,25 @@ class Pneukarnik_Booking {
 		];
 	}
 
+	/**
+	 * Nejbližší den v horizontu s alespoň jedním volným Termínem pro online Rezervaci Služeb,
+	 * nebo null, když žádný není. Kalendář formuláře podle něj přeskočí plné měsíce.
+	 *
+	 * @param list<Pneukarnik_Service> $services
+	 * @return string|null YYYY-MM-DD
+	 */
+	public static function first_available_day( array $services, int $duration, bool $leasing ): ?string {
+		$today = Pneukarnik_Clock::today();
+		$last  = $today->modify( '+' . Pneukarnik_Working_Hours::get_horizon_days() . ' days' );
+		for ( $day = $today; $day <= $last; $day = $day->modify( '+1 day' ) ) {
+			$date = $day->format( 'Y-m-d' );
+			if ( null === self::day_refusal( $services, $leasing, $date ) && Pneukarnik_Slot_Engine::free_termins( $duration, $date ) ) {
+				return $date;
+			}
+		}
+		return null;
+	}
+
 	public static function confirmation_url( string $token ): string {
 		return add_query_arg( 'r', $token, home_url( '/rezervace/potvrzeni/' ) );
 	}

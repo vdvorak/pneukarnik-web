@@ -40,6 +40,18 @@ export function reminderLink(email: string): string {
 	return wpCli(['wp', 'eval', `echo Pneukarnik_Prefill::url_for_email(${shellQuote(email)});`]).trim();
 }
 
+/**
+ * Výjimka „zavřeno“ na dny od–do (YYYY-MM-DD), vrací její ID. Poznámka musí začínat E2E_PREFIX,
+ * aby ji smazal global-teardown, kdyby ji test nesmazal sám.
+ */
+export function addClosedDays(from: string, to: string, note: string): number {
+	return Number(wpCli(['wp', 'eval', `Pneukarnik_Day_Exceptions::add(${shellQuote(from)}, ${shellQuote(to)}, false, null, ${shellQuote(note)}); echo $GLOBALS['wpdb']->insert_id;`]).trim());
+}
+
+export function deleteDayException(id: number): void {
+	wpCli(['wp', 'eval', `Pneukarnik_Day_Exceptions::delete(${id});`]);
+}
+
 /** Příkaz v kontejneru `cli` (WP‑CLI) nad lokálním webem, vrací jeho výstup. */
 function wpCli(command: string[]): string {
 	return execFileSync('docker', ['compose', 'run', '--rm', '-T', 'cli', ...command], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });

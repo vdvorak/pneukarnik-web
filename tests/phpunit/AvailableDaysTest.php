@@ -110,6 +110,36 @@ class AvailableDaysTest extends Pneukarnik_REST_Test_Case {
 		$this->assertNotContains( '2027-03-10', $this->available_days( $this->hour, '2027-03' ) );
 	}
 
+	public function test_first_day_is_the_nearest_free_day_in_the_horizon_whatever_the_month(): void {
+		$this->assertSame( '2027-03-11', $this->available_days_response( $this->hour, '2027-03' )['first_day'] );
+		$this->assertSame( '2027-03-11', $this->available_days_response( $this->hour, '2027-04' )['first_day'] );
+	}
+
+	public function test_first_day_skips_a_full_month(): void {
+		$this->assertNull( Pneukarnik_Day_Exceptions::add( '2027-03-11', '2027-03-31', false, null, null ) );
+
+		$march = $this->available_days_response( $this->hour, '2027-03' );
+
+		$this->assertSame( [], $march['days'] );
+		$this->assertSame( '2027-04-01', $march['first_day'] );
+	}
+
+	public function test_first_day_follows_the_services_and_leasing(): void {
+		$this->set_seasons( [ '03-01', '03-31', '03-22' ] );
+		$seasonal = $this->create_service( 60, true );
+
+		$this->assertSame( '2027-04-01', $this->available_days_response( $this->hour, '2027-03' )['first_day'], 'Mimo sezónní Služby až po Sezóně' );
+		$this->assertSame( '2027-03-11', $this->available_days_response( $seasonal, '2027-03' )['first_day'] );
+		$this->assertSame( '2027-03-22', $this->available_days_response( $seasonal, '2027-03', true )['first_day'], 'Leasing až od leasingového data' );
+	}
+
+	public function test_first_day_is_null_without_a_free_day_in_the_horizon(): void {
+		$this->assertNull( $this->available_days_response( $this->create_service( 180 ), '2027-03' )['first_day'], 'Delší než blok Pracovní doby' );
+
+		$this->assertNull( Pneukarnik_Day_Exceptions::add( '2027-03-10', '2027-04-09', false, null, null ) );
+		$this->assertNull( $this->available_days_response( $this->hour, '2027-03' )['first_day'] );
+	}
+
 	/**
 	 * @return array<string, array{string}>
 	 */

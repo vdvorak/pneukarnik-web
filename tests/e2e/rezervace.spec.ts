@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type APIRequestContext } from '@playwright/test';
-import { addClosedDay, E2E_PREFIX, login, pickDay, pickTime, publishService, saveAutumnSeason, saveBookingSettings, uniqueTitle, upcomingWeekday } from './support/admin';
+import { addClosedDay, dayFromToday, E2E_PREFIX, login, pickDay, pickTime, publishService, saveAutumnSeason, saveBookingSettings, uniqueTitle, upcomingWeekday } from './support/admin';
 import { waitForMail } from './support/mailpit';
-import { createGuide, createService, deletePosts, reminderLink, setPostStatus } from './support/wp';
+import { addClosedDays, createGuide, createService, deleteDayException, deletePosts, reminderLink, setPostStatus } from './support/wp';
 
 // Dílna je jedna, testy si tedy nesmí brát Termíny navzájem.
 test.describe.configure({ mode: 'serial' });
@@ -234,6 +234,40 @@ test('Den s Výjimkou „zavřeno“ je v kalendáři zašedlý', async ({ page 
 		await expect(page.locator(`[data-date="${open}"]`)).toBeEnabled();
 	}
 	await expect(page.getByText('Zašedlé dny nemají volný termín.')).toBeVisible();
+});
+
+test('Z plného měsíce kalendář sám přejde na měsíc nejbližšího volného dne, ručně přepnutý měsíc zůstane', async ({ page, request }) => {
+	const today = dayFromToday(0);
+	const [year, month] = today.split('-').map(Number);
+	const lastDay = new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10);
+	const nextMonth = new Date(Date.UTC(year, month, 1)).toISOString().slice(0, 7);
+	const allDay = createService(uniqueTitle('Celodenní oprava'), `e2e-celodenni-oprava-${Date.now()}`, 'autoservis', { _service_bookable: '1', _service_duration: '600' });
+	const closed = addClosedDays(today, lastDay, `${E2E_PREFIX}plný měsíc`);
+	const nearest = page.locator('#kalendar-nejblizsi');
+	try {
+		const next = await (await request.get('/wp-json/pneukarnik/v1/available-days', { params: { 'service_ids[]': serviceId, month: nextMonth } })).json();
+		const firstDay: string = next.days[0];
+		expect(next.first_day).toBe(firstDay);
+
+		await page.goto('/rezervace/');
+		await page.getByLabel('Služba', { exact: true }).selectOption(String(serviceId));
+		await expect(page.locator(`[data-date="${firstDay}"]`)).toBeEnabled();
+		await expect(page.locator(`[data-date="${today}"]`)).toHaveCount(0);
+		await expect(nearest).toHaveText(new RegExp(`^Nejbližší volný den: \\S+ ${Number(firstDay.slice(8))}\\. ${Number(firstDay.slice(5, 7))}\\.$`));
+		await expect(page.locator('#kalendar-dny [aria-pressed="true"]')).toHaveCount(0); // Den vybírá Zákazník.
+
+		await page.getByRole('button', { name: 'Předchozí měsíc' }).click();
+		await expect(page.getByText('V tomto měsíci nejsou volné termíny.')).toBeVisible();
+		await expect(page.locator(`[data-date="${today}"]`)).toBeDisabled();
+
+		// Služba bez volného dne v celém horizontu: měsíc zůstane a místo dne je telefon.
+		await page.getByLabel('Služba', { exact: true }).selectOption(String(allDay));
+		await expect(nearest).toHaveText(/^Online teď volný termín nemáme, zavolejte nám prosím na .+\.$/);
+		await expect(page.locator(`[data-date="${today}"]`)).toBeVisible();
+	} finally {
+		deleteDayException(closed);
+		deletePosts([allDay]);
+	}
 });
 
 test('V Sezóně jde online jen sezónní Služba a leasing až od leasingového data', async ({ page }) => {

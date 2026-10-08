@@ -153,8 +153,9 @@ get_header();
 					<section class="rezervace__cast">
 						<h2 class="rezervace__nadpis"><span class="rezervace__cislo" aria-hidden="true">2</span> <?php esc_html_e( 'Den a čas', 'pneukarnik' ); ?></h2>
 						<div class="rezervace__den-a-cas">
-							<div class="kalendar" role="group" aria-labelledby="kalendar-mesic" aria-describedby="kalendar-stav chyba-date">
+							<div class="kalendar" role="group" aria-labelledby="kalendar-mesic" aria-describedby="kalendar-nejblizsi kalendar-stav chyba-date">
 								<input type="hidden" name="date" id="rez-den">
+								<p class="kalendar__nejblizsi" id="kalendar-nejblizsi" aria-live="polite"></p>
 								<div class="kalendar__hlavicka">
 									<button type="button" class="kalendar__sipka" id="kalendar-predchozi" aria-label="<?php esc_attr_e( 'Předchozí měsíc', 'pneukarnik' ); ?>"><span aria-hidden="true">←</span></button>
 									<span class="kalendar__mesic" id="kalendar-mesic" aria-live="polite"></span>
