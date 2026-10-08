@@ -278,6 +278,34 @@ final class Pneukarnik_Subscriptions {
 	}
 
 	/**
+	 * Kolika e‑mailům smí teď chodit jednotlivé druhy Nabídek a připomínek (Akce i ze starého
+	 * souhlasu), pro stránku E‑maily Zákazníkům.
+	 *
+	 * @return array{reminder:int,promotions:int,review:int}
+	 */
+	public static function audience(): array {
+		global $wpdb;
+		$audience = [];
+		foreach ( [
+			self::REMINDER   => [ self::REMINDER, self::REMINDER ],
+			self::PROMOTIONS => [ self::PROMOTIONS, self::LEGACY ],
+			self::REVIEW     => [ self::REVIEW, self::REVIEW ],
+		] as $kind => $purposes ) {
+			// RECEIVES_SQL je pevný fragment s placeholdery.
+			// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+			$audience[ $kind ] = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					'SELECT COUNT(DISTINCT s.email) FROM %i s WHERE s.purpose IN (%s, %s) AND ' . self::RECEIVES_SQL,
+					Pneukarnik_DB::subscriptions_table(),
+					...[ ...$purposes, ...self::receives_args() ]
+				)
+			);
+			// phpcs:enable
+		}
+		return $audience;
+	}
+
+	/**
 	 * Stránka nastavení e‑mailů podle klíče z odkazu: e‑mail, co mu smí chodit (u nároku bez ohledu
 	 * na návštěvu, Akce i ze starého souhlasu) a adresa stránky. Null = neplatný klíč.
 	 *

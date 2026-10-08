@@ -20,10 +20,15 @@ final class Pneukarnik_Reminder {
 
 	public const OPTION_DAYS = 'pneukarnik_reminder_days';
 
+	/** Úvod e‑mailu (dřív mezi texty e‑mailů v Nastavení, proto ten název). */
+	public const OPTION_INTRO = 'pneukarnik_email_reminder';
+
 	public const NO_PROVOZOVATEL_EMAIL = 'reminder.no_provozovatel_email';
 	public const SEND_FAILED           = 'reminder.send_failed';
 
 	private const DEFAULT_DAYS = 14;
+
+	private const DEFAULT_INTRO = "Dobrý den,\nblíží se sezóna přezouvání a o termíny bývá velký zájem.";
 
 	/** Kolik Připomínek nejvýš odejde za jedno spuštění (limity SMTP hostingu). */
 	private const BATCH_SIZE = 50;
@@ -45,6 +50,11 @@ final class Pneukarnik_Reminder {
 	/** Kolik dní před začátkem Sezóny se Připomínky posílají, 0 = neposílají se. */
 	public static function days_before(): int {
 		return max( 0, (int) get_option( self::OPTION_DAYS, self::DEFAULT_DAYS ) );
+	}
+
+	/** Úvod e‑mailu, upravuje ho Provozovatel na stránce E‑maily Zákazníkům. */
+	public static function intro(): string {
+		return (string) get_option( self::OPTION_INTRO, self::DEFAULT_INTRO );
 	}
 
 	/**
@@ -148,7 +158,7 @@ final class Pneukarnik_Reminder {
 		/* translators: 1: název Sezóny malým písmenem (jarní, podzimní), 2: den začátku, např. 15. 3. */
 		return ( new Pneukarnik_Email( $subject_prefix . sprintf( __( 'Je čas přezout: %1$s sezóna začíná %2$s', 'pneukarnik-booking' ), $name, $from->format( 'j. n.' ) ) ) )
 			->heading( __( 'Je čas přezout', 'pneukarnik-booking' ) )
-			->paragraph( Pneukarnik_Notifications::text( 'reminder' ) )
+			->paragraph( self::intro() )
 			/* translators: 1: název Sezóny malým písmenem, 2: datum začátku, např. 15. 3. 2027 */
 			->paragraph( sprintf( __( 'Naše %1$s sezóna přezouvání začíná %2$s. Objednejte se včas, ať máte termín, který vám vyhovuje.', 'pneukarnik-booking' ), $name, $from->format( 'j. n. Y' ) ) )
 			->button( __( 'Objednat přezutí', 'pneukarnik-booking' ), Pneukarnik_Prefill::url_for_email( $to ) )

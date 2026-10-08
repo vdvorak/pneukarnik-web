@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * E‑maily k Rezervaci: Zákazníkovi potvrzení a Zrušení, Provozovateli nová a zrušená
  * online Rezervace (zapínatelné). Šablony jsou tady, Provozovatel upravuje jen klíčové
- * texty (úvod, podpis, co si vzít s sebou, úvod Připomínky přezutí). Chyba odeslání Rezervaci nevrací.
+ * texty (úvod, podpis, co si vzít s sebou). Chyba odeslání Rezervaci nevrací.
  */
 final class Pneukarnik_Notifications {
 
@@ -25,7 +25,6 @@ final class Pneukarnik_Notifications {
 			'intro'     => [ __( 'Úvod potvrzení', 'pneukarnik-booking' ), "Dobrý den,\nděkujeme za rezervaci. Těšíme se na vás." ],
 			'bring'     => [ __( 'Co si vzít s sebou (každá položka na řádek)', 'pneukarnik-booking' ), "Technický průkaz vozidla\nKlíč k pojistným šroubům kol" ],
 			'signature' => [ __( 'Podpis', 'pneukarnik-booking' ), "S pozdravem\nPneuservis a autoservis Jan Kárník" ],
-			'reminder'  => [ __( 'Úvod Připomínky přezutí', 'pneukarnik-booking' ), "Dobrý den,\nblíží se sezóna přezouvání a o termíny bývá velký zájem." ],
 		];
 	}
 
