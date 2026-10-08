@@ -1,8 +1,8 @@
 <?php
 /**
  * Nastavení e‑mailů z Nabídek a připomínek (/odhlaseni/?k=…): zvlášť Připomínka přezutí a Akce,
- * nebo Neposílat nic. „Ano, posílejte“ z potvrzení Rezervace (/odhlaseni/?s=…) se zeptá a po stisku
- * tlačítka ukáže nastavení. Odkazy odeslané dřív odhlásí hned při otevření: z Připomínky přezutí
+ * nebo Neposílat nic. Odkaz z potvrzení Rezervace zadané Provozovatelem (/odhlaseni/?s=…) nabídne
+ * obojí nezaškrtnuté a po uložení ukáže nastavení. Odkazy odeslané dřív odhlásí hned při otevření: z Připomínky přezutí
  * (/odhlaseni/?t=…, pak ukáže nastavení) a ze „informací o slevách“ (/cancel-subscription?email=…).
  * Stav dodává a formulář zpracuje plugin (Pneukarnik_Booking_Pages::email_settings).
  * Bílá karta na přechodu: nastavení, nabídka, ✓ a Odhlášeno, nebo Notice s telefonem a e‑mailem.
@@ -19,7 +19,6 @@ $pneukarnik_notices  = [
 	'reminder_off' => __( 'Hotovo, Připomínky přezutí vám už posílat nebudeme.', 'pneukarnik' ),
 	'saved'        => __( 'Uloženo.', 'pneukarnik' ),
 	'nothing'      => __( 'Hotovo, nebudeme vám posílat nic.', 'pneukarnik' ),
-	'consented'    => __( 'Děkujeme, budeme vám posílat Připomínku přezutí a naše akce.', 'pneukarnik' ),
 ];
 
 get_header();
@@ -55,21 +54,29 @@ get_header();
 						<button type="submit" class="button button--secondary" name="volba" value="nic"><?php esc_html_e( 'Neposílat nic', 'pneukarnik' ); ?></button>
 					</div>
 				</form>
-				<p class="vysledek__poznamka"><?php esc_html_e( '„Neposílat nic“ vypne i jednorázovou prosbu o hodnocení na Googlu. E‑maily k vašim rezervacím chodí dál.', 'pneukarnik' ); ?></p>
+				<p class="vysledek__poznamka"><?php esc_html_e( 'E‑maily k vašim rezervacím chodí dál.', 'pneukarnik' ); ?></p>
 			<?php elseif ( null !== $pneukarnik_offer ) : ?>
 				<h1><?php esc_html_e( 'E‑maily od nás', 'pneukarnik' ); ?></h1>
 				<p class="vysledek__text">
 					<?php
 					/* translators: %s: e‑mail Zákazníka */
-					echo esc_html( sprintf( __( 'Chcete na %s před každou sezónou připomenout přezutí a dostávat naše akce?', 'pneukarnik' ), $pneukarnik_offer['email'] ) );
+					echo esc_html( sprintf( __( 'Co vám smíme posílat na %s:', 'pneukarnik' ), $pneukarnik_offer['email'] ) );
 					?>
 				</p>
 				<form class="vysledek__formular" method="post" action="<?php echo esc_url( $pneukarnik_offer['url'] ); ?>">
+					<div class="zaskrtavaci">
+						<input type="checkbox" name="reminder" value="1" id="nabidka-reminder">
+						<label for="nabidka-reminder"><?php esc_html_e( 'Připomínku přezutí před každou sezónou', 'pneukarnik' ); ?></label>
+					</div>
+					<div class="zaskrtavaci">
+						<input type="checkbox" name="promotions" value="1" id="nabidka-promotions">
+						<label for="nabidka-promotions"><?php esc_html_e( 'Naše akce', 'pneukarnik' ); ?></label>
+					</div>
 					<div class="vysledek__tlacitka">
-						<button type="submit" class="button" name="volba" value="ano"><?php esc_html_e( 'Ano, posílejte', 'pneukarnik' ); ?></button>
+						<button type="submit" class="button" name="volba" value="ulozit"><?php esc_html_e( 'Uložit', 'pneukarnik' ); ?></button>
 					</div>
 				</form>
-				<p class="vysledek__poznamka"><?php esc_html_e( 'Jednou po první návštěvě vás poprosíme i o hodnocení na Googlu. Co vám posíláme, nastavíte odkazem v každém z těchto e‑mailů.', 'pneukarnik' ); ?></p>
+				<p class="vysledek__poznamka"><?php esc_html_e( 'Co vám posíláme, změníte odkazem v každém z těchto e‑mailů.', 'pneukarnik' ); ?></p>
 			<?php elseif ( 'legacy' === $pneukarnik_result['state'] ) : ?>
 				<span class="vysledek__ikona" aria-hidden="true">✓</span>
 				<h1><?php esc_html_e( 'Odhlášeno', 'pneukarnik' ); ?></h1>

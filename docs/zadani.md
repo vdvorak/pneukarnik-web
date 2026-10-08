@@ -61,7 +61,7 @@ První verzi textů napíše vývojář, Provozovatel je zkontroluje.
 - Termíny začínají na **mřížce** s krokem nastavitelným v adminu (např. 30 min). Termín je volný, jen když je volný celý úsek a vejde se do jednoho bloku Pracovní doby. Dnes jen s nastavitelným předstihem.
 - V **Sezóně** lze online rezervovat jen sezónní Služby.
 - **Leasingový zákazník**: zaškrtne „vozidlo je na leasing“ + uvede společnost. Systém vynutí leasingové datum Sezóny (k čemu se datum vztahuje, upřesní Provozovatel).
-- **Formulář:** jméno/firma, telefon, e‑mail, SPZ, značka a model (volitelné), poznámka, leasing + společnost, „kola mám uskladněná u vás“ (u pneuslužeb, pokud to Provozovatel chce), souhlas GDPR, nezaškrtnuté „Neposílat Nabídky a připomínky“ s „i“, co chodí (ADR 0003).
+- **Formulář:** jméno/firma, telefon, e‑mail, SPZ, značka a model (volitelné), poznámka, leasing + společnost, „kola mám uskladněná u vás“ (u pneuslužeb, pokud to Provozovatel chce), souhlas GDPR, dvě nezaškrtnutá políčka souhlasu s Připomínkou přezutí a s Akcemi (ADR 0004).
 - Bez registrace a účtů (ADR 0002). Místo toho:
   - předvyplnění údajů v prohlížeči,
   - odkaz „Objednat znovu“ v e‑mailu (předvyplní údaje, Služby a uskladněná kola, Termín vybírá Zákazník znovu),
@@ -69,7 +69,6 @@ První verzi textů napíše vývojář, Provozovatel je zkontroluje.
 - **Zrušení** odkazem z e‑mailu do Lhůty zrušení (nastavitelná, default 24 h). Po lhůtě se zobrazí telefon. Změna Termínu = Zrušení + nová Rezervace s předvyplněnými údaji.
 - Potvrzení e‑mailem zákazníkovi. Upozornění Provozovateli podle jeho odpovědi.
 - **Připomínka Termínu** e‑mailem den před Termínem v nastavenou hodinu (default 16:00), ke každé Rezervaci s e‑mailem i zadané Provozovatelem, ne k vytvořené méně než 24 h předem. Odkaz na Zrušení, po Lhůtě zrušení telefon. Provozovatel ji vypíná na stránce E‑maily Zákazníkům.
-- **Žádost o hodnocení** e‑mailem den po Termínu nezrušené Rezervace od 10:00 s odkazem na napsání hodnocení na Googlu (místo podle Place ID z Nastavení Google recenzí, bez něj se neposílá). Jedna z Nabídek a připomínek, každému e‑mailu nejvýš jednou za celou dobu, i po anonymizaci Rezervace. Provozovatel ji vypíná a upravuje úvod na stránce E‑maily Zákazníkům.
 - **Rezervace do kalendáře** Zákazníka: soubor `.ics` s jednou událostí (tlačítko „Přidat do kalendáře“ na stránce Potvrzení a příloha potvrzovacího e‑mailu). Bez jména, kontaktu a poznámky Zákazníka.
 
 ## Administrace rezervací
@@ -81,7 +80,7 @@ První verzi textů napíše vývojář, Provozovatel je zkontroluje.
 
 ## Provoz, právo, převod
 
-- **GDPR:** Rezervace starší než 1 rok se automaticky anonymizují. **Nabídky a připomínky** (Připomínka přezutí, Akce e‑mailem, Žádost o hodnocení) chodí bez souhlasu Zákazníkovi, který u Provozovatele už byl a při online rezervaci je neodmítl (ADR 0003). Zákazník zadaný Provozovatelem je dostane jen se souhlasem tlačítkem „Ano, posílejte“ z potvrzení Rezervace, které ho nabídne e‑mailu bez souhlasu, nároku i odmítnutí. Odkaz z každého z nich vede na stránku nastavení e‑mailů: zvlášť Připomínka přezutí a Akce, nebo Neposílat nic (opětovné zapnutí je výslovný souhlas), hlavička `List-Unsubscribe` odhlásí vše. Nárok po návštěvě přežije anonymizaci Rezervace, výmaz osobních údajů ho smaže. Text zásad napíše vývojář, Provozovatel schválí.
+- **GDPR:** Rezervace starší než 1 rok se automaticky anonymizují. **Nabídky a připomínky** (Připomínka přezutí, Akce e‑mailem) chodí jen se souhlasem, každý druh zvlášť: zaškrtnutím při online rezervaci (ADR 0004). Zákazníkovi zadanému Provozovatelem nabídne potvrzení Rezervace odkaz na stránku se stejnými dvěma políčky, pokud jeho e‑mail ještě nemá souhlas ani odvolání. Odkaz z každého z e‑mailů vede na stránku nastavení e‑mailů: zvlášť Připomínka přezutí a Akce, nebo Neposílat nic (opětovné zapnutí je souhlas), hlavička `List-Unsubscribe` odhlásí vše. Souhlas přežije anonymizaci Rezervace, výmaz osobních údajů ho smaže. Text zásad napíše vývojář, Provozovatel schválí.
 - **Bez cookies vyžadujících souhlas:**
   - analytika Matomo v cookieless režimu + Google Search Console,
   - mapa jako obrázek nebo načtení až po kliknutí,

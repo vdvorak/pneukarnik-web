@@ -620,10 +620,6 @@ a.ikona-info:hover,button.ikona-info:hover{background:var(--brand-primary);color
 .zaskrtavaci label{cursor:pointer}
 .zaskrtavaci a{font-weight:700}
 /* „i“ jako na kartě Služby hned za textem pod ním rozbalí nápovědu (akordeon). */
-.zaskrtavaci__info{margin:-2px 0 -2px 2px;vertical-align:middle;cursor:pointer}
-.zaskrtavaci__info[aria-expanded="true"]{background:var(--brand-primary);color:var(--text-on-primary)}
-.zaskrtavaci__napoveda p,.zaskrtavaci__napoveda ul{margin:6px 0 0}
-.zaskrtavaci__napoveda ul{padding-left:18px}
 
 /* 1 Služba */
 .rezervace__sluzby{display:flex;flex-direction:column;gap:16px}

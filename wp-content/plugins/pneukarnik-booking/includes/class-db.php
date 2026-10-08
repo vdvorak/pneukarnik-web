@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Pneukarnik_DB {
 
 	private const DB_VERSION_OPTION = 'pneukarnik_db_version';
-	private const DB_VERSION        = '1.16';
+	private const DB_VERSION        = '1.17';
 
 	/** Testy běží uvnitř transakce WP test suite, transakce pluginu pak používají savepoint. */
 	private static bool $savepoints = false;
@@ -116,8 +116,39 @@ class Pneukarnik_DB {
 			);
 		}
 
+		// 1.16 → 1.17: Nabídky a připomínky jen s výslovným souhlasem, bez Žádosti o hodnocení (ADR 0004).
+		if ( $installed && version_compare( (string) $installed, '1.17', '<' ) ) {
+			self::drop_soft_opt_in();
+		}
+
 		update_option( self::DB_VERSION_OPTION, self::DB_VERSION );
 		pneukarnik_ensure_capabilities();
+	}
+
+	/**
+	 * Nároky z online Rezervace souhlasem nejsou a smažou se, s nimi i odmítnutí ve formuláři bez
+	 * dřívějšího souhlasu. Odvolání odkazem zůstanou (starý odkaz brání převodu starých souhlasů).
+	 * Žádost o hodnocení zmizí i s plánovanou úlohou a nastavením.
+	 */
+	private static function drop_soft_opt_in(): void {
+		global $wpdb;
+		$table = self::subscriptions_table();
+		$wpdb->query(
+			$wpdb->prepare(
+				'DELETE FROM %i WHERE purpose = %s OR (consented_at IS NULL AND (withdrawn_at IS NULL OR withdrawn_source = %s))',
+				$table,
+				'review',
+				'rezervace'
+			)
+		);
+		foreach ( [ 'claimed_at', 'visited_at', 'sent_at' ] as $column ) {
+			if ( $wpdb->get_var( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, $column ) ) ) {
+				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i DROP COLUMN %i', $table, $column ) );
+			}
+		}
+		wp_clear_scheduled_hook( 'pneukarnik_review_request_send' );
+		delete_option( 'pneukarnik_review_request_enabled' );
+		delete_option( 'pneukarnik_review_request_intro' );
 	}
 
 	private static function rename_subscription_source(): void {
@@ -299,21 +330,17 @@ class Pneukarnik_DB {
 			KEY idx_service (service_id)
 		) ENGINE=InnoDB $charset_collate;";
 
-		// Vztah e‑mailu k Nabídkám a připomínkám, jeden řádek na e‑mail a druh (Pneukarnik_Subscriptions):
-		// nárok z online Rezervace, výslovný souhlas, odmítnutí nebo odvolání a zapamatovaná návštěva.
-		// last_season = Sezóna poslední odeslané Připomínky (např. 2027-spring), sent_at = kdy odešla Žádost o hodnocení.
+		// Souhlas e‑mailu s Nabídkami a připomínkami, jeden řádek na e‑mail a druh (Pneukarnik_Subscriptions):
+		// souhlas a odvolání s časem a zdrojem. last_season = Sezóna poslední odeslané Připomínky (např. 2027-spring).
 		$subscriptions = "CREATE TABLE {$wpdb->prefix}pneukarnik_subscriptions (
 			id               BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			email            VARCHAR(255)    NOT NULL,
 			purpose          VARCHAR(20)     NOT NULL,
 			consent_source   VARCHAR(20)     DEFAULT NULL,
-			claimed_at       DATETIME        DEFAULT NULL,
 			consented_at     DATETIME        DEFAULT NULL,
 			withdrawn_at     DATETIME        DEFAULT NULL,
 			withdrawn_source VARCHAR(20)     DEFAULT NULL,
-			visited_at       DATETIME        DEFAULT NULL,
 			last_season      VARCHAR(20)     DEFAULT NULL,
-			sent_at          DATETIME        DEFAULT NULL,
 			PRIMARY KEY  (id),
 			UNIQUE KEY uq_email_purpose (email, purpose),
 			KEY idx_purpose (purpose, withdrawn_at)

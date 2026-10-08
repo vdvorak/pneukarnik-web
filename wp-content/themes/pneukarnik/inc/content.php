@@ -107,7 +107,7 @@ function pneukarnik_default_pages(): array {
 				. $list(
 					[
 						'Rezervace: jméno nebo firma, telefon, e‑mail, SPZ, značka a model vozu a poznámka, abychom vás mohli objednat, potvrdit Termín a ozvat se při změně.',
-						'Nabídky a připomínky: e‑mail, abychom vám po vaší návštěvě posílali Připomínku přezutí před každou sezónou, naše akce a jednou prosbu o hodnocení na Googlu. Jde o naše vlastní podobné služby pro naše zákazníky (§ 7 odst. 3 zákona č. 480/2004 Sb.). Odmítnout je můžete už při online rezervaci a kdykoli později odkazem v každém z těchto e‑mailů. Odmítnutí platí do vaší další online rezervace, ve které políčko „Neposílat“ nezaškrtnete. E‑mail se záznamem o návštěvě, souhlasu nebo odmítnutí uchováváme i po anonymizaci Rezervace. Na vaši žádost ho smažeme.',
+						'Nabídky a připomínky: e‑mail, abychom vám posílali Připomínku přezutí před každou sezónou nebo naše akce, jen když jste s tím souhlasili, každé zvlášť (zaškrtnutím při online rezervaci nebo odkazem z potvrzení rezervace). Souhlas můžete kdykoli odvolat odkazem v každém z těchto e‑mailů. E‑mail se záznamem o souhlasu nebo odvolání uchováváme i po anonymizaci Rezervace. Na vaši žádost ho smažeme.',
 					]
 				)
 				. $heading( 'Jak dlouho údaje uchováváme' )

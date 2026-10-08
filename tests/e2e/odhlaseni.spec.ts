@@ -32,20 +32,23 @@ test('Nastavení e‑mailů: zvlášť Připomínka přezutí a Akce, nebo Nepos
 	await expect(promotions).not.toBeChecked();
 });
 
-test('„Ano, posílejte“ z potvrzení Rezervace zadané Provozovatelem zapne Nabídky a připomínky', async ({ page }) => {
+test('Odkaz z potvrzení Rezervace zadané Provozovatelem zapne jen zaškrtnuté Nabídky a připomínky', async ({ page }) => {
 	const email = `e2e-ano-${Date.now()}@example.test`;
 	await page.goto(offerLink(email));
 
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('E‑maily od nás');
 	await expect(page.getByRole('main')).toContainText(email);
 	await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
+	await expect(page.getByLabel('Připomínku přezutí před každou sezónou')).not.toBeChecked();
+	await expect(page.getByLabel('Naše akce')).not.toBeChecked();
 
-	await page.getByRole('button', { name: 'Ano, posílejte' }).click();
+	await page.getByLabel('Připomínku přezutí před každou sezónou').check();
+	await page.getByRole('button', { name: 'Uložit' }).click();
 
-	await expect(page).toHaveURL(/\/odhlaseni\/\?k=.+&souhlas=1$/);
-	await expect(page.getByRole('status')).toHaveText('Děkujeme, budeme vám posílat Připomínku přezutí a naše akce.');
+	await expect(page).toHaveURL(/\/odhlaseni\/\?k=.+&ulozeno=1$/);
+	await expect(page.getByRole('status')).toHaveText('Uloženo.');
 	await expect(page.getByLabel('Připomínku přezutí před každou sezónou')).toBeChecked();
-	await expect(page.getByLabel('Naše akce')).toBeChecked();
+	await expect(page.getByLabel('Naše akce')).not.toBeChecked();
 });
 
 test('Starý odkaz z e‑mailů starého webu přesměruje na odhlášení a neplatný odkaz to řekne', async ({ page }) => {

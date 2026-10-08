@@ -7,7 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Připomínka přezutí (viz CONTEXT.md): nastavený počet dní před začátkem každé Sezóny dostane
- * každý e‑mail, který smí dostávat Nabídky a připomínky druhu Pneukarnik_Subscriptions::REMINDER,
+ * každý e‑mail se souhlasem s Nabídkami a připomínkami druhu Pneukarnik_Subscriptions::REMINDER,
  * jednu Připomínku s odkazem na předvyplněnou rezervaci a na stránku nastavení e‑mailů.
  *
  * Plánovaná úloha běží každou hodinu a posílá po dávkách. Příjemce se před odesláním označí
@@ -100,7 +100,7 @@ final class Pneukarnik_Reminder {
 				continue; // Mezitím ji poslalo souběžné spuštění.
 			}
 			$settings = Pneukarnik_Subscriptions::settings_url( $recipient['email'] );
-			$email    = self::email( $season, $recipient['email'], $settings, $recipient['consented'] );
+			$email    = self::email( $season, $recipient['email'], $settings );
 			if ( ! $email->send( $recipient['email'], Pneukarnik_Contact::email(), Pneukarnik_Subscriptions::unsubscribe_headers( $settings ) ) ) {
 				self::release( $recipient['id'], $season['key'], $recipient['last_season'] );
 			}
@@ -141,16 +141,15 @@ final class Pneukarnik_Reminder {
 			'from'      => $today->format( 'Y-m-d' ),
 			'send_from' => $today->format( 'Y-m-d' ),
 		];
-		$email  = self::email( $season, $to, home_url( '/odhlaseni/' ), false, __( '[Zkouška] ', 'pneukarnik-booking' ) )
+		$email  = self::email( $season, $to, home_url( '/odhlaseni/' ), __( '[Zkouška] ', 'pneukarnik-booking' ) )
 			->paragraph( __( 'Toto je zkušební Připomínka pro Provozovatele. Zákazníci dostanou vlastní odkaz na nastavení e‑mailů, ten tady nic nenastaví.', 'pneukarnik-booking' ) );
 		return $email->send( $to ) ? $to : null;
 	}
 
 	/**
 	 * @param array{name:string,from:string} $season
-	 * @param bool                           $consented Výslovný souhlas, jinak nárok po návštěvě.
 	 */
-	private static function email( array $season, string $to, string $settings_url, bool $consented, string $subject_prefix = '' ): Pneukarnik_Email {
+	private static function email( array $season, string $to, string $settings_url, string $subject_prefix = '' ): Pneukarnik_Email {
 		$name  = mb_strtolower( Pneukarnik_Season::names()[ $season['name'] ] ?? '' );
 		$from  = Pneukarnik_Clock::at( $season['from'] );
 		$phone = Pneukarnik_Contact::phone();
@@ -166,9 +165,7 @@ final class Pneukarnik_Reminder {
 			->paragraph( '' !== $phone ? sprintf( __( 'Raději zavoláte? Jsme na %s.', 'pneukarnik-booking' ), $phone ) : '' )
 			->signature( Pneukarnik_Notifications::text( 'signature' ) )
 			->footer(
-				$consented
-					? __( 'Připomínku dostáváte, protože jste s ní souhlasili.', 'pneukarnik-booking' )
-					: __( 'Připomínku dostáváte, protože jste u nás byli a při online rezervaci jste e‑maily s nabídkami a připomínkami neodmítli.', 'pneukarnik-booking' ),
+				__( 'Připomínku dostáváte, protože jste s ní souhlasili.', 'pneukarnik-booking' ),
 				__( 'Nastavit, co vám posíláme', 'pneukarnik-booking' ),
 				$settings_url
 			);
@@ -177,20 +174,21 @@ final class Pneukarnik_Reminder {
 	/**
 	 * E‑maily, které Připomínku smějí dostávat a pro Sezónu jim ještě neodešla.
 	 *
-	 * @return list<array{id:int,email:string,last_season:string|null,consented:bool}>
+	 * @return list<array{id:int,email:string,last_season:string|null}>
 	 */
 	private static function recipients( string $key, int $limit ): array {
 		global $wpdb;
-		// Pneukarnik_Subscriptions::RECEIVES_SQL je pevný fragment s placeholdery.
-		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+		// Pneukarnik_Subscriptions::RECEIVES_SQL je pevný fragment.
+		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT s.id, s.email, s.last_season, s.consented_at IS NOT NULL AS consented FROM %i s
+				'SELECT s.id, s.email, s.last_season FROM %i s
 				 WHERE s.purpose = %s AND ' . Pneukarnik_Subscriptions::RECEIVES_SQL . ' AND (s.last_season IS NULL OR s.last_season <> %s)
 				 ORDER BY s.id LIMIT %d',
 				Pneukarnik_DB::subscriptions_table(),
 				Pneukarnik_Subscriptions::REMINDER,
-				...[ ...Pneukarnik_Subscriptions::receives_args(), $key, $limit ]
+				$key,
+				$limit
 			),
 			ARRAY_A
 		);
@@ -200,7 +198,6 @@ final class Pneukarnik_Reminder {
 				'id'          => (int) $row['id'],
 				'email'       => (string) $row['email'],
 				'last_season' => null === $row['last_season'] ? null : (string) $row['last_season'],
-				'consented'   => (bool) $row['consented'],
 			],
 			$rows ?: []
 		);
@@ -208,14 +205,14 @@ final class Pneukarnik_Reminder {
 
 	private static function count_recipients( string $key ): int {
 		global $wpdb;
-		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
 				'SELECT COUNT(*) FROM %i s
 				 WHERE s.purpose = %s AND ' . Pneukarnik_Subscriptions::RECEIVES_SQL . ' AND (s.last_season IS NULL OR s.last_season <> %s)',
 				Pneukarnik_DB::subscriptions_table(),
 				Pneukarnik_Subscriptions::REMINDER,
-				...[ ...Pneukarnik_Subscriptions::receives_args(), $key ]
+				$key
 			)
 		);
 		// phpcs:enable

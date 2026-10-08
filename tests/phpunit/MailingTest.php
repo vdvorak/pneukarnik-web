@@ -37,17 +37,15 @@ class MailingTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	public function test_mailing_goes_once_to_everyone_who_may_get_promotions_including_old_discount_consents(): void {
-		$this->book_online( 'byl@example.test', '2027-02-10' );
-		$this->book_online( 'jeste-nebyl@example.test', '2027-02-25' );
-		$this->book_online( 'odmitl@example.test', '2027-02-10', '11:00', refuse: true );
+		$this->book_online( 'souhlasil@example.test', '2027-02-25' );
+		$this->book_online( 'nesouhlasil@example.test', '2027-02-10', '11:00', consent: false );
 		Pneukarnik_Subscriptions::consent( 'jen-pripominka@example.test', Pneukarnik_Subscriptions::REMINDER, 'test' );
 		Pneukarnik_Subscriptions::import_legacy( 'stary@example.test', '2020-01-01 00:00:00' );
-		Pneukarnik_Subscriptions::import_legacy( 'byl@example.test', '2020-01-01 00:00:00' );
-		Pneukarnik_Clock::freeze( '2027-02-20 12:00' );
+		Pneukarnik_Subscriptions::import_legacy( 'souhlasil@example.test', '2020-01-01 00:00:00' );
 
 		$this->send_now( $this->mailing() );
 
-		$this->assertEqualsCanonicalizing( [ [ 'byl@example.test' ], [ 'stary@example.test' ] ], array_column( $this->mails, 'to' ) );
+		$this->assertEqualsCanonicalizing( [ [ 'souhlasil@example.test' ], [ 'stary@example.test' ] ], array_column( $this->mails, 'to' ) );
 	}
 
 	public function test_switching_off_promotions_on_the_settings_page_leaves_out_of_all_further_mailings(): void {
@@ -132,13 +130,12 @@ class MailingTest extends Pneukarnik_REST_Test_Case {
 		}
 	}
 
-	public function test_customer_who_did_not_refuse_gets_the_footer_about_the_visit(): void {
-		$this->book_online( 'byl@example.test', '2027-02-10' );
-		Pneukarnik_Clock::freeze( '2027-02-20 12:00' );
+	public function test_footer_says_the_customer_consented_to_promotions(): void {
+		$this->book_online( 'jan@example.test', '2027-02-10' );
 
 		$this->send_now( $this->mailing() );
 
-		$this->assertStringContainsString( 'neodmítli', $this->mail_to( 'byl@example.test' )['text'] );
+		$this->assertStringContainsString( 'Tento e‑mail dostáváte, protože jste souhlasili se zasíláním našich akcí.', $this->mail_to( 'jan@example.test' )['text'] );
 	}
 
 	public function test_mailing_goes_out_in_batches_and_is_sent_when_nobody_is_left(): void {
@@ -617,16 +614,16 @@ class MailingTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	/**
-	 * Online Rezervace s/bez odmítnutí Nabídek a připomínek.
+	 * Online Rezervace se zaškrtnutým souhlasem s Akcemi, nebo bez něj.
 	 */
-	private function book_online( string $email, string $date, string $time = '09:00', bool $refuse = false, ?int $service = null ): void {
+	private function book_online( string $email, string $date, string $time = '09:00', bool $consent = true, ?int $service = null ): void {
 		$response = $this->book(
 			$service ?? $this->tyres,
 			$date,
 			$time,
 			[
-				'email'         => $email,
-				'refuse_offers' => $refuse,
+				'email'              => $email,
+				'consent_promotions' => $consent,
 			]
 		);
 		$this->assertSame( 201, $response->get_status(), (string) wp_json_encode( $response->get_data() ) );

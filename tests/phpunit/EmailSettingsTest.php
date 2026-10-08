@@ -80,7 +80,6 @@ class EmailSettingsTest extends Pneukarnik_REST_Test_Case {
 		$this->assertSame( [ false, true ], [ $response->get_data()['reminder'], $response->get_data()['promotions'] ] );
 		$this->run_reminders_at( self::BEFORE_SPRING );
 		$this->assertSame( [], $this->mails );
-		$this->assertTrue( Pneukarnik_Subscriptions::is_active( 'jan@example.test', Pneukarnik_Subscriptions::REVIEW ), 'Žádost o hodnocení se ukládáním nemění' );
 	}
 
 	public function test_turning_the_reminder_on_again_is_an_explicit_consent_with_time(): void {
@@ -102,17 +101,18 @@ class EmailSettingsTest extends Pneukarnik_REST_Test_Case {
 		$this->assertCount( 1, $this->mails );
 	}
 
-	public function test_saving_what_already_comes_keeps_the_claim_from_the_booking(): void {
+	public function test_saving_what_already_comes_keeps_the_consent_from_the_booking(): void {
 		$this->book_online( 'jan@example.test' );
+		Pneukarnik_Clock::freeze( '2027-02-20 08:15' );
 
 		$this->save( 'jan@example.test', reminder: true, promotions: true );
 
 		$this->assertSame(
 			[
-				'claimed_at'   => '2027-02-01 12:00:00',
-				'consented_at' => null,
+				'consent_source' => 'rezervace',
+				'consented_at'   => '2027-02-01 12:00:00',
 			],
-			$this->row( 'jan@example.test', Pneukarnik_Subscriptions::REMINDER, 'claimed_at, consented_at' )
+			$this->row( 'jan@example.test', Pneukarnik_Subscriptions::REMINDER, 'consent_source, consented_at' )
 		);
 	}
 
@@ -139,7 +139,7 @@ class EmailSettingsTest extends Pneukarnik_REST_Test_Case {
 		$this->assertSame( [ [ 'stary@example.test' ] ], array_column( $this->mails, 'to' ) );
 	}
 
-	public function test_nothing_withdraws_every_kind_including_the_review_request(): void {
+	public function test_nothing_withdraws_every_kind_including_the_old_consent(): void {
 		$this->book_online( 'jan@example.test' );
 		Pneukarnik_Subscriptions::consent( 'jan@example.test', Pneukarnik_Subscriptions::LEGACY, 'import' );
 
@@ -288,7 +288,7 @@ class EmailSettingsTest extends Pneukarnik_REST_Test_Case {
 		Pneukarnik_Booking_Pages::handle_email_settings_form();
 
 		$this->assertSame( [ [ 303, add_query_arg( 'nic', '1', $url ) ] ], $redirects->list );
-		$this->assertFalse( Pneukarnik_Subscriptions::is_active( 'jan@example.test', Pneukarnik_Subscriptions::REVIEW ) );
+		$this->assertSame( [ false, false ], [ $this->settings( 'jan@example.test' )['reminder'], $this->settings( 'jan@example.test' )['promotions'] ] );
 	}
 
 	public function test_settings_page_with_invalid_key_shows_nothing(): void {
@@ -309,10 +309,19 @@ class EmailSettingsTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	/**
-	 * Online Rezervace před Připomínkami, aby Zákazník u nás už byl.
+	 * Online Rezervace se souhlasem s Připomínkou přezutí i s Akcemi.
 	 */
 	private function book_online( string $email, string $time = '09:00' ): void {
-		$response = $this->book( $this->tyres, '2027-02-10', $time, [ 'email' => $email ] );
+		$response = $this->book(
+			$this->tyres,
+			'2027-02-10',
+			$time,
+			[
+				'email'              => $email,
+				'consent_reminder'   => true,
+				'consent_promotions' => true,
+			]
+		);
 		$this->assertSame( 201, $response->get_status(), (string) wp_json_encode( $response->get_data() ) );
 		$this->mails = [];
 	}

@@ -241,22 +241,14 @@ get_header();
 								</span>
 							</div>
 							<span class="pole__chyba rezervace__chyba-souhlasu" id="chyba-consent_gdpr"></span>
-							<?php // Nabídky a připomínky (ADR 0003): nezaškrtnuté chodí až po návštěvě, „i“ za textem pod ním rozbalí, co chodí. ?>
+							<?php // Nabídky a připomínky (ADR 0004): každý druh zvlášť, jen se zaškrtnutím. ?>
 							<div class="zaskrtavaci">
-								<input type="checkbox" name="refuse_offers" value="1" id="rez-refuse_offers" aria-describedby="napoveda-refuse_offers">
-								<div>
-									<label for="rez-refuse_offers"><?php esc_html_e( 'Neposílat nabídky a připomínky.', 'pneukarnik' ); ?></label>
-									<button type="button" class="ikona-info zaskrtavaci__info" id="rez-co-posilame" aria-expanded="false" aria-controls="napoveda-refuse_offers"><?php echo pneukarnik_icon( 'info' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SVG ze šablony. ?><span class="screen-reader-text"><?php esc_html_e( 'Co posíláme', 'pneukarnik' ); ?></span></button>
-									<div class="zaskrtavaci__napoveda" id="napoveda-refuse_offers" hidden>
-										<p><?php esc_html_e( 'Když políčko nezaškrtnete, pošleme vám po vaší návštěvě e‑mailem:', 'pneukarnik' ); ?></p>
-										<ul>
-											<li><?php esc_html_e( 'Připomínku přezutí před každou sezónou,', 'pneukarnik' ); ?></li>
-											<li><?php esc_html_e( 'naše akce,', 'pneukarnik' ); ?></li>
-											<li><?php esc_html_e( 'jednou po první návštěvě prosbu o hodnocení na Googlu.', 'pneukarnik' ); ?></li>
-										</ul>
-										<p><?php esc_html_e( 'Odhlásit se jde v každém z nich.', 'pneukarnik' ); ?></p>
-									</div>
-								</div>
+								<input type="checkbox" name="consent_reminder" value="1" id="rez-consent_reminder">
+								<label for="rez-consent_reminder"><?php esc_html_e( 'Připomenout mi e‑mailem přezutí před každou sezónou.', 'pneukarnik' ); ?></label>
+							</div>
+							<div class="zaskrtavaci">
+								<input type="checkbox" name="consent_promotions" value="1" id="rez-consent_promotions">
+								<label for="rez-consent_promotions"><?php esc_html_e( 'Posílat mi e‑mailem vaše akce.', 'pneukarnik' ); ?></label>
 							</div>
 						</div>
 					</section>

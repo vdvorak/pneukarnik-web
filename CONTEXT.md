@@ -88,16 +88,12 @@ _Avoid_: newsletter, marketingový e‑mail
 E‑mail Zákazníkovi den před Termínem jeho Rezervace s časem, tím, co si vzít s sebou, a odkazem na Zrušení. Provozní e‑mail k jedné Rezervaci, mezi Nabídky a připomínky nepatří. Provozovatel ji může vypnout.
 _Avoid_: připomínka den předem, reminder
 
-**Žádost o hodnocení**:
-E‑mail Zákazníkovi (jedna z Nabídek a připomínek) den po jeho první návštěvě s odkazem na hodnocení Provozovatele na Googlu. Každý Zákazník ji dostane nejvýš jednou.
-_Avoid_: recenze (to jsou hodnocení na Googlu), dotazník spokojenosti
-
 **Rozesílka**:
 E‑mail o jedné nebo více platných Akcích, který Provozovatel pošle Zákazníkům hned, nebo naplánuje. Jedna z Nabídek a připomínek. Jde všem, kdo ji smějí dostávat, nebo jen Zákazníkům jedné Kategorie. Obsah se skládá z Akcí, Provozovatel doplní jen úvodní větu. Není to newsletter s volným obsahem. Dostanou ji i ti, kdo na starém webu dali souhlas s „informacemi o slevách“.
 _Avoid_: newsletter, kampaň, hromadný e‑mail
 
 **Nabídky a připomínky**:
-E‑maily, které Zákazník dostává mimo své Rezervace: Připomínka přezutí, Žádost o hodnocení a Rozesílka. Chodí Zákazníkovi, který u Provozovatele už byl (Termín jeho nezrušené Rezervace proběhl) a při online rezervaci je neodmítl, nebo který k nim dal souhlas odkazem z potvrzení Rezervace (tak se k nim dostane i Zákazník, kterého zadal Provozovatel). Odmítnout je jde kdykoli odkazem z každého z těchto e‑mailů, všechny nebo jen některé druhy (ADR 0003). Odmítnutí platí do další online rezervace, ve které Zákazník „Neposílat“ nezaškrtne. E‑maily k Rezervaci (potvrzení, Zrušení, Připomínka Termínu) mezi ně nepatří a odmítnout nejdou.
+E‑maily, které Zákazník dostává mimo své Rezervace: Připomínka přezutí a Rozesílka. Chodí jen se souhlasem Zákazníka, každý druh zvlášť: zaškrtnutím políčka v online rezervaci, nebo odkazem z potvrzení Rezervace zadané Provozovatelem (ADR 0004). Odvolat je jde kdykoli odkazem z každého z těchto e‑mailů, všechny nebo jen některé druhy. E‑maily k Rezervaci (potvrzení, Zrušení, Připomínka Termínu) mezi ně nepatří a odmítnout nejdou.
 _Avoid_: newsletter, odběr, marketingové e‑maily, sdělení (tím je Oznámení)
 
 ## Relationships

@@ -104,8 +104,8 @@ class TerminReminderTest extends Pneukarnik_REST_Test_Case {
 		$this->assertSame( [ [ 'telefon@example.test' ] ], array_column( $this->mails, 'to' ) );
 	}
 
-	public function test_customer_who_refused_offers_still_gets_it(): void {
-		$this->book_online( 'jan@example.test', refuse: true );
+	public function test_customer_without_consent_to_offers_still_gets_it(): void {
+		$this->book_online( 'jan@example.test' );
 
 		$this->run_at( self::SEND_AT );
 
@@ -299,16 +299,8 @@ class TerminReminderTest extends Pneukarnik_REST_Test_Case {
 	/**
 	 * Online Rezervace. Vrátí token Zrušení z potvrzení.
 	 */
-	private function book_online( string $email, string $time = '09:00', string $date = self::MONDAY, bool $refuse = false ): string {
-		$response = $this->book(
-			$this->tyres,
-			$date,
-			$time,
-			[
-				'email'         => $email,
-				'refuse_offers' => $refuse,
-			]
-		);
+	private function book_online( string $email, string $time = '09:00', string $date = self::MONDAY ): string {
+		$response = $this->book( $this->tyres, $date, $time, [ 'email' => $email ] );
 		$this->assertSame( 201, $response->get_status(), (string) wp_json_encode( $response->get_data() ) );
 		$token       = $this->cancel_token_from( $this->mail_to( $email ) );
 		$this->mails = []; // Potvrzení Rezervace nás tu nezajímá.

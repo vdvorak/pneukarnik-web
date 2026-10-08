@@ -6,23 +6,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Vztah e‑mailu k Nabídkám a připomínkám (ADR 0003), jeden řádek na e‑mail a druh:
+ * Souhlas e‑mailu s Nabídkami a připomínkami (ADR 0004), jeden řádek na e‑mail a druh:
  *   REMINDER    Připomínka přezutí,
  *   PROMOTIONS  Akce (Rozesílky),
- *   REVIEW      Žádost o hodnocení,
  *   LEGACY      „informace o slevách“ ze starého webu, jen s původním účelem, tedy pro Akce (převod #21).
  *
- * Řádek nese, proč e‑mail smí chodit, s časem a zdrojem kvůli doložení:
- *   claimed_at    nárok z online Rezervace, ve které Zákazník Nabídky a připomínky neodmítl (soft opt‑in).
- *                 Platí až po návštěvě: Termín nezrušené Rezervace s tímto e‑mailem proběhl, nebo visited_at.
- *   consented_at  výslovný souhlas (consent_source), platí hned.
- *   withdrawn_at  odmítnutí ve formuláři nebo odvolání (withdrawn_source: rezervace, nastaveni, jedno-kliknuti,
- *                 odkaz, stary-odkaz).
- *                 Má přednost, dokud ho nezmění nový výslovný souhlas nebo další online Rezervace
- *                 s nezaškrtnutým „Neposílat“ (ta založí nový nárok místo dřívějšího souhlasu).
- *   visited_at    Termín proběhlé Rezervace zapamatovaný při její anonymizaci, aby nárok přežil.
- *   sent_at       kdy e‑mailu odešla Žádost o hodnocení (Pneukarnik_Review_Request), přežije anonymizaci.
- * Rezervace zadaná Provozovatelem nárok nezakládá, za návštěvu se ale počítá.
+ * E‑mail smí druh dostávat jen s výslovným souhlasem, čas a zdroj se pamatují kvůli doložení:
+ *   consented_at  souhlas (consent_source: rezervace, potvrzeni, nastaveni, stary-web), platí hned.
+ *   withdrawn_at  odvolání (withdrawn_source: nastaveni, jedno-kliknuti, odkaz, stary-odkaz).
+ *                 Má přednost, dokud ho nezmění nový souhlas.
+ * Souhlas dává Zákazník zvlášť pro každý druh nezaškrtnutým políčkem v online Rezervaci, nebo
+ * na stránce z odkazu v potvrzení Rezervace zadané Provozovatelem. Nezaškrtnuté políčko nic nemění.
  * Výmaz osobních údajů smaže všechny řádky e‑mailu.
  *
  * Stránka nastavení e‑mailů /odhlaseni/?k={id}.{podpis}: klíč nese id některého řádku e‑mailu
@@ -30,13 +24,13 @@ if ( ! defined( 'ABSPATH' ) ) {
  * výmaz osobních údajů řádky e‑mailu nesmaže. Zvlášť jde vypnout a zapnout Připomínku přezutí
  * a Akce (i LEGACY), „Neposílat nic“ odvolá všechny druhy. Zapnutí je výslovný souhlas (nastaveni).
  *
- * „Ano, posílejte“ /odhlaseni/?s={id}.{podpis} z potvrzení Rezervace zadané Provozovatelem, když e‑mail
- * k Nabídkám a připomínkám ještě nemá žádný vztah: podpis id Rezervace spolu s jejím e‑mailem, platí do
- * anonymizace Rezervace. Otevření nic nezapíše, souhlas se všemi druhy (potvrzeni) zapíše až tlačítko na stránce.
+ * Souhlasy /odhlaseni/?s={id}.{podpis} z potvrzení Rezervace zadané Provozovatelem, když e‑mail
+ * k Nabídkám a připomínkám ještě nemá žádný záznam: podpis id Rezervace spolu s jejím e‑mailem, platí do
+ * anonymizace Rezervace. Otevření nic nezapíše, souhlas se zaškrtnutými druhy (potvrzeni) zapíše až tlačítko.
  *
  * Odkazy odeslané dřív fungují dál se stejným účinkem: /odhlaseni/?t={id}.{podpis} z Připomínek
- * před stránkou nastavení odvolá Připomínku přezutí řádku id (podpis s časem souhlasu nebo nároku,
- * po odvolání a novém souhlasu nebo nároku přestane platit). Starý odkaz /cancel-subscription?email=…
+ * před stránkou nastavení odvolá Připomínku přezutí řádku id (podpis s časem souhlasu, po odvolání
+ * a novém souhlasu přestane platit). Starý odkaz /cancel-subscription?email=…
  * odhlašuje jen LEGACY a zapamatuje si i e‑mail, který zatím nezná, aby ho převod starých souhlasů
  * (#21) znovu nepřihlásil: převod proto existující záznam nikdy nepřepisuje.
  */
@@ -44,69 +38,28 @@ final class Pneukarnik_Subscriptions {
 
 	public const REMINDER   = 'reminder';
 	public const PROMOTIONS = 'promotions';
-	public const REVIEW     = 'review';
 	public const LEGACY     = 'legacy';
 
-	/** Druhy Nabídek a připomínek, které odmítá a zakládá online Rezervace. */
-	public const KINDS = [ self::REMINDER, self::PROMOTIONS, self::REVIEW ];
+	/** Druhy Nabídek a připomínek, se kterými jde souhlasit. */
+	public const KINDS = [ self::REMINDER, self::PROMOTIONS ];
 
 	public const DONE          = 'unsubscribe.done';
 	public const INVALID_TOKEN = 'unsubscribe.invalid_token';
 
-	/**
-	 * SQL podmínka pro řádek s aliasem s: smí teď dostávat svůj druh e‑mailu.
-	 * Hodnoty placeholderů dává receives_args().
-	 */
-	public const RECEIVES_SQL = 's.withdrawn_at IS NULL AND (s.consented_at IS NOT NULL OR (s.claimed_at IS NOT NULL AND (s.visited_at IS NOT NULL OR EXISTS (
-		SELECT 1 FROM %i b WHERE b.customer_email = s.email AND b.status = %s AND TIMESTAMP(b.booking_date, b.time_start) <= %s))))';
+	/** SQL podmínka pro řádek s aliasem s: smí teď dostávat svůj druh e‑mailu. */
+	public const RECEIVES_SQL = 's.consented_at IS NOT NULL AND s.withdrawn_at IS NULL';
 
 	/**
-	 * @return array{0:string,1:string,2:string}
+	 * Online Rezervace: zaškrtnutá políčka zapíšou souhlas s Připomínkou přezutí a s Akcemi.
+	 * Nezaškrtnuté nic nemění, dřívější souhlas ani odvolání.
 	 */
-	public static function receives_args(): array {
-		return [ Pneukarnik_DB::bookings_table(), Pneukarnik_Booking::STATUS_CONFIRMED, Pneukarnik_Clock::now()->format( 'Y-m-d H:i:s' ) ];
-	}
-
-	/**
-	 * Online Rezervace: zaškrtnuté „Neposílat“ odmítne všechny druhy, nezaškrtnuté založí nárok.
-	 * Platný souhlas nebo nárok zůstane, jak byl, odmítnutý nebo odvolaný druh dostane nový nárok
-	 * od teď (Zákazník mohl „Neposílat“ zaškrtnout a nechal ho prázdné).
-	 */
-	public static function after_online_booking( string $email, bool $refused ): void {
-		if ( $refused ) {
-			self::refuse( $email, 'rezervace' );
-			return;
+	public static function after_online_booking( string $email, bool $reminder, bool $promotions ): void {
+		if ( $reminder ) {
+			self::consent( $email, self::REMINDER, 'rezervace' );
 		}
-		$email = self::normalize( $email );
-		if ( ! is_email( $email ) ) {
-			return;
+		if ( $promotions ) {
+			self::consent( $email, self::PROMOTIONS, 'rezervace' );
 		}
-		global $wpdb;
-		$now = Pneukarnik_Clock::now()->format( 'Y-m-d H:i:s' );
-		foreach ( self::KINDS as $purpose ) {
-			$wpdb->query(
-				$wpdb->prepare(
-					'INSERT INTO %i (email, purpose, claimed_at) VALUES (%s, %s, %s)
-					 ON DUPLICATE KEY UPDATE
-					   consent_source = IF(withdrawn_at IS NULL, consent_source, NULL),
-					   consented_at = IF(withdrawn_at IS NULL, consented_at, NULL),
-					   claimed_at = IF(withdrawn_at IS NULL, COALESCE(claimed_at, VALUES(claimed_at)), VALUES(claimed_at)),
-					   withdrawn_source = NULL,
-					   withdrawn_at = NULL',
-					Pneukarnik_DB::subscriptions_table(),
-					$email,
-					$purpose,
-					$now
-				)
-			);
-		}
-	}
-
-	/**
-	 * Odmítne všechny druhy Nabídek a připomínek. Dřívější odmítnutí zůstane, jak bylo.
-	 */
-	public static function refuse( string $email, string $source ): void {
-		self::withdraw( $email, self::KINDS, $source );
 	}
 
 	/**
@@ -137,8 +90,8 @@ final class Pneukarnik_Subscriptions {
 	}
 
 	/**
-	 * Odkaz „Ano, posílejte“ do potvrzení Rezervace zadané Provozovatelem, prázdný pro webovou
-	 * Rezervaci a pro e‑mail, který už souhlas, nárok nebo odmítnutí má (i starý souhlas).
+	 * Odkaz na stránku se souhlasy do potvrzení Rezervace zadané Provozovatelem, prázdný pro webovou
+	 * Rezervaci a pro e‑mail, který už souhlas nebo odvolání má (i starý souhlas).
 	 *
 	 * @param array<string,mixed> $booking Rezervace (Pneukarnik_Booking::get_by_id).
 	 */
@@ -151,7 +104,7 @@ final class Pneukarnik_Subscriptions {
 	}
 
 	/**
-	 * E‑mail podle odkazu „Ano, posílejte“, null = neplatný odkaz. Nic nezapíše.
+	 * E‑mail podle odkazu z potvrzení Rezervace zadané Provozovatelem, null = neplatný odkaz. Nic nezapíše.
 	 */
 	public static function offer( mixed $token ): ?string {
 		if ( ! is_string( $token ) || ! preg_match( '/^([1-9][0-9]*)\.[0-9a-f]{64}$/', $token, $m ) ) {
@@ -164,50 +117,23 @@ final class Pneukarnik_Subscriptions {
 	}
 
 	/**
-	 * „Ano, posílejte“: výslovný souhlas se všemi druhy Nabídek a připomínek, platí hned.
+	 * Souhlasy ze stránky z odkazu v potvrzení Rezervace zadané Provozovatelem, platí hned.
 	 *
-	 * @return string|null Adresa stránky nastavení e‑mailu, null = neplatný odkaz (nic se nezapíše).
+	 * @return string|null Adresa stránky nastavení e‑mailu, prázdná, když Zákazník nic nezaškrtl
+	 *                     (nic se nezapíše), null = neplatný odkaz (nic se nezapíše).
 	 */
-	public static function accept_offer( mixed $token ): ?string {
+	public static function accept_offer( mixed $token, bool $reminder, bool $promotions ): ?string {
 		$email = self::offer( $token );
 		if ( null === $email ) {
 			return null;
 		}
-		foreach ( self::KINDS as $purpose ) {
-			self::consent( $email, $purpose, 'potvrzeni' );
+		if ( $reminder ) {
+			self::consent( $email, self::REMINDER, 'potvrzeni' );
 		}
-		global $wpdb;
-		$id = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT MIN(id) FROM %i WHERE email = %s', Pneukarnik_DB::subscriptions_table(), $email ) );
-		return self::settings_url_for_key( self::key( $id, $email ) );
-	}
-
-	/**
-	 * Zapamatuje si návštěvu e‑mailů nezrušených Rezervací, než se anonymizují (Termín už proběhl).
-	 * Jen u e‑mailů, které k Nabídkám a připomínkám nějaký vztah mají, jiné e‑maily neukládá.
-	 *
-	 * @param array<int|string> $booking_ids
-	 */
-	public static function remember_visits( array $booking_ids ): void {
-		if ( ! $booking_ids ) {
-			return;
+		if ( $promotions ) {
+			self::consent( $email, self::PROMOTIONS, 'potvrzeni' );
 		}
-		global $wpdb;
-		$ids = implode( ',', array_map( 'intval', $booking_ids ) );
-		// $ids jsou jen celá čísla.
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query(
-			$wpdb->prepare(
-				"UPDATE %i s JOIN (
-				   SELECT customer_email, MIN(TIMESTAMP(booking_date, time_start)) AS visited_at FROM %i
-				   WHERE id IN ({$ids}) AND status = %s GROUP BY customer_email
-				 ) v ON v.customer_email = s.email
-				 SET s.visited_at = LEAST(COALESCE(s.visited_at, v.visited_at), v.visited_at)",
-				Pneukarnik_DB::subscriptions_table(),
-				Pneukarnik_DB::bookings_table(),
-				Pneukarnik_Booking::STATUS_CONFIRMED
-			)
-		);
-		// phpcs:enable
+		return self::settings_url( $email );
 	}
 
 	/**
@@ -231,13 +157,13 @@ final class Pneukarnik_Subscriptions {
 	}
 
 	/**
-	 * Jestli má e‑mail k druhu platný souhlas nebo nárok (u nároku bez ohledu na návštěvu).
+	 * Jestli má e‑mail k druhu platný souhlas.
 	 */
 	public static function is_active( string $email, string $purpose ): bool {
 		global $wpdb;
 		return (bool) $wpdb->get_var(
 			$wpdb->prepare(
-				'SELECT 1 FROM %i WHERE email = %s AND purpose = %s AND withdrawn_at IS NULL AND COALESCE(consented_at, claimed_at) IS NOT NULL',
+				'SELECT 1 FROM %i WHERE email = %s AND purpose = %s AND consented_at IS NOT NULL AND withdrawn_at IS NULL',
 				Pneukarnik_DB::subscriptions_table(),
 				self::normalize( $email ),
 				$purpose
@@ -280,9 +206,9 @@ final class Pneukarnik_Subscriptions {
 
 	/**
 	 * Kolika e‑mailům smí teď chodit jednotlivé druhy Nabídek a připomínek (Akce i ze starého
-	 * souhlasu, Žádost o hodnocení jen těm, kterým ještě neodešla), pro stránku E‑maily Zákazníkům.
+	 * souhlasu), pro stránku E‑maily Zákazníkům.
 	 *
-	 * @return array{reminder:int,promotions:int,review:int}
+	 * @return array{reminder:int,promotions:int}
 	 */
 	public static function audience(): array {
 		global $wpdb;
@@ -290,15 +216,14 @@ final class Pneukarnik_Subscriptions {
 		foreach ( [
 			self::REMINDER   => [ self::REMINDER, self::REMINDER ],
 			self::PROMOTIONS => [ self::PROMOTIONS, self::LEGACY ],
-			self::REVIEW     => [ self::REVIEW, self::REVIEW ],
 		] as $kind => $purposes ) {
-			// RECEIVES_SQL je pevný fragment s placeholdery.
+			// RECEIVES_SQL je pevný fragment.
 			// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
 			$audience[ $kind ] = (int) $wpdb->get_var(
 				$wpdb->prepare(
-					'SELECT COUNT(DISTINCT s.email) FROM %i s WHERE s.purpose IN (%s, %s) AND (s.purpose <> %s OR s.sent_at IS NULL) AND ' . self::RECEIVES_SQL,
+					'SELECT COUNT(DISTINCT s.email) FROM %i s WHERE s.purpose IN (%s, %s) AND ' . self::RECEIVES_SQL,
 					Pneukarnik_DB::subscriptions_table(),
-					...[ ...$purposes, self::REVIEW, ...self::receives_args() ]
+					...$purposes
 				)
 			);
 			// phpcs:enable
@@ -307,8 +232,8 @@ final class Pneukarnik_Subscriptions {
 	}
 
 	/**
-	 * Stránka nastavení e‑mailů podle klíče z odkazu: e‑mail, co mu smí chodit (u nároku bez ohledu
-	 * na návštěvu, Akce i ze starého souhlasu) a adresa stránky. Null = neplatný klíč.
+	 * Stránka nastavení e‑mailů podle klíče z odkazu: e‑mail, co mu smí chodit (Akce i ze starého
+	 * souhlasu) a adresa stránky. Null = neplatný klíč.
 	 *
 	 * @return array{email:string,reminder:bool,promotions:bool,url:string}|null
 	 */
@@ -327,8 +252,7 @@ final class Pneukarnik_Subscriptions {
 
 	/**
 	 * Uloží nastavení ze stránky: vypnutý druh odvolá (Akce i se starým souhlasem), zapnutý,
-	 * který neplatí, dostane výslovný souhlas. Platný souhlas nebo nárok zůstane, jak byl.
-	 * Žádost o hodnocení nemění.
+	 * který neplatí, dostane výslovný souhlas. Platný souhlas zůstane, jak byl.
 	 *
 	 * @return string DONE nebo INVALID_TOKEN
 	 */
@@ -353,7 +277,7 @@ final class Pneukarnik_Subscriptions {
 
 	/**
 	 * „Neposílat nic“ ze stránky nastavení nebo odhlášení jedním kliknutím z pošty (List-Unsubscribe):
-	 * odvolá všechny druhy včetně Žádosti o hodnocení a starého souhlasu.
+	 * odvolá všechny druhy včetně starého souhlasu.
 	 *
 	 * @return string DONE nebo INVALID_TOKEN
 	 */
@@ -381,8 +305,7 @@ final class Pneukarnik_Subscriptions {
 	}
 
 	/**
-	 * Smaže vztah e‑mailu ke všem druhům i zapamatovanou návštěvu (výmaz osobních údajů
-	 * v nástrojích WordPressu).
+	 * Smaže souhlasy a odvolání e‑mailu ke všem druhům (výmaz osobních údajů v nástrojích WordPressu).
 	 */
 	public static function erase( string $email ): int {
 		global $wpdb;
@@ -488,11 +411,11 @@ final class Pneukarnik_Subscriptions {
 	}
 
 	/**
-	 * Čas souhlasu, jinak nároku. Nový souhlas po odvolání ho změní, odvolání ne.
+	 * Čas souhlasu. Nový souhlas po odvolání ho změní, odvolání ne.
 	 */
 	private static function since( int $id ): ?string {
 		global $wpdb;
-		$since = $wpdb->get_var( $wpdb->prepare( 'SELECT COALESCE(consented_at, claimed_at) FROM %i WHERE id = %d', Pneukarnik_DB::subscriptions_table(), $id ) );
+		$since = $wpdb->get_var( $wpdb->prepare( 'SELECT consented_at FROM %i WHERE id = %d', Pneukarnik_DB::subscriptions_table(), $id ) );
 		return null === $since ? null : (string) $since;
 	}
 }

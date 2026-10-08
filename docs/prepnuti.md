@@ -17,7 +17,7 @@ make zkouska-down                   # po zkoušce smazat, jsou tam osobní údaj
 - **Kde připravit obsah.** Co Provozovatel nastaví na testovací kopii (perexy Služeb, Nastavení, Průvodci, stránky), se samo na ostrý web nepřenese. Doporučení: připravit vše na testovací kopii a při přepnutí její databázi nasadit na ostrý web, do ní nahrát čerstvou tabulku `hwjcw_reservations` ze živého webu a převod spustit znovu. Převod je opakovatelný, takže přidá jen Rezervace a souhlasy, které mezitím na starém webu přibyly.
 - **E‑mail s novým odkazem na Zrušení** převedeným budoucím Rezervacím: ano/ne (Provozovatel).
 - **Zálohy ostrého webu.** Všechny Rezervace a souhlasy jsou jen v databázi. Zjistit u Webglobe, jak často a jak dlouho databázi zálohují a jak se záloha obnoví. Když to nestačí (třeba jen týden zpětně), domluvit vlastní pravidelný export.
-- **Cron na hostingu.** Zjistit, jestli Webglobe umí spouštět naplánovaný příkaz (cron). Plánované úlohy pluginu (anonymizace, Připomínky přezutí a Termínu, Žádosti o hodnocení, recenze) jinak běží přes WP‑Cron, tedy jen když někdo otevře web a web si úspěšně zavolá sám sebe.
+- **Cron na hostingu.** Zjistit, jestli Webglobe umí spouštět naplánovaný příkaz (cron). Plánované úlohy pluginu (anonymizace, Připomínky přezutí a Termínu, Rozesílky, recenze) jinak běží přes WP‑Cron, tedy jen když někdo otevře web a web si úspěšně zavolá sám sebe.
 
 ## Testovací kopie (hosting Webglobe)
 
@@ -116,7 +116,7 @@ Stejné jako v sekci Přepnutí níže (bez kroku 1, zálohou kopie je `kopie/`)
 - [ ] Provozovatel dostane vlastní účet (Uživatelé → Přidat, role Administrátor nebo Editor) a heslo k serveru.
 - [ ] Provozovatel doplní Služby (viz Výsledek zkoušky), Nastavení (kontakty, Pracovní doba, Sezóny, Lhůta zrušení), stránky O nás, Kontakt, Ochrana osobních údajů (perex do výňatku stránky) a Průvodce.
 - [ ] Zkušební rezervace, Zrušení odkazem z e‑mailu, PDF přehled a iCal.
-- [ ] Cron je vypnutý. Anonymizaci, Připomínky přezutí a Termínu, Žádosti o hodnocení a recenze jde spustit ručně, když je potřeba vyzkoušet: plugin WP Crontrol, nebo dočasně `DISABLE_WP_CRON` na `false`.
+- [ ] Cron je vypnutý. Anonymizaci, Připomínky přezutí a Termínu, Rozesílky a recenze jde spustit ručně, když je potřeba vyzkoušet: plugin WP Crontrol, nebo dočasně `DISABLE_WP_CRON` na `false`.
 - [ ] Návrat zpět (nacvičení): znovu nahrát soubory a `kopie.sql` podle kroků 5 a 6 a v phpMyAdminu smazat tabulky `tstpk_`, které přidal nový plugin (`tstpk_pneukarnik_booking_services`, `…_day_exceptions`, `…_subscriptions`). Starý web na kopii musí naběhnout, pak krok 7 zopakovat. Proto `kopie/` lokálně smaž až po této zkoušce.
 
 **Po zkoušce** (nebo až kopie nebude potřeba): smazat adresář subdomény a v phpMyAdminu **jen tabulky `tstpk_`** (filtr tabulek `tstpk_`, Zaškrtnout vše, Odstranit). Lokálně smazat `kopie/`. Všude jsou osobní údaje zákazníků.

@@ -39,7 +39,6 @@ spl_autoload_register(
 			'Pneukarnik_Subscriptions'         => 'includes/class-subscriptions.php',
 			'Pneukarnik_Reminder'              => 'includes/class-reminder.php',
 			'Pneukarnik_Termin_Reminder'       => 'includes/class-termin-reminder.php',
-			'Pneukarnik_Review_Request'        => 'includes/class-review-request.php',
 			'Pneukarnik_Mailing'               => 'includes/class-mailing.php',
 			'Pneukarnik_Rest_Reminder'         => 'api/class-rest-reminder.php',
 			'Pneukarnik_Sitemap_Provider'      => 'includes/class-sitemap-provider.php',
@@ -113,7 +112,6 @@ function pneukarnik_deactivate(): void {
 	wp_clear_scheduled_hook( Pneukarnik_Reviews::CRON_HOOK );
 	wp_clear_scheduled_hook( Pneukarnik_Reminder::CRON_HOOK );
 	wp_clear_scheduled_hook( Pneukarnik_Termin_Reminder::CRON_HOOK );
-	wp_clear_scheduled_hook( Pneukarnik_Review_Request::CRON_HOOK );
 	wp_unschedule_hook( Pneukarnik_Mailing::CRON_HOOK ); // I naplánované Rozesílky (s ID v argumentech).
 }
 
@@ -126,7 +124,6 @@ add_action( 'plugins_loaded', [ 'Pneukarnik_GDPR', 'init' ] );
 Pneukarnik_Reviews::init();
 Pneukarnik_Reminder::init();
 Pneukarnik_Termin_Reminder::init();
-Pneukarnik_Review_Request::init();
 Pneukarnik_Mailing::init();
 
 // Bootstrap

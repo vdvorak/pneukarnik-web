@@ -231,7 +231,6 @@ function init() {
 	const zapamatovat = /** @type {HTMLInputElement} */ (document.getElementById('rez-zapamatovat'));
 	const zapomenout = /** @type {HTMLButtonElement} */ (document.getElementById('rez-zapomenout'));
 	const zapomenuto = /** @type {HTMLElement} */ (document.getElementById('rez-zapomenuto'));
-	const coPosilame = /** @type {HTMLButtonElement} */ (document.getElementById('rez-co-posilame'));
 	const askStoredWheels = new Set(config.services.filter((service) => service.ask_stored_wheels).map((service) => String(service.id)));
 	const servicesById = new Map(config.services.map((service) => [String(service.id), service]));
 	const maxServices = Math.min(config.max_services, config.services.length);
@@ -646,7 +645,8 @@ function init() {
 			leasing_company: leasing.checked ? values.get('leasing_company') : '',
 			stored_wheels: !uskladnena.hidden && values.get('stored_wheels') === '1',
 			consent_gdpr: values.get('consent_gdpr') === '1',
-			refuse_offers: values.get('refuse_offers') === '1',
+			consent_reminder: values.get('consent_reminder') === '1',
+			consent_promotions: values.get('consent_promotions') === '1',
 		};
 		setSending(true);
 		let leaving = false;
@@ -725,12 +725,6 @@ function init() {
 		zapomenout.hidden = false;
 	}
 	zapomenout.addEventListener('click', forgetContact);
-	// „i“ u Nabídek a připomínek rozbalí a sbalí, co chodí.
-	coPosilame.addEventListener('click', () => {
-		const open = coPosilame.getAttribute('aria-expanded') !== 'true';
-		coPosilame.setAttribute('aria-expanded', String(open));
-		/** @type {HTMLElement} */ (document.getElementById('napoveda-refuse_offers')).hidden = !open;
-	});
 	prefillFromLink();
 	syncServices();
 	syncStoredWheels();

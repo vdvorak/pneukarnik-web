@@ -38,9 +38,9 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 		$this->capture_mails();
 	}
 
-	public function test_reminder_goes_only_to_customers_who_did_not_refuse(): void {
+	public function test_reminder_goes_only_to_customers_who_consented(): void {
 		$this->book_online( 'ano@example.test', '09:00' );
-		$this->book_online( 'ne@example.test', '11:00', refuse: true );
+		$this->book_online( 'ne@example.test', '11:00', consent: false );
 
 		$this->run_reminders_at( self::BEFORE_SPRING );
 
@@ -271,7 +271,7 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 		$this->assertCount( 2, $this->mails );
 	}
 
-	public function test_booking_after_unsubscribing_subscribes_again(): void {
+	public function test_booking_with_ticked_box_after_unsubscribing_subscribes_again(): void {
 		$this->book_online( 'jan@example.test' );
 		$this->run_reminders_at( self::BEFORE_SPRING );
 		$this->rest( 'POST', '/unsubscribe', [ 'token' => $this->old_unsubscribe_token( 'jan@example.test' ) ] );
@@ -387,8 +387,8 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	public function test_preview_shows_season_start_and_number_of_recipients(): void {
 		$this->book_online( 'jan@example.test', '09:00' );
 		$this->book_online( 'eva@example.test', '11:00' );
-		$this->book_online( 'ne@example.test', '13:00', refuse: true );
-		Pneukarnik_Clock::freeze( '2027-02-20 12:00' ); // Po návštěvě.
+		$this->book_online( 'ne@example.test', '13:00', consent: false );
+		Pneukarnik_Clock::freeze( '2027-02-20 12:00' );
 		$this->log_in_as( 'pneukarnik_manager' );
 
 		$response = $this->rest( 'GET', '/admin/reminder' );
@@ -411,7 +411,7 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 		$this->book_online( 'jan@example.test', '09:00' );
 		$this->run_reminders_at( self::BEFORE_SPRING );
 		$this->book_online( 'eva@example.test', '11:00', '2027-03-08' );
-		Pneukarnik_Clock::freeze( '2027-03-09 10:00' ); // Eva už u nás byla.
+		Pneukarnik_Clock::freeze( '2027-03-09 10:00' );
 		$this->log_in_as( 'pneukarnik_manager' );
 
 		$this->assertSame( 1, $this->rest( 'GET', '/admin/reminder' )->get_data()['recipients'] );
@@ -477,17 +477,18 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	/**
-	 * Online Rezervace s/bez odmítnutí Nabídek a připomínek. Den mimo Sezónu, aby šla i nesezónní
-	 * pravidla, a před Připomínkami, aby Zákazník u nás už byl.
+	 * Online Rezervace se zaškrtnutými políčky souhlasu, nebo bez nich. Den mimo Sezónu, aby šla
+	 * i nesezónní pravidla.
 	 */
-	private function book_online( string $email, string $time = '09:00', string $date = '2027-02-10', bool $refuse = false ): void {
+	private function book_online( string $email, string $time = '09:00', string $date = '2027-02-10', bool $consent = true ): void {
 		$response = $this->book(
 			$this->tyres,
 			$date,
 			$time,
 			[
-				'email'         => $email,
-				'refuse_offers' => $refuse,
+				'email'              => $email,
+				'consent_reminder'   => $consent,
+				'consent_promotions' => $consent,
 			]
 		);
 		$this->assertSame( 201, $response->get_status(), (string) wp_json_encode( $response->get_data() ) );
@@ -495,13 +496,13 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	/**
-	 * Online Rezervace Služeb, další údaje podle $overrides.
+	 * Online Rezervace Služeb se souhlasem s Připomínkou přezutí, další údaje podle $overrides.
 	 *
 	 * @param list<int>            $services
 	 * @param array<string, mixed> $overrides
 	 */
 	private function book_services( array $services, array $overrides = [], string $date = '2027-02-10' ): void {
-		$response = $this->book( $services, $date, '09:00', $overrides );
+		$response = $this->book( $services, $date, '09:00', $overrides + [ 'consent_reminder' => true ] );
 		$this->assertSame( 201, $response->get_status(), (string) wp_json_encode( $response->get_data() ) );
 		$this->mails = [];
 	}
@@ -525,11 +526,11 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 
 	/**
 	 * Token odkazu /odhlaseni/?t=…, jaký Připomínky posílaly před stránkou nastavení e‑mailů:
-	 * id řádku Připomínky přezutí podepsané s časem souhlasu, jinak nároku.
+	 * id řádku Připomínky přezutí podepsané s časem souhlasu.
 	 */
 	private function old_unsubscribe_token( string $email ): string {
 		global $wpdb;
-		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT id, COALESCE(consented_at, claimed_at) AS since FROM %i WHERE email = %s AND purpose = %s', Pneukarnik_DB::subscriptions_table(), $email, Pneukarnik_Subscriptions::REMINDER ), ARRAY_A );
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT id, consented_at AS since FROM %i WHERE email = %s AND purpose = %s', Pneukarnik_DB::subscriptions_table(), $email, Pneukarnik_Subscriptions::REMINDER ), ARRAY_A );
 		return $row['id'] . '.' . hash_hmac( 'sha256', 'unsubscribe|' . $row['id'] . '|' . $row['since'], wp_salt( 'pneukarnik' ) );
 	}
 }

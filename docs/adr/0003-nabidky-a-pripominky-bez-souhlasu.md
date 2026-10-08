@@ -1,5 +1,7 @@
 # Nabídky a připomínky bez souhlasu, s možností odmítnout
 
+**Nahrazeno ADR 0004.**
+
 Připomínka přezutí, Žádost o hodnocení a Rozesílky chodí Zákazníkovi, který u Provozovatele už byl a při online rezervaci je neodmítl (nezaškrtnuté „Neposílat“ s výčtem, co chodí), ne jen tomu, kdo zaškrtl souhlas. Opírá se to o § 7 odst. 3 zákona 480/2004 Sb. (vlastní zákazník, vlastní podobné služby, možnost odmítnout při zadání e‑mailu a v každém e‑mailu). Opt‑in by k e‑mailům pustil jen menšinu Zákazníků a Žádost o hodnocení, kterou ÚOOÚ bere jako obchodní sdělení, by bez souhlasu stejně potřebovala tenhle režim, takže jsme ho zvolili pro všechny Nabídky a připomínky.
 
 ## Consequences

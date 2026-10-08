@@ -67,25 +67,19 @@ test('Zákazník si z detailu Služby zarezervuje Termín, uvidí potvrzení a p
 	await pickTime(page, '8:00–9:00');
 	await page.getByLabel('Jméno nebo firma').fill(customer.name);
 	await page.getByLabel('Telefon').fill(customer.phone);
-	await page.getByLabel('E‑mail').fill(customer.email);
+	await page.getByLabel('E‑mail', { exact: true }).fill(customer.email);
 	await page.getByLabel('SPZ').fill(customer.plate);
 	await page.getByLabel('Značka a model').fill('Škoda Fabia');
 	await page.getByLabel(/Souhlasím se zpracováním/).check();
-	// Nabídky a připomínky chodí, dokud je Zákazník neodmítne, „i“ za textem pod ním rozbalí, co chodí.
-	const refuse = page.getByLabel(/Neposílat nabídky a připomínky/);
-	await expect(refuse).not.toBeChecked();
-	await expect(page.getByText(/prosbu o hodnocení na Googlu/)).toBeHidden();
-	const whatWeSend = page.getByRole('button', { name: 'Co posíláme' });
-	await whatWeSend.click();
-	await expect(whatWeSend).toHaveAttribute('aria-expanded', 'true');
-	await expect(page.getByText(/Připomínku přezutí před každou sezónou/)).toBeVisible();
-	await expect(page.getByText(/prosbu o hodnocení na Googlu/)).toBeVisible();
-	await whatWeSend.click();
-	await expect(page.getByText(/prosbu o hodnocení na Googlu/)).toBeHidden();
-	await refuse.check();
+	// Nabídky a připomínky jen se souhlasem, každý druh zvlášť.
+	const reminder = page.getByLabel('Připomenout mi e‑mailem přezutí před každou sezónou.');
+	const promotions = page.getByLabel('Posílat mi e‑mailem vaše akce.');
+	await expect(reminder).not.toBeChecked();
+	await expect(promotions).not.toBeChecked();
+	await reminder.check();
 	const [sent] = await Promise.all([page.waitForRequest(/\/pneukarnik\/v1\/bookings$/), page.getByRole('button', { name: 'Rezervovat' }).click()]);
 
-	expect(sent.postDataJSON()).toMatchObject({ consent_gdpr: true, refuse_offers: true });
+	expect(sent.postDataJSON()).toMatchObject({ consent_gdpr: true, consent_reminder: true, consent_promotions: false });
 	await expect(page).toHaveURL(/\/rezervace\/potvrzeni\/\?r=[0-9a-f]{64}$/);
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Rezervace přijata');
 	await expect(page.locator('dd').filter({ hasText: serviceTitle })).toBeVisible();
@@ -122,7 +116,7 @@ test('Zákazník přidá další Službu a Termín trvá součet Délek', async 
 	await pickTime(page, '8:00–9:30');
 	await page.getByLabel('Jméno nebo firma').fill(customer.name);
 	await page.getByLabel('Telefon').fill(customer.phone);
-	await page.getByLabel('E‑mail').fill(customer.email);
+	await page.getByLabel('E‑mail', { exact: true }).fill(customer.email);
 	await page.getByLabel('SPZ').fill(customer.plate);
 	await page.getByLabel(/Souhlasím se zpracováním/).check();
 	await page.getByRole('button', { name: 'Rezervovat' }).click();
@@ -207,7 +201,7 @@ test('Když Termín mezitím někdo obsadí, formulář to řekne a nabídne zby
 	await pickTime(page, '10:00–11:00');
 	await page.getByLabel('Jméno nebo firma').fill(customer.name);
 	await page.getByLabel('Telefon').fill(customer.phone);
-	await page.getByLabel('E‑mail').fill(customer.email);
+	await page.getByLabel('E‑mail', { exact: true }).fill(customer.email);
 	await page.getByLabel('SPZ').fill(customer.plate);
 	await page.getByLabel(/Souhlasím se zpracováním/).check();
 
@@ -324,7 +318,7 @@ test('V Sezóně jde online jen sezónní Služba a leasing až od leasingového
 		await page.getByLabel('Leasingová společnost').fill('E2E Leasing');
 		await page.getByLabel('Jméno nebo firma').fill(customer.name);
 		await page.getByLabel('Telefon').fill(customer.phone);
-		await page.getByLabel('E‑mail').fill(customer.email);
+		await page.getByLabel('E‑mail', { exact: true }).fill(customer.email);
 		await page.getByLabel('SPZ').fill(customer.plate);
 		await page.getByLabel(/Souhlasím se zpracováním/).check();
 		await page.getByRole('button', { name: 'Rezervovat' }).click();
@@ -368,7 +362,7 @@ test('Zákazník zruší Rezervaci odkazem z e‑mailu a Termín se uvolní', as
 	// Změna Termínu = Zrušení + nová Rezervace s předvyplněnými údaji.
 	await page.getByRole('link', { name: 'Objednat znovu' }).click();
 	await expect(page.getByLabel('Jméno nebo firma')).toHaveValue('E2E Rušitel');
-	await expect(page.getByLabel('E‑mail')).toHaveValue(email);
+	await expect(page.getByLabel('E‑mail', { exact: true })).toHaveValue(email);
 });
 
 test('Neplatný odkaz pro zrušení nic neukáže a nabídne telefon a novou rezervaci', async ({ page }) => {
@@ -391,7 +385,7 @@ test('Údaje se zapamatují jen se zaškrtnutím a jdou smazat', async ({ page }
 		await pickTime(page, time);
 		await page.getByLabel('Jméno nebo firma').fill(customer.name);
 		await page.getByLabel('Telefon').fill(customer.phone);
-		await page.getByLabel('E‑mail').fill(customer.email);
+		await page.getByLabel('E‑mail', { exact: true }).fill(customer.email);
 		await page.getByLabel('SPZ').fill(customer.plate);
 		await page.getByLabel('Značka a model').fill('Škoda Fabia');
 		await page.getByLabel('Zapamatovat údaje na tomto zařízení').setChecked(remember);
@@ -408,7 +402,7 @@ test('Údaje se zapamatují jen se zaškrtnutím a jdou smazat', async ({ page }
 	await book('9:00–10:00', true);
 	await page.goto('/rezervace/');
 	await expect(page.getByLabel('Jméno nebo firma')).toHaveValue(customer.name);
-	await expect(page.getByLabel('E‑mail')).toHaveValue(customer.email);
+	await expect(page.getByLabel('E‑mail', { exact: true })).toHaveValue(customer.email);
 	await expect(page.getByLabel('Značka a model')).toHaveValue('Škoda Fabia');
 	await expect(page.getByLabel('Zapamatovat údaje na tomto zařízení')).toBeChecked();
 
@@ -447,7 +441,7 @@ test('Odkaz „Objednat znovu“ z e‑mailu předvyplní kontaktní údaje, Slu
 	await expect(page.getByLabel('Další služba')).toHaveValue(String(serviceId));
 	await expect(page.getByLabel('Kola mám uskladněná u vás')).toBeChecked();
 	await expect(page.getByLabel('Jméno nebo firma')).toHaveValue('E2E Stálý zákazník');
-	await expect(page.getByLabel('E‑mail')).toHaveValue(/^e2e-znovu-/);
+	await expect(page.getByLabel('E‑mail', { exact: true })).toHaveValue(/^e2e-znovu-/);
 	await expect(page.getByLabel('SPZ')).toHaveValue('1AB2345');
 	await expect(page.getByLabel('Značka a model')).toHaveValue('Škoda Octavia');
 	await expect(page.getByLabel('Poznámka')).toHaveValue('');

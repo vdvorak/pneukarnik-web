@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Rozesílka (viz CONTEXT.md): e‑mail o jedné nebo více Akcích (platných teď nebo začínajících do
  * DAYS_AHEAD dní) s úvodní větou od Provozovatele, který odejde každému e‑mailu, jenž smí dostávat
- * Akce (Nabídky a připomínky druhu Pneukarnik_Subscriptions::PROMOTIONS, i starý souhlas LEGACY),
+ * Akce (souhlas s Nabídkami a připomínkami druhu Pneukarnik_Subscriptions::PROMOTIONS, i starý LEGACY),
  * nebo jen Zákazníkům jedné Kategorie (mají nezrušenou Rezervaci Služby té Kategorie).
  *
  * Provozovatel ji na stránce E‑maily Zákazníkům složí (rozepsaná), pošle si zkušební e‑mail a pak
@@ -257,7 +257,7 @@ final class Pneukarnik_Mailing {
 		if ( ! $promotions ) {
 			return null;
 		}
-		$email = self::email( $mailing, $promotions, home_url( '/odhlaseni/' ), false, __( '[Zkouška] ', 'pneukarnik-booking' ) )
+		$email = self::email( $mailing, $promotions, home_url( '/odhlaseni/' ), __( '[Zkouška] ', 'pneukarnik-booking' ) )
 			->paragraph( __( 'Toto je zkušební Rozesílka pro Provozovatele. Zákazníci dostanou vlastní odkaz na nastavení e‑mailů, ten tady nic nenastaví.', 'pneukarnik-booking' ) );
 		if ( ! $email->send( $to ) ) {
 			return null;
@@ -379,7 +379,7 @@ final class Pneukarnik_Mailing {
 					continue; // Mezitím ji poslalo souběžné spuštění.
 				}
 				$settings = Pneukarnik_Subscriptions::settings_url( $recipient['email'] );
-				$email    = self::email( $mailing, $promotions, $settings, $recipient['consented'] );
+				$email    = self::email( $mailing, $promotions, $settings );
 				if ( $email->send( $recipient['email'], Pneukarnik_Contact::email(), Pneukarnik_Subscriptions::unsubscribe_headers( $settings ) ) ) {
 					self::count_sent( $mailing['id'] );
 				} else {
@@ -395,14 +395,14 @@ final class Pneukarnik_Mailing {
 	}
 
 	/**
-	 * Náhled e‑mailu Rozesílky (HTML), jak ho dostane Zákazník s nárokem po návštěvě. U rozepsané
+	 * Náhled e‑mailu Rozesílky (HTML), jak ho dostane Zákazník. U rozepsané
 	 * a naplánované jen s Akcemi, které ještě platí.
 	 *
 	 * @param array{intro:string,promotion_ids:list<int>,status:string} $mailing
 	 */
 	public static function preview( array $mailing ): string {
 		$promotions = self::editable( $mailing ) ? self::valid_promotions( $mailing ) : self::mailing_promotions( $mailing );
-		return self::email( $mailing, $promotions, home_url( '/odhlaseni/' ), false )->html();
+		return self::email( $mailing, $promotions, home_url( '/odhlaseni/' ) )->html();
 	}
 
 	/**
@@ -416,9 +416,8 @@ final class Pneukarnik_Mailing {
 	/**
 	 * @param array{intro:string}        $mailing
 	 * @param list<Pneukarnik_Promotion> $promotions Aspoň jedna, každá se Službou.
-	 * @param bool                       $consented  Výslovný souhlas, jinak nárok po návštěvě.
 	 */
-	private static function email( array $mailing, array $promotions, string $settings_url, bool $consented, string $subject_prefix = '' ): Pneukarnik_Email {
+	private static function email( array $mailing, array $promotions, string $settings_url, string $subject_prefix = '' ): Pneukarnik_Email {
 		$services = [];
 		foreach ( $promotions as $promotion ) {
 			$services[ $promotion->service_id ] = (string) $promotion->service()?->title;
@@ -453,9 +452,7 @@ final class Pneukarnik_Mailing {
 		return $email
 			->signature( Pneukarnik_Notifications::text( 'signature' ) )
 			->footer(
-				$consented
-					? __( 'Tento e‑mail dostáváte, protože jste souhlasili se zasíláním nabídek.', 'pneukarnik-booking' )
-					: __( 'Tento e‑mail dostáváte, protože jste u nás byli a při online rezervaci jste e‑maily s nabídkami a připomínkami neodmítli.', 'pneukarnik-booking' ),
+				__( 'Tento e‑mail dostáváte, protože jste souhlasili se zasíláním našich akcí.', 'pneukarnik-booking' ),
 				__( 'Nastavit, co vám posíláme', 'pneukarnik-booking' ),
 				$settings_url
 			);
@@ -551,7 +548,7 @@ final class Pneukarnik_Mailing {
 	private static function audience_where( string $category ): array {
 		global $wpdb;
 		$where = 's.purpose IN (%s, %s) AND ' . Pneukarnik_Subscriptions::RECEIVES_SQL;
-		$args  = [ Pneukarnik_Subscriptions::PROMOTIONS, Pneukarnik_Subscriptions::LEGACY, ...Pneukarnik_Subscriptions::receives_args() ];
+		$args  = [ Pneukarnik_Subscriptions::PROMOTIONS, Pneukarnik_Subscriptions::LEGACY ];
 		if ( '' !== $category ) {
 			$where .= ' AND EXISTS (SELECT 1 FROM %i cb JOIN %i cs ON cs.booking_id = cb.id JOIN %i cm ON cm.post_id = cs.service_id AND cm.meta_key = %s
 				WHERE cb.customer_email = s.email AND cb.status = %s AND cm.meta_value = %s)';
@@ -563,7 +560,7 @@ final class Pneukarnik_Mailing {
 	/**
 	 * E‑maily, kterým Rozesílka jde (audience_where()) a ještě jim neodešla, každý jednou.
 	 *
-	 * @return list<array{email:string,consented:bool}>
+	 * @return list<array{email:string}>
 	 */
 	private static function recipients( int $mailing_id, string $category, int $limit ): array {
 		global $wpdb;
@@ -572,7 +569,7 @@ final class Pneukarnik_Mailing {
 		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT s.email, MAX(s.consented_at IS NOT NULL) AS consented FROM %i s
+				'SELECT s.email FROM %i s
 				 WHERE ' . $where . '
 				   AND NOT EXISTS (SELECT 1 FROM %i r WHERE r.mailing_id = %d AND r.email = s.email)
 				 GROUP BY s.email ORDER BY MIN(s.id) LIMIT %d',
@@ -589,8 +586,7 @@ final class Pneukarnik_Mailing {
 		// phpcs:enable
 		return array_map(
 			static fn( array $row ): array => [
-				'email'     => (string) $row['email'],
-				'consented' => (bool) $row['consented'],
+				'email' => (string) $row['email'],
 			],
 			$rows ?: []
 		);

@@ -41,15 +41,15 @@ export function reminderLink(email: string): string {
 }
 
 /**
- * Odkaz na nastavení e‑mailů, který by poslala Připomínka přezutí, pro e‑mail s nárokem z online
- * Rezervace s nezaškrtnutým „Neposílat“. E‑mail musí začínat e2e-, aby ho smazal global-teardown.
+ * Odkaz na nastavení e‑mailů, který by poslala Připomínka přezutí, pro e‑mail se souhlasem z online
+ * Rezervace s oběma zaškrtnutými políčky. E‑mail musí začínat e2e-, aby ho smazal global-teardown.
  */
 export function emailSettingsLink(email: string): string {
-	return wpCli(['wp', 'eval', `Pneukarnik_Subscriptions::after_online_booking(${shellQuote(email)}, false); echo Pneukarnik_Subscriptions::settings_url(${shellQuote(email)});`]).trim();
+	return wpCli(['wp', 'eval', `Pneukarnik_Subscriptions::after_online_booking(${shellQuote(email)}, true, true); echo Pneukarnik_Subscriptions::settings_url(${shellQuote(email)});`]).trim();
 }
 
 /**
- * Odkaz „Ano, posílejte“ z potvrzení Rezervace zadané Provozovatelem pro e‑mail bez vztahu k Nabídkám
+ * Odkaz na souhlasy z potvrzení Rezervace zadané Provozovatelem pro e‑mail bez záznamu k Nabídkám
  * a připomínkám. Rezervace jde do DB přímo, daleko v budoucnu, aby nezabrala Termín jiným testům.
  * E‑mail musí začínat e2e-, aby Rezervaci i souhlas smazal global-teardown.
  */
