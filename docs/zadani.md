@@ -79,7 +79,7 @@ První verzi textů napíše vývojář, Provozovatel je zkontroluje.
 
 ## Provoz, právo, převod
 
-- **GDPR:** Rezervace starší než 1 rok se automaticky anonymizují. **Nabídky a připomínky** (Připomínka přezutí, Akce e‑mailem, Žádost o hodnocení) chodí bez souhlasu Zákazníkovi, který u Provozovatele už byl a při online rezervaci je neodmítl (ADR 0003). Odkaz z každého z nich vede na stránku nastavení e‑mailů: zvlášť Připomínka přezutí a Akce, nebo Neposílat nic (opětovné zapnutí je výslovný souhlas), hlavička `List-Unsubscribe` odhlásí vše. Nárok po návštěvě přežije anonymizaci Rezervace, výmaz osobních údajů ho smaže. Text zásad napíše vývojář, Provozovatel schválí.
+- **GDPR:** Rezervace starší než 1 rok se automaticky anonymizují. **Nabídky a připomínky** (Připomínka přezutí, Akce e‑mailem, Žádost o hodnocení) chodí bez souhlasu Zákazníkovi, který u Provozovatele už byl a při online rezervaci je neodmítl (ADR 0003). Zákazník zadaný Provozovatelem je dostane jen se souhlasem tlačítkem „Ano, posílejte“ z potvrzení Rezervace, které ho nabídne e‑mailu bez souhlasu, nároku i odmítnutí. Odkaz z každého z nich vede na stránku nastavení e‑mailů: zvlášť Připomínka přezutí a Akce, nebo Neposílat nic (opětovné zapnutí je výslovný souhlas), hlavička `List-Unsubscribe` odhlásí vše. Nárok po návštěvě přežije anonymizaci Rezervace, výmaz osobních údajů ho smaže. Text zásad napíše vývojář, Provozovatel schválí.
 - **Bez cookies vyžadujících souhlas:**
   - analytika Matomo v cookieless režimu + Google Search Console,
   - mapa jako obrázek nebo načtení až po kliknutí,

@@ -256,6 +256,28 @@ abstract class Pneukarnik_REST_Test_Case extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Přesměrování zachytí bez odeslání hlaviček a exit.
+	 *
+	 * @return object{list:list<array{0:int,1:string}>}
+	 */
+	protected function catch_redirects(): object {
+		$redirects = new class() {
+			/** @var list<array{0:int,1:string}> */
+			public array $list = [];
+		};
+		add_filter(
+			'wp_redirect',
+			static function ( string $location, int $status ) use ( $redirects ): bool {
+				$redirects->list[] = [ $status, $location ];
+				return false;
+			},
+			10,
+			2
+		);
+		return $redirects;
+	}
+
+	/**
 	 * Jediný zachycený e‑mail pro adresu.
 	 *
 	 * @return array{to:list<string>,subject:string,html:string,text:string,from_name:string,reply_to:list<string>,headers:list<array{0:string,1:string}>,attachments:list<array{filename:string,content:string,type:string}>}

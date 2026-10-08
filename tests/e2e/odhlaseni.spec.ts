@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { emailSettingsLink } from './support/wp';
+import { emailSettingsLink, offerLink } from './support/wp';
 
 test('Nastavení e‑mailů: zvlášť Připomínka přezutí a Akce, nebo Neposílat nic', async ({ page }) => {
 	const email = `e2e-nastaveni-${Date.now()}@example.test`;
@@ -32,6 +32,22 @@ test('Nastavení e‑mailů: zvlášť Připomínka přezutí a Akce, nebo Nepos
 	await expect(promotions).not.toBeChecked();
 });
 
+test('„Ano, posílejte“ z potvrzení Rezervace zadané Provozovatelem zapne Nabídky a připomínky', async ({ page }) => {
+	const email = `e2e-ano-${Date.now()}@example.test`;
+	await page.goto(offerLink(email));
+
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('E‑maily od nás');
+	await expect(page.getByRole('main')).toContainText(email);
+	await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
+
+	await page.getByRole('button', { name: 'Ano, posílejte' }).click();
+
+	await expect(page).toHaveURL(/\/odhlaseni\/\?k=.+&souhlas=1$/);
+	await expect(page.getByRole('status')).toHaveText('Děkujeme, budeme vám posílat Připomínku přezutí a naše akce.');
+	await expect(page.getByLabel('Připomínku přezutí před každou sezónou')).toBeChecked();
+	await expect(page.getByLabel('Naše akce')).toBeChecked();
+});
+
 test('Starý odkaz z e‑mailů starého webu přesměruje na odhlášení a neplatný odkaz to řekne', async ({ page }) => {
 	await page.goto('/cancel-subscription?email=e2e-stary-odber%40example.test');
 
@@ -40,7 +56,7 @@ test('Starý odkaz z e‑mailů starého webu přesměruje na odhlášení a nep
 	await expect(page.getByRole('status')).toHaveText('Hotovo, informace o slevách vám už posílat nebudeme.');
 	await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
 
-	for (const link of ['/odhlaseni/?t=1.' + '0'.repeat(64), '/odhlaseni/?k=1.' + '0'.repeat(64)]) {
+	for (const link of ['/odhlaseni/?t=1.' + '0'.repeat(64), '/odhlaseni/?k=1.' + '0'.repeat(64), '/odhlaseni/?s=1.' + '0'.repeat(64)]) {
 		await page.goto(link);
 
 		await expect(page.getByRole('heading', { level: 1 })).toHaveText('Odkaz nefunguje');

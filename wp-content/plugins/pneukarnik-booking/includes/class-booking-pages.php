@@ -8,7 +8,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Stránky rezervace: /rezervace/ (formulář), /rezervace/potvrzeni/?r={token}
  * a /rezervace/zruseni/?r={token} (Zrušení odkazem z e‑mailu). K nim nastavení e‑mailů
- * /odhlaseni/?k={klíč} z Nabídek a připomínek, a odhlášení odkazy odeslanými dřív: ?t={token}
+ * /odhlaseni/?k={klíč} z Nabídek a připomínek, „Ano, posílejte“ /odhlaseni/?s={token} z potvrzení
+ * Rezervace zadané Provozovatelem, a odhlášení odkazy odeslanými dřív: ?t={token}
  * (Připomínka přezutí) nebo ?email=… (starý odkaz /cancel-subscription?email=… se sem přesměruje).
  * Plugin vlastní adresy a data, vzhled dodává šablona webu souborem rezervace.php,
  * rezervace-potvrzeni.php, rezervace-zruseni.php a odhlaseni.php.
@@ -34,6 +35,7 @@ final class Pneukarnik_Booking_Pages {
 		add_action( 'template_redirect', [ self::class, 'handle_cancellation' ] );
 		add_action( 'template_redirect', [ self::class, 'redirect_old_unsubscribe' ], 1 ); // Před redirect_canonical.
 		add_action( 'template_redirect', [ self::class, 'handle_email_settings_form' ] );
+		add_action( 'template_redirect', [ self::class, 'handle_offer_form' ] );
 		add_action( 'template_redirect', [ self::class, 'handle_unsubscription' ] );
 		add_filter( 'template_include', [ self::class, 'template' ] );
 		add_filter( 'wp_robots', [ self::class, 'robots' ] );
@@ -215,6 +217,25 @@ final class Pneukarnik_Booking_Pages {
 	}
 
 	/**
+	 * Tlačítko „Ano, posílejte“ na stránce z odkazu v potvrzení Rezervace (funguje i bez JavaScriptu):
+	 * zapíše souhlas a přesměruje na nastavení e‑mailů. Token v adrese je sám tajemstvím, nonce
+	 * by nepřidal nic. Neplatný token nic nezapíše a vrátí zpět na stránku, která to řekne.
+	 */
+	public static function handle_offer_form(): void {
+		// phpcs:disable WordPress.Security.NonceVerification -- viz výše.
+		if ( 'odhlaseni' !== self::current() || 'POST' !== ( $_SERVER['REQUEST_METHOD'] ?? '' ) || isset( $_GET['k'] ) || ! isset( $_GET['s'], $_POST['volba'] ) ) {
+			return;
+		}
+		$token = sanitize_text_field( wp_unslash( $_GET['s'] ) );
+		// phpcs:enable
+		$url = Pneukarnik_Subscriptions::accept_offer( $token );
+		$url = null === $url ? add_query_arg( 's', $token, home_url( '/odhlaseni/' ) ) : add_query_arg( 'souhlas', '1', $url );
+		if ( wp_safe_redirect( $url, 303 ) ) {
+			exit;
+		}
+	}
+
+	/**
 	 * Odhlásí hned při otevření stránky, i když šablona webu výsledek nevypíše.
 	 */
 	public static function handle_unsubscription(): void {
@@ -228,29 +249,33 @@ final class Pneukarnik_Booking_Pages {
 	 *   ?k={klíč}   nastavení; POST z tlačítka odhlášení v poště (List-Unsubscribe=One-Click) odvolá vše,
 	 *   ?t={token}  odkaz z Připomínky odeslané dřív: hned při otevření odvolá Připomínku přezutí
 	 *               a ukáže nastavení,
+	 *   ?s={token}  „Ano, posílejte“ z potvrzení Rezervace: zeptá se tlačítkem, otevření nic nezapíše,
 	 *   ?email=…    starý odkaz: odhlásí jen starý odběr, nastavení neukáže (odkaz není podepsaný).
-	 * state: settings, legacy nebo invalid. notice u nastavení: reminder_off, saved, nothing nebo prázdné.
+	 * state: settings, offer, legacy nebo invalid. notice u nastavení: reminder_off, saved, nothing,
+	 * consented (po „Ano, posílejte“) nebo prázdné.
 	 *
-	 * @return array{state:string,notice:string,settings:array{email:string,reminder:bool,promotions:bool,url:string}|null}
+	 * @return array{state:string,notice:string,settings:array{email:string,reminder:bool,promotions:bool,url:string}|null,offer:array{email:string,url:string}|null}
 	 */
 	public static function email_settings(): array {
 		static $results = [];
 		// phpcs:disable WordPress.Security.NonceVerification -- odkaz z e‑mailu, klíč i token jsou samy tajemstvím.
 		$key       = isset( $_GET['k'] ) ? sanitize_text_field( wp_unslash( $_GET['k'] ) ) : null;
 		$token     = isset( $_GET['t'] ) ? sanitize_text_field( wp_unslash( $_GET['t'] ) ) : null;
+		$offer     = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : null;
 		$email     = isset( $_GET['email'] ) ? sanitize_email( wp_unslash( $_GET['email'] ) ) : null;
-		$notice    = isset( $_GET['nic'] ) ? 'nothing' : ( isset( $_GET['ulozeno'] ) ? 'saved' : '' );
+		$notice    = isset( $_GET['nic'] ) ? 'nothing' : ( isset( $_GET['ulozeno'] ) ? 'saved' : ( isset( $_GET['souhlas'] ) ? 'consented' : '' ) );
 		$one_click = 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? '' ) && 'One-Click' === ( $_POST['List-Unsubscribe'] ?? '' );
 		// phpcs:enable
 		$invalid = [
 			'state'    => 'invalid',
 			'notice'   => '',
 			'settings' => null,
+			'offer'    => null,
 		];
 		if ( 'odhlaseni' !== self::current() ) {
 			return $invalid;
 		}
-		$cache_key = (string) wp_json_encode( [ $key, $token, $email, $notice, $one_click ] );
+		$cache_key = (string) wp_json_encode( [ $key, $token, $offer, $email, $notice, $one_click ] );
 		if ( isset( $results[ $cache_key ] ) ) {
 			return $results[ $cache_key ];
 		}
@@ -261,6 +286,18 @@ final class Pneukarnik_Booking_Pages {
 				'state'    => 'legacy',
 				'notice'   => '',
 				'settings' => null,
+				'offer'    => null,
+			];
+		} elseif ( null === $key && null === $token && null !== $offer ) {
+			$offer_email = Pneukarnik_Subscriptions::offer( $offer );
+			$result      = null === $offer_email ? $invalid : [
+				'state'    => 'offer',
+				'notice'   => '',
+				'settings' => null,
+				'offer'    => [
+					'email' => $offer_email,
+					'url'   => add_query_arg( 's', $offer, home_url( '/odhlaseni/' ) ),
+				],
 			];
 		} else {
 			if ( null === $key ) {
@@ -274,6 +311,7 @@ final class Pneukarnik_Booking_Pages {
 				'state'    => 'settings',
 				'notice'   => $notice,
 				'settings' => $settings,
+				'offer'    => null,
 			];
 		}
 		$results[ $cache_key ] = $result;

@@ -29,6 +29,10 @@ if ( ! defined( 'ABSPATH' ) ) {
  * výmaz osobních údajů řádky e‑mailu nesmaže. Zvlášť jde vypnout a zapnout Připomínku přezutí
  * a Akce (i LEGACY), „Neposílat nic“ odvolá všechny druhy. Zapnutí je výslovný souhlas (nastaveni).
  *
+ * „Ano, posílejte“ /odhlaseni/?s={id}.{podpis} z potvrzení Rezervace zadané Provozovatelem, když e‑mail
+ * k Nabídkám a připomínkám ještě nemá žádný vztah: podpis id Rezervace spolu s jejím e‑mailem, platí do
+ * anonymizace Rezervace. Otevření nic nezapíše, souhlas se všemi druhy (potvrzeni) zapíše až tlačítko na stránce.
+ *
  * Odkazy odeslané dřív fungují dál se stejným účinkem: /odhlaseni/?t={id}.{podpis} z Připomínek
  * před stránkou nastavení odvolá Připomínku přezutí řádku id (podpis s časem souhlasu nebo nároku,
  * po odvolání a novém souhlasu nebo nároku přestane platit). Starý odkaz /cancel-subscription?email=…
@@ -129,6 +133,51 @@ final class Pneukarnik_Subscriptions {
 				Pneukarnik_Clock::now()->format( 'Y-m-d H:i:s' )
 			)
 		);
+	}
+
+	/**
+	 * Odkaz „Ano, posílejte“ do potvrzení Rezervace zadané Provozovatelem, prázdný pro webovou
+	 * Rezervaci a pro e‑mail, který už souhlas, nárok nebo odmítnutí má (i starý souhlas).
+	 *
+	 * @param array<string,mixed> $booking Rezervace (Pneukarnik_Booking::get_by_id).
+	 */
+	public static function offer_url( array $booking ): string {
+		$email = self::normalize( (string) $booking['customer_email'] );
+		if ( Pneukarnik_Booking::SOURCE_WEB === $booking['source'] || ! is_email( $email ) || self::has_record( $email ) ) {
+			return '';
+		}
+		return add_query_arg( 's', self::offer_token( (int) $booking['id'], $email ), home_url( '/odhlaseni/' ) );
+	}
+
+	/**
+	 * E‑mail podle odkazu „Ano, posílejte“, null = neplatný odkaz. Nic nezapíše.
+	 */
+	public static function offer( mixed $token ): ?string {
+		if ( ! is_string( $token ) || ! preg_match( '/^([1-9][0-9]*)\.[0-9a-f]{64}$/', $token, $m ) ) {
+			return null;
+		}
+		global $wpdb;
+		$email = $wpdb->get_var( $wpdb->prepare( 'SELECT customer_email FROM %i WHERE id = %d', Pneukarnik_DB::bookings_table(), (int) $m[1] ) );
+		$email = self::normalize( (string) $email );
+		return is_email( $email ) && hash_equals( self::offer_token( (int) $m[1], $email ), $token ) ? $email : null;
+	}
+
+	/**
+	 * „Ano, posílejte“: výslovný souhlas se všemi druhy Nabídek a připomínek, platí hned.
+	 *
+	 * @return string|null Adresa stránky nastavení e‑mailu, null = neplatný odkaz (nic se nezapíše).
+	 */
+	public static function accept_offer( mixed $token ): ?string {
+		$email = self::offer( $token );
+		if ( null === $email ) {
+			return null;
+		}
+		foreach ( self::KINDS as $purpose ) {
+			self::consent( $email, $purpose, 'potvrzeni' );
+		}
+		global $wpdb;
+		$id = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT MIN(id) FROM %i WHERE email = %s', Pneukarnik_DB::subscriptions_table(), $email ) );
+		return self::settings_url_for_key( self::key( $id, $email ) );
 	}
 
 	/**
@@ -355,6 +404,11 @@ final class Pneukarnik_Subscriptions {
 		}
 	}
 
+	private static function has_record( string $email ): bool {
+		global $wpdb;
+		return null !== $wpdb->get_var( $wpdb->prepare( 'SELECT 1 FROM %i WHERE email = %s LIMIT 1', Pneukarnik_DB::subscriptions_table(), $email ) );
+	}
+
 	private static function settings_url_for_key( string $key ): string {
 		return add_query_arg( 'k', $key, home_url( '/odhlaseni/' ) );
 	}
@@ -373,6 +427,10 @@ final class Pneukarnik_Subscriptions {
 		global $wpdb;
 		$email = $wpdb->get_var( $wpdb->prepare( 'SELECT email FROM %i WHERE id = %d', Pneukarnik_DB::subscriptions_table(), (int) $m[1] ) );
 		return null !== $email && hash_equals( self::key( (int) $m[1], (string) $email ), $key ) ? (string) $email : null;
+	}
+
+	private static function offer_token( int $booking_id, string $email ): string {
+		return $booking_id . '.' . hash_hmac( 'sha256', 'offer|' . $booking_id . '|' . $email, wp_salt( 'pneukarnik' ) );
 	}
 
 	private static function token( int $id, string $since ): string {

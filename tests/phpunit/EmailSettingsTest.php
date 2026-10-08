@@ -302,6 +302,7 @@ class EmailSettingsTest extends Pneukarnik_REST_Test_Case {
 				'state'    => 'invalid',
 				'notice'   => '',
 				'settings' => null,
+				'offer'    => null,
 			],
 			Pneukarnik_Booking_Pages::email_settings()
 		);
@@ -359,28 +360,6 @@ class EmailSettingsTest extends Pneukarnik_REST_Test_Case {
 		// $columns jsou pevné názvy sloupců z testů.
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return $wpdb->get_row( $wpdb->prepare( "SELECT {$columns} FROM %i WHERE email = %s AND purpose = %s", Pneukarnik_DB::subscriptions_table(), $email, $purpose ), ARRAY_A );
-	}
-
-	/**
-	 * Přesměrování zachytí bez odeslání hlaviček a exit.
-	 *
-	 * @return object{list:list<array{0:int,1:string}>}
-	 */
-	private function catch_redirects(): object {
-		$redirects = new class() {
-			/** @var list<array{0:int,1:string}> */
-			public array $list = [];
-		};
-		add_filter(
-			'wp_redirect',
-			static function ( string $location, int $status ) use ( $redirects ): bool {
-				$redirects->list[] = [ $status, $location ];
-				return false;
-			},
-			10,
-			2
-		);
-		return $redirects;
 	}
 
 	private function run_reminders_at( string $now ): void {

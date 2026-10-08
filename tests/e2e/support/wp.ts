@@ -49,6 +49,16 @@ export function emailSettingsLink(email: string): string {
 }
 
 /**
+ * Odkaz „Ano, posílejte“ z potvrzení Rezervace zadané Provozovatelem pro e‑mail bez vztahu k Nabídkám
+ * a připomínkám. Rezervace jde do DB přímo, daleko v budoucnu, aby nezabrala Termín jiným testům.
+ * E‑mail musí začínat e2e-, aby Rezervaci i souhlas smazal global-teardown.
+ */
+export function offerLink(email: string): string {
+	const booking = `['customer_name' => 'E2E Telefonická objednávka', 'customer_plate' => '1AB2345', 'customer_email' => ${shellQuote(email)}, 'customer_phone' => '603123456', 'booking_date' => '2099-01-05', 'time_start' => '09:00', 'time_end' => '10:00', 'source' => Pneukarnik_Booking::SOURCE_PROVOZOVATEL]`;
+	return wpCli(['wp', 'eval', `$GLOBALS['wpdb']->insert(Pneukarnik_DB::bookings_table(), ${booking}); echo Pneukarnik_Subscriptions::offer_url(Pneukarnik_Booking::get_by_id($GLOBALS['wpdb']->insert_id));`]).trim();
+}
+
+/**
  * Výjimka „zavřeno“ na dny od–do (YYYY-MM-DD), vrací její ID. Poznámka musí začínat E2E_PREFIX,
  * aby ji smazal global-teardown, kdyby ji test nesmazal sám.
  */
