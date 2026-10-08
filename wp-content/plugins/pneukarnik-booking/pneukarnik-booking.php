@@ -114,7 +114,7 @@ function pneukarnik_deactivate(): void {
 	wp_clear_scheduled_hook( Pneukarnik_Reminder::CRON_HOOK );
 	wp_clear_scheduled_hook( Pneukarnik_Termin_Reminder::CRON_HOOK );
 	wp_clear_scheduled_hook( Pneukarnik_Review_Request::CRON_HOOK );
-	wp_clear_scheduled_hook( Pneukarnik_Mailing::CRON_HOOK );
+	wp_unschedule_hook( Pneukarnik_Mailing::CRON_HOOK ); // I naplánované Rozesílky (s ID v argumentech).
 }
 
 function pneukarnik_ensure_capabilities(): void {

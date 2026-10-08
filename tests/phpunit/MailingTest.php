@@ -1,9 +1,10 @@
 <?php
 /**
  * Rozesílka: Akce platné teď nebo začínající do 14 dní s úvodní větou e‑mailům, které smějí dostávat
- * Akce (i ze starého souhlasu „informace o slevách“, podrobně OffersTest), každému jednou, po dávkách.
- * Odeslat jde až po zkušebním e‑mailu. Vytvoření a zkušební e‑mail z formuláře ověřuje Playwright
- * (emaily-zakaznikum.spec.ts).
+ * Akce (i ze starého souhlasu „informace o slevách“, podrobně OffersTest), všem nebo jen Zákazníkům
+ * jedné Kategorie, každému jednou, po dávkách, hned nebo v naplánovaný čas. Odeslat jde až po
+ * zkušebním e‑mailu. Akce se vyhodnotí při odeslání. Vytvoření, zkušební e‑mail a naplánování
+ * z formuláře ověřuje Playwright (emaily-zakaznikum.spec.ts).
  */
 
 declare(strict_types=1);
@@ -285,9 +286,9 @@ class MailingTest extends Pneukarnik_REST_Test_Case {
 
 		$page = $this->render();
 
-		$this->assertStringContainsString( 'Přezutí: Zaváděcí cena odeslaná: 2 (1. 2. 2027)', $page );
-		$this->assertStringContainsString( 'Přezutí: Druhá odesílá se (zatím odesláno: 0)', $page );
-		$this->assertStringContainsString( 'Přezutí: Třetí rozepsaná', $page );
+		$this->assertStringContainsString( 'Přezutí: Zaváděcí cena všem odeslaná: 2 (1. 2. 2027)', $page );
+		$this->assertStringContainsString( 'Přezutí: Druhá všem odesílá se (zatím odesláno: 0)', $page );
+		$this->assertStringContainsString( 'Přezutí: Třetí všem rozepsaná', $page );
 	}
 
 	public function test_mailing_page_has_the_promotions_recipients_preview_and_send_only_after_test(): void {
@@ -300,7 +301,7 @@ class MailingTest extends Pneukarnik_REST_Test_Case {
 		$this->assertMatchesRegularExpression( '/value="' . $promotion . '"\s+checked/', $page );
 		$this->assertStringContainsString( 'Přezutí: Zaváděcí cena (15. 1. – 31. 3. 2027)', $page );
 		$this->assertStringContainsString( 'Vlastní úvodní věta</textarea>', $page );
-		$this->assertStringContainsString( 'Počet příjemců: 1', $page );
+		$this->assertStringContainsString( 'Počet příjemců: 1', $this->render( true, (string) $id ) );
 		$this->assertStringContainsString( 'Uložit a poslat zkušební e‑mail na ' . self::PROVOZOVATEL, $page );
 		$this->assertStringContainsString( 'srcdoc="', $page );
 		$this->assertMatchesRegularExpression( '/value="send"[^>]*disabled/', $page );
@@ -312,6 +313,232 @@ class MailingTest extends Pneukarnik_REST_Test_Case {
 
 	public function test_mailings_are_scheduled(): void {
 		$this->assertNotFalse( wp_next_scheduled( Pneukarnik_Mailing::CRON_HOOK ) );
+	}
+
+	public function test_scheduled_mailing_goes_out_at_the_set_time_in_batches_once_to_each(): void {
+		for ( $i = 1; $i <= 55; $i++ ) {
+			Pneukarnik_Subscriptions::consent( "zakaznik{$i}@example.test", Pneukarnik_Subscriptions::PROMOTIONS, 'test' );
+		}
+		$id = $this->mailing();
+		$this->schedule( $id, '2027-02-03 10:00' );
+		$this->assertSame( Pneukarnik_Clock::at( '2027-02-03 10:00' )->getTimestamp(), wp_next_scheduled( Pneukarnik_Mailing::CRON_HOOK, [ $id ] ) );
+
+		Pneukarnik_Clock::freeze( '2027-02-03 09:59' );
+		do_action( Pneukarnik_Mailing::CRON_HOOK );
+		$this->assertSame( [], $this->mails );
+		$this->assertSame( Pneukarnik_Mailing::SCHEDULED, Pneukarnik_Mailing::find( $id )['status'] );
+
+		Pneukarnik_Clock::freeze( '2027-02-03 10:00' );
+		do_action( Pneukarnik_Mailing::CRON_HOOK, $id );
+		$this->assertCount( 50, $this->mails );
+		Pneukarnik_Clock::freeze( '2027-02-03 11:00' );
+		do_action( Pneukarnik_Mailing::CRON_HOOK );
+		do_action( Pneukarnik_Mailing::CRON_HOOK );
+
+		$this->assertCount( 55, $this->mails );
+		$this->assertCount( 55, array_unique( array_merge( ...array_column( $this->mails, 'to' ) ) ) );
+		$mailing = Pneukarnik_Mailing::find( $id );
+		$this->assertSame( Pneukarnik_Mailing::SENT, $mailing['status'] );
+		$this->assertSame( 55, $mailing['sent_count'] );
+	}
+
+	/**
+	 * @return array<string, array{0:string,1:string,2:string,3:string}>
+	 */
+	public static function daylight_saving_changes(): array {
+		return [
+			'na letní čas' => [ '2027-03-27 12:00', '2027-03-28 10:00', '2027-03-28 08:00:00', '2027-03-31' ],
+			'na zimní čas' => [ '2027-10-30 12:00', '2027-10-31 10:00', '2027-10-31 09:00:00', '2027-11-30' ],
+		];
+	}
+
+	/**
+	 * @dataProvider daylight_saving_changes
+	 */
+	public function test_scheduled_time_is_local_time_across_the_daylight_saving_change( string $now, string $at, string $utc, string $promotion_to ): void {
+		Pneukarnik_Clock::freeze( $now );
+		Pneukarnik_Subscriptions::consent( 'jan@example.test', Pneukarnik_Subscriptions::PROMOTIONS, 'test' );
+		$id     = $this->mailing( [ $this->promotion( 'Zaváděcí cena', substr( $now, 0, 10 ), $promotion_to ) ] );
+		$utc_at = new DateTimeImmutable( $utc, new DateTimeZone( 'UTC' ) );
+		$this->schedule( $id, $at );
+
+		$this->assertSame( $utc_at->getTimestamp(), wp_next_scheduled( Pneukarnik_Mailing::CRON_HOOK, [ $id ] ) );
+		$this->assertStringContainsString( 'naplánovaná na ' . Pneukarnik_Clock::at( $at )->format( 'j. n. Y H:i' ), $this->render() );
+
+		Pneukarnik_Clock::freeze( $utc_at->modify( '-1 minute' ) );
+		do_action( Pneukarnik_Mailing::CRON_HOOK );
+		$this->assertSame( [], $this->mails );
+
+		Pneukarnik_Clock::freeze( $utc_at );
+		do_action( Pneukarnik_Mailing::CRON_HOOK, $id );
+		$this->assertSame( [ [ 'jan@example.test' ] ], array_column( $this->mails, 'to' ) );
+	}
+
+	public function test_cancelled_mailing_does_not_go_out(): void {
+		Pneukarnik_Subscriptions::consent( 'jan@example.test', Pneukarnik_Subscriptions::PROMOTIONS, 'test' );
+		$id = $this->mailing();
+		$this->schedule( $id, '2027-02-03 10:00' );
+
+		$this->assertTrue( Pneukarnik_Mailing::cancel( $id ) );
+		Pneukarnik_Clock::freeze( '2027-02-03 10:00' );
+		do_action( Pneukarnik_Mailing::CRON_HOOK );
+
+		$this->assertSame( [], $this->mails );
+		$this->assertFalse( wp_next_scheduled( Pneukarnik_Mailing::CRON_HOOK, [ $id ] ) );
+		$this->assertSame( Pneukarnik_Mailing::CANCELLED, Pneukarnik_Mailing::find( $id )['status'] );
+		$this->assertSame( Pneukarnik_Mailing::NOT_DRAFT, Pneukarnik_Mailing::send( $id ) );
+		$this->assertFalse( Pneukarnik_Mailing::cancel( $id ), 'Zrušit jde jen naplánovanou' );
+		$this->assertStringContainsString( 'Přezutí: Akce přezutí všem zrušená', $this->render() );
+	}
+
+	public function test_scheduled_mailing_can_be_moved_or_sent_right_away(): void {
+		Pneukarnik_Subscriptions::consent( 'jan@example.test', Pneukarnik_Subscriptions::PROMOTIONS, 'test' );
+		$id = $this->mailing();
+		$this->schedule( $id, '2027-02-03 10:00' );
+
+		$this->assertSame( Pneukarnik_Mailing::DONE, Pneukarnik_Mailing::schedule_send( $id, Pneukarnik_Clock::at( '2027-02-05 08:00' ) ) );
+		$this->assertSame( Pneukarnik_Clock::at( '2027-02-05 08:00' )->getTimestamp(), wp_next_scheduled( Pneukarnik_Mailing::CRON_HOOK, [ $id ] ) );
+		Pneukarnik_Clock::freeze( '2027-02-03 10:00' );
+		do_action( Pneukarnik_Mailing::CRON_HOOK );
+		$this->assertSame( [], $this->mails );
+
+		$this->assertSame( Pneukarnik_Mailing::DONE, Pneukarnik_Mailing::send( $id ) );
+		$this->assertFalse( wp_next_scheduled( Pneukarnik_Mailing::CRON_HOOK, [ $id ] ) );
+		do_action( Pneukarnik_Mailing::CRON_HOOK );
+		$this->assertSame( [ [ 'jan@example.test' ] ], array_column( $this->mails, 'to' ) );
+	}
+
+	public function test_changing_the_content_of_a_scheduled_mailing_returns_it_to_drafts(): void {
+		Pneukarnik_Subscriptions::consent( 'jan@example.test', Pneukarnik_Subscriptions::PROMOTIONS, 'test' );
+		$promotion = $this->promotion( 'Zaváděcí cena', '2027-01-15', '2027-03-31' );
+		$id        = $this->mailing( [ $promotion ], 'Úvod' );
+		$this->schedule( $id, '2027-02-03 10:00' );
+
+		$this->assertSame( $id, Pneukarnik_Mailing::save( $id, 'Úvod', [ $promotion ], Pneukarnik_Service::AUTOSERVIS ) );
+		$this->assertSame( Pneukarnik_Mailing::SCHEDULED, Pneukarnik_Mailing::find( $id )['status'], 'Změna příjemců naplánování nezruší' );
+
+		$this->assertSame( $id, Pneukarnik_Mailing::save( $id, 'Jiný úvod', [ $promotion ] ) );
+		$mailing = Pneukarnik_Mailing::find( $id );
+		$this->assertSame( Pneukarnik_Mailing::DRAFT, $mailing['status'] );
+		$this->assertNull( $mailing['test_sent_at'] );
+		$this->assertFalse( wp_next_scheduled( Pneukarnik_Mailing::CRON_HOOK, [ $id ] ) );
+		$this->assertSame( Pneukarnik_Mailing::NOT_TESTED, Pneukarnik_Mailing::schedule_send( $id, Pneukarnik_Clock::at( '2027-02-03 10:00' ) ) );
+		Pneukarnik_Clock::freeze( '2027-02-03 10:00' );
+		do_action( Pneukarnik_Mailing::CRON_HOOK );
+		$this->assertSame( [], $this->mails );
+	}
+
+	public function test_mailing_cannot_be_scheduled_into_the_past_or_without_a_test_email(): void {
+		$id = $this->mailing();
+
+		$this->assertSame( Pneukarnik_Mailing::NOT_TESTED, Pneukarnik_Mailing::schedule_send( $id, Pneukarnik_Clock::at( '2027-02-03 10:00' ) ) );
+		Pneukarnik_Mailing::send_test( $id );
+		$this->assertSame( Pneukarnik_Mailing::NOT_FUTURE, Pneukarnik_Mailing::schedule_send( $id, Pneukarnik_Clock::at( '2027-02-01 12:00' ) ) );
+		$this->assertSame( Pneukarnik_Mailing::DRAFT, Pneukarnik_Mailing::find( $id )['status'] );
+	}
+
+	public function test_with_a_category_the_mailing_goes_only_to_customers_with_a_booking_of_that_category(): void {
+		$geometry = $this->create_service( 60, false, 'Geometrie' );
+		update_post_meta( $geometry, '_service_category', Pneukarnik_Service::AUTOSERVIS );
+		$this->book_online( 'pneu@example.test', '2027-02-10' );
+		$this->book_online( 'auto@example.test', '2027-02-10', '10:00', service: $geometry );
+		$this->book_online( 'oboji@example.test', '2027-02-10', '11:00' );
+		$this->book_online( 'oboji@example.test', '2027-02-11', '09:00', service: $geometry );
+		$this->book( $geometry, '2027-02-11', '10:00', [ 'email' => 'zrusil@example.test' ] );
+		$this->assertSame( 200, $this->cancel( $this->cancel_token_from( $this->mail_to( 'zrusil@example.test' ) ) )->get_status() );
+		$this->book_online( 'zrusil@example.test', '2027-02-11', '11:00' );
+		Pneukarnik_Subscriptions::import_legacy( 'stary@example.test', '2020-01-01 00:00:00' );
+		Pneukarnik_Clock::freeze( '2027-02-20 12:00' );
+
+		$this->assertSame( 5, Pneukarnik_Mailing::audience() );
+		$this->assertSame( 2, Pneukarnik_Mailing::audience( Pneukarnik_Service::AUTOSERVIS ) );
+		$this->assertSame( 3, Pneukarnik_Mailing::audience( Pneukarnik_Service::PNEUSERVIS ) );
+		$id = Pneukarnik_Mailing::save( null, 'Úvod', [ $this->promotion( 'Kontrola brzd zdarma', '2027-02-15', '2027-03-31', $geometry ) ], Pneukarnik_Service::AUTOSERVIS );
+		$this->assertIsInt( $id );
+		$this->send_now( $id );
+
+		$this->assertEqualsCanonicalizing( [ [ 'auto@example.test' ], [ 'oboji@example.test' ] ], array_column( $this->mails, 'to' ) );
+		$this->assertStringContainsString( 'Geometrie: Kontrola brzd zdarma Autoservis odeslaná: 2', $this->render() );
+	}
+
+	public function test_mailing_page_counts_recipients_for_each_category(): void {
+		$geometry = $this->create_service( 60, false, 'Geometrie' );
+		update_post_meta( $geometry, '_service_category', Pneukarnik_Service::AUTOSERVIS );
+		Pneukarnik_Clock::freeze( '2027-01-01 12:00' );
+		$this->book_online( 'pneu@example.test', '2027-01-10' );
+		$this->book_online( 'auto@example.test', '2027-01-10', '10:00', service: $geometry );
+		Pneukarnik_Clock::freeze( '2027-02-01 12:00' );
+		$id = Pneukarnik_Mailing::save( null, 'Úvod', [ $this->promotion( 'Akce', '2027-01-15', '2027-03-31' ) ], Pneukarnik_Service::AUTOSERVIS );
+
+		$page = $this->render( true, (string) $id );
+
+		$this->assertStringContainsString( 'Všem (2) Jen Zákazníkům Kategorie Pneuservis (1) Jen Zákazníkům Kategorie Autoservis (1)', $page );
+		$this->assertMatchesRegularExpression( '/value="autoservis" data-count="1"\s+selected/', $this->render( false, (string) $id ) );
+	}
+
+	public function test_promotion_that_ended_or_was_deleted_before_sending_is_not_in_the_email(): void {
+		Pneukarnik_Subscriptions::consent( 'jan@example.test', Pneukarnik_Subscriptions::PROMOTIONS, 'test' );
+		$ending  = $this->promotion( 'Končí 5. 2.', '2027-01-15', '2027-02-05' );
+		$deleted = $this->promotion( 'Smazaná', '2027-01-15', '2027-03-31' );
+		$lasting = $this->promotion( 'Platí dál', '2027-01-15', '2027-03-31' );
+		$id      = $this->mailing( [ $ending, $deleted, $lasting ] );
+		$this->schedule( $id, '2027-02-06 10:00' );
+		wp_delete_post( $deleted, true );
+
+		Pneukarnik_Clock::freeze( '2027-02-06 10:00' );
+		do_action( Pneukarnik_Mailing::CRON_HOOK );
+
+		$text = $this->mail_to( 'jan@example.test' )['text'];
+		$this->assertStringContainsString( 'Akce: Platí dál', $text );
+		$this->assertStringNotContainsString( 'Končí 5. 2.', $text );
+		$this->assertStringNotContainsString( 'Smazaná', $text );
+	}
+
+	public function test_mailing_without_a_valid_promotion_at_sending_time_is_not_sent(): void {
+		Pneukarnik_Subscriptions::consent( 'jan@example.test', Pneukarnik_Subscriptions::PROMOTIONS, 'test' );
+		$id = $this->mailing( [ $this->promotion( 'Končí 5. 2.', '2027-01-15', '2027-02-05' ) ] );
+		$this->schedule( $id, '2027-02-06 10:00' );
+
+		Pneukarnik_Clock::freeze( '2027-02-06 10:00' );
+		do_action( Pneukarnik_Mailing::CRON_HOOK );
+
+		$this->assertSame( [], $this->mails );
+		$this->assertSame( Pneukarnik_Mailing::NOT_SENT, Pneukarnik_Mailing::find( $id )['status'] );
+		$this->assertStringContainsString( 'neodeslaná: žádná platná Akce (6. 2. 2027)', $this->render() );
+	}
+
+	public function test_mailing_whose_promotions_end_while_it_is_going_out_stops_as_sent(): void {
+		for ( $i = 1; $i <= 55; $i++ ) {
+			Pneukarnik_Subscriptions::consent( "zakaznik{$i}@example.test", Pneukarnik_Subscriptions::PROMOTIONS, 'test' );
+		}
+		Pneukarnik_Clock::freeze( '2027-02-05 23:00' );
+		$id = $this->mailing( [ $this->promotion( 'Končí 5. 2.', '2027-01-15', '2027-02-05' ) ] );
+		$this->send_now( $id );
+		$this->assertCount( 50, $this->mails );
+
+		Pneukarnik_Clock::freeze( '2027-02-06 00:00' );
+		do_action( Pneukarnik_Mailing::CRON_HOOK );
+
+		$this->assertCount( 50, $this->mails );
+		$mailing = Pneukarnik_Mailing::find( $id );
+		$this->assertSame( Pneukarnik_Mailing::SENT, $mailing['status'] );
+		$this->assertSame( 50, $mailing['sent_count'] );
+	}
+
+	public function test_new_mailing_page_says_when_the_last_mailing_went_out(): void {
+		$this->assertStringNotContainsString( 'Poslední Rozesílka', $this->render( true, 'new' ) );
+		$this->send_now( $this->mailing() );
+		$this->schedule( $this->mailing(), '2027-02-20 10:00' );
+
+		Pneukarnik_Clock::freeze( '2027-02-11 08:00' );
+
+		$this->assertStringContainsString( 'Poslední Rozesílka odešla před 10 dny (1. 2. 2027).', $this->render( true, 'new' ) );
+	}
+
+	public function test_admin_page_lists_scheduled_mailings_with_the_time(): void {
+		$this->schedule( $this->mailing(), '2027-02-03 10:00' );
+
+		$this->assertStringContainsString( 'Přezutí: Akce přezutí všem naplánovaná na 3. 2. 2027 10:00', $this->render() );
 	}
 
 	/**
@@ -361,6 +588,16 @@ class MailingTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	/**
+	 * Zkušební e‑mail (zahodí se) a naplánování na místní čas.
+	 */
+	private function schedule( int $id, string $at ): void {
+		$before = count( $this->mails );
+		$this->assertSame( self::PROVOZOVATEL, Pneukarnik_Mailing::send_test( $id ) );
+		$this->mails = array_slice( $this->mails, 0, $before );
+		$this->assertSame( Pneukarnik_Mailing::DONE, Pneukarnik_Mailing::schedule_send( $id, Pneukarnik_Clock::at( $at ) ) );
+	}
+
+	/**
 	 * Stránka E‑maily Zákazníkům (nebo Rozesílky) jako administrátor: text bez značek s jednoduchými
 	 * mezerami, nebo HTML.
 	 */
@@ -382,9 +619,9 @@ class MailingTest extends Pneukarnik_REST_Test_Case {
 	/**
 	 * Online Rezervace s/bez odmítnutí Nabídek a připomínek.
 	 */
-	private function book_online( string $email, string $date, string $time = '09:00', bool $refuse = false ): void {
+	private function book_online( string $email, string $date, string $time = '09:00', bool $refuse = false, ?int $service = null ): void {
 		$response = $this->book(
-			$this->tyres,
+			$service ?? $this->tyres,
 			$date,
 			$time,
 			[

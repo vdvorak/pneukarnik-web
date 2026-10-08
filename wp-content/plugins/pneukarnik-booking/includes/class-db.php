@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Pneukarnik_DB {
 
 	private const DB_VERSION_OPTION = 'pneukarnik_db_version';
-	private const DB_VERSION        = '1.15';
+	private const DB_VERSION        = '1.16';
 
 	/** Testy běží uvnitř transakce WP test suite, transakce pluginu pak používají savepoint. */
 	private static bool $savepoints = false;
@@ -319,13 +319,16 @@ class Pneukarnik_DB {
 			KEY idx_purpose (purpose, withdrawn_at)
 		) ENGINE=InnoDB $charset_collate;";
 
-		// Rozesílky (Pneukarnik_Mailing): úvodní věta, vybrané Akce (ID oddělená čárkou) a stav odesílání.
+		// Rozesílky (Pneukarnik_Mailing): úvodní věta, vybrané Akce (ID oddělená čárkou), Kategorie příjemců
+		// (prázdná = všichni), plánovaný čas odeslání (místní) a stav odesílání.
 		$mailings = "CREATE TABLE {$wpdb->prefix}pneukarnik_mailings (
 			id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			intro         TEXT            NOT NULL,
 			promotion_ids VARCHAR(255)    NOT NULL DEFAULT '',
+			category      VARCHAR(20)     NOT NULL DEFAULT '',
 			status        VARCHAR(20)     NOT NULL DEFAULT 'draft',
 			test_sent_at  DATETIME        DEFAULT NULL,
+			scheduled_at  DATETIME        DEFAULT NULL,
 			created_at    DATETIME        NOT NULL,
 			started_at    DATETIME        DEFAULT NULL,
 			finished_at   DATETIME        DEFAULT NULL,

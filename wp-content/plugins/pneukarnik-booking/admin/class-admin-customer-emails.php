@@ -13,7 +13,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Rezervace. Připomínka Termínu (zapnutí, hodina, zkušební odeslání), kolika Zákazníkům může který
  * druh Nabídek a připomínek dnes přijít, Připomínka přezutí (kolik dní před Sezónou, úvod, náhled,
  * zkušební odeslání), Žádost o hodnocení (zapnutí, úvod, upozornění na chybějící Place ID, zkušební
- * odeslání) a Rozesílky (seznam, složení, zkušební e‑mail a odeslání na mailing=new|{id}).
+ * odeslání) a Rozesílky (seznam, na mailing=new|{id} složení, příjemci, zkušební e‑mail, odeslání,
+ * naplánování a zrušení).
  * Oprávnění stejné jako Nastavení.
  */
 class Pneukarnik_Admin_Customer_Emails {
@@ -71,7 +72,8 @@ class Pneukarnik_Admin_Customer_Emails {
 	}
 
 	/**
-	 * Formulář Rozesílky: uložit, uložit a poslat zkušební e‑mail, odeslat hned, nebo smazat rozepsanou.
+	 * Formulář Rozesílky: uložit, uložit a poslat zkušební e‑mail, odeslat hned, naplánovat, zrušit
+	 * naplánovanou, nebo smazat rozepsanou.
 	 */
 	private static function handle_mailing_post(): void {
 		check_admin_referer( 'pneukarnik_mailing' );
@@ -84,11 +86,18 @@ class Pneukarnik_Admin_Customer_Emails {
 			wp_safe_redirect( add_query_arg( 'mailing_deleted', '1', self::url() ) );
 			exit;
 		}
+		if ( 'cancel' === $action ) {
+			Pneukarnik_Mailing::cancel( (int) $id );
+			wp_safe_redirect( add_query_arg( 'mailing_cancelled', '1', self::url() ) );
+			exit;
+		}
 
-		$saved = Pneukarnik_Mailing::save(
+		$before = null === $id ? null : Pneukarnik_Mailing::find( $id );
+		$saved  = Pneukarnik_Mailing::save(
 			$id,
 			isset( $_POST['intro'] ) ? (string) wp_unslash( $_POST['intro'] ) : '', // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitizuje save().
-			array_map( 'intval', (array) wp_unslash( $_POST['promotions'] ?? [] ) )
+			array_map( 'intval', (array) wp_unslash( $_POST['promotions'] ?? [] ) ),
+			sanitize_key( wp_unslash( $_POST['category'] ?? '' ) )
 		);
 		if ( is_string( $saved ) ) {
 			wp_safe_redirect( add_query_arg( 'error', $saved, self::mailing_url( $id ?? 'new' ) ) );
@@ -96,16 +105,24 @@ class Pneukarnik_Admin_Customer_Emails {
 		}
 
 		$result = [ 'saved' => '1' ];
+		if ( Pneukarnik_Mailing::SCHEDULED === ( $before['status'] ?? null ) && Pneukarnik_Mailing::DRAFT === Pneukarnik_Mailing::find( $saved )['status'] ) {
+			$result['unscheduled'] = '1';
+		}
 		if ( 'test' === $action ) {
 			$result['test'] = null !== Pneukarnik_Mailing::send_test( $saved ) ? 'sent' : 'failed';
 		}
-		if ( 'send' === $action ) {
-			$sent = Pneukarnik_Mailing::send( $saved );
-			if ( Pneukarnik_Mailing::DONE === $sent ) {
-				wp_safe_redirect( add_query_arg( 'mailing_sent', '1', self::url() ) );
+		if ( 'send' === $action || 'schedule' === $action ) {
+			$at   = \DateTimeImmutable::createFromFormat( '!Y-m-d\TH:i', sanitize_text_field( wp_unslash( $_POST['scheduled_at'] ?? '' ) ), Pneukarnik_Clock::timezone() );
+			$done = match ( true ) {
+				'send' === $action => Pneukarnik_Mailing::send( $saved ),
+				false === $at      => Pneukarnik_Mailing::NOT_FUTURE,
+				default            => Pneukarnik_Mailing::schedule_send( $saved, $at ),
+			};
+			if ( Pneukarnik_Mailing::DONE === $done ) {
+				wp_safe_redirect( add_query_arg( 'send' === $action ? 'mailing_sent' : 'mailing_scheduled', '1', self::url() ) );
 				exit;
 			}
-			$result = [ 'error' => $sent ];
+			$result = [ 'error' => $done ];
 		}
 		wp_safe_redirect( add_query_arg( $result, self::mailing_url( $saved ) ) );
 		exit;
@@ -162,6 +179,12 @@ class Pneukarnik_Admin_Customer_Emails {
 			<?php endforeach; ?>
 			<?php if ( isset( $_GET['mailing_sent'] ) ) : ?>
 				<div class="notice notice-success"><p><?php esc_html_e( 'Rozesílka se odesílá. Odchází po dávkách, u větších během několika hodin.', 'pneukarnik-booking' ); ?></p></div>
+			<?php endif; ?>
+			<?php if ( isset( $_GET['mailing_scheduled'] ) ) : ?>
+				<div class="notice notice-success"><p><?php esc_html_e( 'Rozesílka je naplánovaná. Do odeslání ji jde upravit nebo zrušit.', 'pneukarnik-booking' ); ?></p></div>
+			<?php endif; ?>
+			<?php if ( isset( $_GET['mailing_cancelled'] ) ) : ?>
+				<div class="notice notice-success"><p><?php esc_html_e( 'Naplánovaná Rozesílka je zrušená, neodejde.', 'pneukarnik-booking' ); ?></p></div>
 			<?php endif; ?>
 			<?php if ( isset( $_GET['mailing_deleted'] ) ) : ?>
 				<div class="notice notice-success"><p><?php esc_html_e( 'Rozepsaná Rozesílka je smazaná.', 'pneukarnik-booking' ); ?></p></div>
@@ -366,7 +389,7 @@ class Pneukarnik_Admin_Customer_Emails {
 		<p class="description">
 			<?php
 			/* translators: %d: počet dní */
-			echo esc_html( sprintf( __( 'E‑mail o Akcích, které platí nebo začnou do %d dní, všem Zákazníkům, kterým smějí chodit Akce.', 'pneukarnik-booking' ), Pneukarnik_Mailing::DAYS_AHEAD ) );
+			echo esc_html( sprintf( __( 'E‑mail o Akcích, které platí nebo začnou do %d dní, Zákazníkům, kterým smějí chodit Akce, všem nebo jedné Kategorie. Odejde hned, nebo v naplánovaný čas.', 'pneukarnik-booking' ), Pneukarnik_Mailing::DAYS_AHEAD ) );
 			?>
 		</p>
 		<p><a class="button" href="<?php echo esc_url( self::mailing_url( 'new' ) ); ?>"><?php esc_html_e( 'Nová Rozesílka', 'pneukarnik-booking' ); ?></a></p>
@@ -376,6 +399,7 @@ class Pneukarnik_Admin_Customer_Emails {
 					<tr>
 						<th><?php esc_html_e( 'Založená', 'pneukarnik-booking' ); ?></th>
 						<th><?php esc_html_e( 'Akce', 'pneukarnik-booking' ); ?></th>
+						<th><?php esc_html_e( 'Komu', 'pneukarnik-booking' ); ?></th>
 						<th><?php esc_html_e( 'Stav', 'pneukarnik-booking' ); ?></th>
 					</tr>
 				</thead>
@@ -384,6 +408,7 @@ class Pneukarnik_Admin_Customer_Emails {
 						<tr>
 							<td><a href="<?php echo esc_url( self::mailing_url( $mailing['id'] ) ); ?>"><?php echo esc_html( Pneukarnik_Clock::at( $mailing['created_at'] )->format( 'j. n. Y H:i' ) ); ?></a></td>
 							<td><?php echo esc_html( implode( ', ', array_map( [ self::class, 'promotion_label' ], Pneukarnik_Mailing::mailing_promotions( $mailing ) ) ) ); ?></td>
+							<td><?php echo esc_html( Pneukarnik_Service::categories()[ $mailing['category'] ] ?? __( 'všem', 'pneukarnik-booking' ) ); ?></td>
 							<td><?php echo esc_html( self::mailing_status( $mailing ) ); ?></td>
 						</tr>
 					<?php endforeach; ?>
@@ -394,20 +419,25 @@ class Pneukarnik_Admin_Customer_Emails {
 	}
 
 	/**
-	 * Rozesílka: rozepsaná jde upravit, otestovat a odeslat, odesílaná a odeslaná jen prohlédnout.
+	 * Rozesílka: rozepsaná a naplánovaná jde upravit, otestovat, odeslat a naplánovat, naplánovaná
+	 * i zrušit, ostatní jen prohlédnout.
 	 */
 	private static function render_mailing( string $param ): void {
 		$mailing = 'new' === $param ? null : Pneukarnik_Mailing::find( absint( $param ) );
 		if ( 'new' !== $param && null === $mailing ) {
 			wp_die( esc_html__( 'Rozesílka neexistuje.', 'pneukarnik-booking' ) );
 		}
-		$draft              = null === $mailing || Pneukarnik_Mailing::DRAFT === $mailing['status'];
+		$editable           = null === $mailing || Pneukarnik_Mailing::editable( $mailing );
 		$provozovatel_email = Pneukarnik_Contact::email();
-		$audience           = Pneukarnik_Mailing::audience();
+		$audiences          = self::audiences();
+		$category           = $mailing['category'] ?? '';
+		$last_sent          = Pneukarnik_Mailing::last_sent();
+		$scheduled_at       = null === ( $mailing['scheduled_at'] ?? null ) ? '' : Pneukarnik_Clock::at( (string) $mailing['scheduled_at'] )->format( 'Y-m-d\TH:i' );
 		$errors             = [
-			Pneukarnik_Mailing::NO_PROMOTIONS => __( 'Vyberte aspoň jednu Akci.', 'pneukarnik-booking' ),
+			Pneukarnik_Mailing::NO_PROMOTIONS => __( 'Vyberte aspoň jednu Akci, která ještě platí.', 'pneukarnik-booking' ),
 			Pneukarnik_Mailing::NOT_TESTED    => __( 'Před odesláním si pošlete zkušební e‑mail, po každé změně znovu.', 'pneukarnik-booking' ),
-			Pneukarnik_Mailing::NOT_DRAFT     => __( 'Rozesílka už se odesílá, změnit ji nejde.', 'pneukarnik-booking' ),
+			Pneukarnik_Mailing::NOT_FUTURE    => __( 'Zadejte datum a čas odeslání, které ještě nenastaly.', 'pneukarnik-booking' ),
+			Pneukarnik_Mailing::NOT_DRAFT     => __( 'Rozesílka už se odesílá, odešla nebo je zrušená, změnit ji nejde.', 'pneukarnik-booking' ),
 			Pneukarnik_Mailing::NOT_FOUND     => __( 'Rozesílka neexistuje.', 'pneukarnik-booking' ),
 		];
 		$error              = sanitize_key( wp_unslash( $_GET['error'] ?? '' ) );
@@ -420,6 +450,9 @@ class Pneukarnik_Admin_Customer_Emails {
 				<div class="notice notice-error"><p><?php echo esc_html( $errors[ $error ] ); ?></p></div>
 			<?php elseif ( isset( $_GET['saved'] ) ) : ?>
 				<div class="notice notice-success"><p><?php esc_html_e( 'Uloženo.', 'pneukarnik-booking' ); ?></p></div>
+			<?php endif; ?>
+			<?php if ( isset( $_GET['unscheduled'] ) ) : ?>
+				<div class="notice notice-warning"><p><?php esc_html_e( 'Obsah se změnil, Rozesílka už není naplánovaná. Pošlete si zkušební e‑mail a naplánujte ji znovu.', 'pneukarnik-booking' ); ?></p></div>
 			<?php endif; ?>
 			<?php if ( 'sent' === ( $_GET['test'] ?? '' ) ) : ?>
 				<div class="notice notice-success">
@@ -434,9 +467,13 @@ class Pneukarnik_Admin_Customer_Emails {
 				<div class="notice notice-error"><p><?php esc_html_e( 'Zkušební Rozesílku se nepodařilo odeslat. Zkontrolujte kontaktní e‑mail v Nastavení a nastavení odesílání pošty.', 'pneukarnik-booking' ); ?></p></div>
 			<?php endif; ?>
 
-			<?php if ( null !== $mailing && ! $draft ) : ?>
+			<?php if ( null !== $mailing ) : ?>
 				<p><strong><?php echo esc_html( self::mailing_status( $mailing ) ); ?></strong></p>
-			<?php else : ?>
+			<?php endif; ?>
+			<?php if ( $editable ) : ?>
+				<?php if ( null !== $last_sent ) : ?>
+					<p><?php echo esc_html( self::last_sent_label( $last_sent ) ); ?></p>
+				<?php endif; ?>
 				<?php $promotions = Pneukarnik_Mailing::promotions(); ?>
 				<form method="post">
 					<?php wp_nonce_field( 'pneukarnik_mailing' ); ?>
@@ -468,17 +505,23 @@ class Pneukarnik_Admin_Customer_Emails {
 							<td><textarea id="pnk-mailing-intro" name="intro" rows="3" class="large-text"><?php echo esc_textarea( $mailing['intro'] ?? Pneukarnik_Mailing::DEFAULT_INTRO ); ?></textarea></td>
 						</tr>
 						<tr>
-							<th><?php esc_html_e( 'Příjemci', 'pneukarnik-booking' ); ?></th>
+							<th><label for="pnk-mailing-category"><?php esc_html_e( 'Příjemci', 'pneukarnik-booking' ); ?></label></th>
 							<td>
-								<p>
-									<strong>
-										<?php
-										/* translators: %d: počet Zákazníků */
-										echo esc_html( sprintf( __( 'Počet příjemců: %d', 'pneukarnik-booking' ), $audience ) );
-										?>
-									</strong>
-								</p>
-								<p class="description"><?php esc_html_e( 'Všichni, kterým smějí chodit Akce, i se souhlasem „informace o slevách“ ze starého webu. Každý ji dostane jednou.', 'pneukarnik-booking' ); ?></p>
+								<select id="pnk-mailing-category" name="category" onchange="document.querySelectorAll('.pnk-mailing-count').forEach((el) => { el.textContent = this.selectedOptions[0].dataset.count; })">
+									<?php foreach ( $audiences as $value => [ $label, $count ] ) : ?>
+										<option value="<?php echo esc_attr( $value ); ?>" data-count="<?php echo esc_attr( (string) $count ); ?>" <?php selected( $category, $value ); ?>><?php echo esc_html( $label . ' (' . $count . ')' ); ?></option>
+									<?php endforeach; ?>
+								</select>
+								<p><strong><?php esc_html_e( 'Počet příjemců:', 'pneukarnik-booking' ); ?> <span class="pnk-mailing-count"><?php echo esc_html( (string) $audiences[ $category ][1] ); ?></span></strong></p>
+								<p class="description"><?php esc_html_e( 'Všichni, kterým smějí chodit Akce, i se souhlasem „informace o slevách“ ze starého webu, nebo jen ti z nich, kteří mají Rezervaci Služby té Kategorie. Každý ji dostane jednou.', 'pneukarnik-booking' ); ?></p>
+							</td>
+						</tr>
+						<tr>
+							<th><label for="pnk-mailing-scheduled-at"><?php esc_html_e( 'Naplánovat na', 'pneukarnik-booking' ); ?></label></th>
+							<td>
+								<input id="pnk-mailing-scheduled-at" type="datetime-local" name="scheduled_at" value="<?php echo esc_attr( $scheduled_at ); ?>">
+								<button type="submit" name="mailing_action" value="schedule" class="button" <?php disabled( null === ( $mailing['test_sent_at'] ?? null ) ); ?>><?php esc_html_e( 'Naplánovat', 'pneukarnik-booking' ); ?></button>
+								<p class="description"><?php esc_html_e( 'Akce se vyhodnotí při odeslání: ta, která mezitím skončí nebo zmizí, v e‑mailu nebude. Nezbude‑li žádná, Rozesílka neodejde.', 'pneukarnik-booking' ); ?></p>
 							</td>
 						</tr>
 					</table>
@@ -492,21 +535,20 @@ class Pneukarnik_Admin_Customer_Emails {
 								?>
 							</button>
 						<?php endif; ?>
-						<?php
-						/* translators: %d: počet Zákazníků */
-						$send_label = sprintf( __( 'Odeslat hned (%d)', 'pneukarnik-booking' ), $audience );
-						/* translators: %d: počet Zákazníků */
-						$confirm = sprintf( __( 'Odeslat Rozesílku %d Zákazníkům? Vrátit to nejde.', 'pneukarnik-booking' ), $audience );
-						?>
-						<button type="submit" name="mailing_action" value="send" class="button button-primary" <?php disabled( null === ( $mailing['test_sent_at'] ?? null ) ); ?> onclick="return confirm(<?php echo esc_attr( (string) wp_json_encode( $confirm ) ); ?>)"><?php echo esc_html( $send_label ); ?></button>
-						<?php if ( null !== $mailing ) : ?>
+						<button type="submit" name="mailing_action" value="send" class="button button-primary" <?php disabled( null === ( $mailing['test_sent_at'] ?? null ) ); ?> onclick="return confirm(<?php echo esc_attr( (string) wp_json_encode( __( 'Odeslat Rozesílku hned? Vrátit to nejde.', 'pneukarnik-booking' ) ) ); ?>)">
+							<?php esc_html_e( 'Odeslat hned', 'pneukarnik-booking' ); ?>
+							(<span class="pnk-mailing-count"><?php echo esc_html( (string) $audiences[ $category ][1] ); ?></span>)
+						</button>
+						<?php if ( Pneukarnik_Mailing::SCHEDULED === ( $mailing['status'] ?? null ) ) : ?>
+							<button type="submit" name="mailing_action" value="cancel" class="button-link button-link-delete" style="margin-left:1em" onclick="return confirm(<?php echo esc_attr( (string) wp_json_encode( __( 'Zrušit naplánovanou Rozesílku? Neodejde.', 'pneukarnik-booking' ) ) ); ?>)"><?php esc_html_e( 'Zrušit Rozesílku', 'pneukarnik-booking' ); ?></button>
+						<?php elseif ( null !== $mailing ) : ?>
 							<button type="submit" name="mailing_action" value="delete" class="button-link button-link-delete" style="margin-left:1em" onclick="return confirm(<?php echo esc_attr( (string) wp_json_encode( __( 'Smazat rozepsanou Rozesílku?', 'pneukarnik-booking' ) ) ); ?>)"><?php esc_html_e( 'Smazat', 'pneukarnik-booking' ); ?></button>
 						<?php endif; ?>
 					</p>
 					<?php if ( '' === $provozovatel_email ) : ?>
-						<p class="description"><?php esc_html_e( 'Zkušební e‑mail jde poslat jen na kontaktní e‑mail, vyplňte ho v Nastavení. Bez něj Rozesílku odeslat nejde.', 'pneukarnik-booking' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Zkušební e‑mail jde poslat jen na kontaktní e‑mail, vyplňte ho v Nastavení. Bez něj Rozesílku odeslat ani naplánovat nejde.', 'pneukarnik-booking' ); ?></p>
 					<?php elseif ( null === ( $mailing['test_sent_at'] ?? null ) ) : ?>
-						<p class="description"><?php esc_html_e( 'Odeslat jde až po zkušebním e‑mailu, po každé změně znovu.', 'pneukarnik-booking' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Odeslat a naplánovat jde až po zkušebním e‑mailu, po každé změně úvodu nebo Akcí znovu.', 'pneukarnik-booking' ); ?></p>
 					<?php endif; ?>
 				</form>
 			<?php endif; ?>
@@ -527,19 +569,57 @@ class Pneukarnik_Admin_Customer_Emails {
 	}
 
 	/**
-	 * @param array{status:string,sent_count:int,finished_at:string|null} $mailing
+	 * Výběr příjemců Rozesílky: '' = všem, jinak Kategorie => popisek a počet příjemců.
+	 *
+	 * @return array<string, array{0:string,1:int}>
+	 */
+	private static function audiences(): array {
+		$audiences = [ '' => [ __( 'Všem', 'pneukarnik-booking' ), Pneukarnik_Mailing::audience() ] ];
+		foreach ( Pneukarnik_Service::categories() as $category => $label ) {
+			$count                  = Pneukarnik_Mailing::audience( $category );
+			$audiences[ $category ] = [
+				/* translators: %s: Kategorie */
+				sprintf( __( 'Jen Zákazníkům Kategorie %s', 'pneukarnik-booking' ), $label ),
+				$count,
+			];
+		}
+		return $audiences;
+	}
+
+	/**
+	 * „Poslední Rozesílka odešla dnes / včera / před X dny (datum).“
+	 */
+	private static function last_sent_label( DateTimeImmutable $last_sent ): string {
+		$days = (int) $last_sent->setTime( 0, 0 )->diff( Pneukarnik_Clock::today() )->days;
+		$when = match ( $days ) {
+			0       => __( 'dnes', 'pneukarnik-booking' ),
+			1       => __( 'včera', 'pneukarnik-booking' ),
+			/* translators: %d: počet dní */
+			default => sprintf( __( 'před %d dny', 'pneukarnik-booking' ), $days ),
+		};
+		/* translators: 1: dnes, včera nebo před X dny, 2: datum */
+		return sprintf( __( 'Poslední Rozesílka odešla %1$s (%2$s).', 'pneukarnik-booking' ), $when, $last_sent->format( 'j. n. Y' ) );
+	}
+
+	/**
+	 * @param array{status:string,sent_count:int,scheduled_at:string|null,finished_at:string|null} $mailing
 	 */
 	private static function mailing_status( array $mailing ): string {
 		return match ( $mailing['status'] ) {
+			/* translators: %s: datum a čas */
+			Pneukarnik_Mailing::SCHEDULED => sprintf( __( 'naplánovaná na %s', 'pneukarnik-booking' ), Pneukarnik_Clock::at( (string) $mailing['scheduled_at'] )->format( 'j. n. Y H:i' ) ),
 			/* translators: %d: počet Zákazníků */
-			Pneukarnik_Mailing::SENDING => sprintf( __( 'odesílá se (zatím odesláno: %d)', 'pneukarnik-booking' ), $mailing['sent_count'] ),
-			Pneukarnik_Mailing::SENT    => sprintf(
+			Pneukarnik_Mailing::SENDING   => sprintf( __( 'odesílá se (zatím odesláno: %d)', 'pneukarnik-booking' ), $mailing['sent_count'] ),
+			Pneukarnik_Mailing::SENT      => sprintf(
 				/* translators: 1: počet Zákazníků, 2: den dokončení */
 				__( 'odeslaná: %1$d (%2$s)', 'pneukarnik-booking' ),
 				$mailing['sent_count'],
 				Pneukarnik_Clock::at( (string) $mailing['finished_at'] )->format( 'j. n. Y' )
 			),
-			default                     => __( 'rozepsaná', 'pneukarnik-booking' ),
+			/* translators: %s: den */
+			Pneukarnik_Mailing::NOT_SENT  => sprintf( __( 'neodeslaná: žádná platná Akce (%s)', 'pneukarnik-booking' ), Pneukarnik_Clock::at( (string) $mailing['finished_at'] )->format( 'j. n. Y' ) ),
+			Pneukarnik_Mailing::CANCELLED => __( 'zrušená', 'pneukarnik-booking' ),
+			default                       => __( 'rozepsaná', 'pneukarnik-booking' ),
 		};
 	}
 }

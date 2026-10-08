@@ -103,7 +103,7 @@ test('Žádost o hodnocení se zapíná a nastavuje na stránce E‑maily Zákaz
 	}
 });
 
-test('Rozesílka se složí z Akce na stránce E‑maily Zákazníkům a zkušební odejde Provozovateli', async ({ page, request }) => {
+test('Rozesílka se složí z Akce na stránce E‑maily Zákazníkům, zkušební odejde Provozovateli a jde naplánovat a zrušit', async ({ page, request }) => {
 	test.slow(); // Služba a Akce přes administraci, při souběhu všech testů trvá déle.
 	const contact = getOption('pneukarnik_email');
 	const provozovatel = `e2e-provozovatel-${Date.now()}@example.test`;
@@ -139,10 +139,23 @@ test('Rozesílka se složí z Akce na stránce E‑maily Zákazníkům a zkušeb
 		const row = page.getByRole('row', { name: new RegExp(promotion) });
 		await expect(row).toContainText('rozepsaná');
 		await row.getByRole('link').click();
+
+		const pneuservis = await page.getByLabel('Příjemci').locator('option[value="pneuservis"]').getAttribute('data-count');
+		await page.getByLabel('Příjemci').selectOption('pneuservis');
+		await expect(page.getByText(`Počet příjemců: ${pneuservis}`)).toBeVisible();
+		await page.getByLabel('Naplánovat na').fill(`${dayFromToday(1)}T10:00`);
+		await page.getByRole('button', { name: 'Naplánovat', exact: true }).click();
+		await expect(page.getByText('Rozesílka je naplánovaná.')).toBeVisible();
+		const [year, month, day] = dayFromToday(1).split('-').map(Number);
+		await expect(row).toContainText('Pneuservis');
+		await expect(row).toContainText(`naplánovaná na ${day}. ${month}. ${year} 10:00`);
+
+		await row.getByRole('link').click();
+		await expect(page.getByLabel('Naplánovat na')).toHaveValue(`${dayFromToday(1)}T10:00`);
 		page.once('dialog', (dialog) => dialog.accept());
-		await page.getByRole('button', { name: 'Smazat' }).click();
-		await expect(page.getByText('Rozepsaná Rozesílka je smazaná.')).toBeVisible();
-		await expect(page.getByRole('row', { name: new RegExp(promotion) })).toHaveCount(0);
+		await page.getByRole('button', { name: 'Zrušit Rozesílku' }).click();
+		await expect(page.getByText('Naplánovaná Rozesílka je zrušená, neodejde.')).toBeVisible();
+		await expect(row).toContainText('zrušená');
 	} finally {
 		setOptions({ pneukarnik_email: contact });
 	}
