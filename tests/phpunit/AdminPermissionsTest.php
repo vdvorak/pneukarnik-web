@@ -22,6 +22,8 @@ class AdminPermissionsTest extends Pneukarnik_REST_Test_Case {
 		'GET /pneukarnik/v1/cancellation',
 		'POST /pneukarnik/v1/cancellation',
 		'GET /pneukarnik/v1/prefill',
+		'GET /pneukarnik/v1/email-settings', // Nastavení e‑mailů, chráněné podepsaným klíčem (EmailSettingsTest).
+		'POST /pneukarnik/v1/email-settings',
 		'POST /pneukarnik/v1/unsubscribe',
 		'GET /pneukarnik/v1/calendar', // iCal, chráněný tajným tokenem (CalendarFeedTest).
 		'GET /pneukarnik/v1/confirmation/calendar', // .ics Zákazníka, chráněný tokenem Potvrzení (BookingIcsTest).

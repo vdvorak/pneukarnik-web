@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Připomínka přezutí (viz CONTEXT.md): nastavený počet dní před začátkem každé Sezóny dostane
  * každý e‑mail, který smí dostávat Nabídky a připomínky druhu Pneukarnik_Subscriptions::REMINDER,
- * jednu Připomínku s odkazem na předvyplněnou rezervaci a na odhlášení.
+ * jednu Připomínku s odkazem na předvyplněnou rezervaci a na stránku nastavení e‑mailů.
  *
  * Plánovaná úloha běží každou hodinu a posílá po dávkách. Příjemce se před odesláním označí
  * Sezónou (last_season), takže opakované nebo souběžné spuštění nic nepošle dvakrát.
@@ -89,9 +89,9 @@ final class Pneukarnik_Reminder {
 			if ( ! self::claim( $recipient['id'], $season['key'] ) ) {
 				continue; // Mezitím ji poslalo souběžné spuštění.
 			}
-			$unsubscribe = Pneukarnik_Subscriptions::unsubscribe_url( $recipient['id'] );
-			$email       = self::email( $season, $recipient['email'], $unsubscribe, $recipient['consented'] );
-			if ( ! $email->send( $recipient['email'], Pneukarnik_Contact::email(), self::unsubscribe_headers( $unsubscribe ) ) ) {
+			$settings = Pneukarnik_Subscriptions::settings_url( $recipient['email'] );
+			$email    = self::email( $season, $recipient['email'], $settings, $recipient['consented'] );
+			if ( ! $email->send( $recipient['email'], Pneukarnik_Contact::email(), self::unsubscribe_headers( $settings ) ) ) {
 				self::release( $recipient['id'], $season['key'], $recipient['last_season'] );
 			}
 		}
@@ -132,7 +132,7 @@ final class Pneukarnik_Reminder {
 			'send_from' => $today->format( 'Y-m-d' ),
 		];
 		$email  = self::email( $season, $to, home_url( '/odhlaseni/' ), false, __( '[Zkouška] ', 'pneukarnik-booking' ) )
-			->paragraph( __( 'Toto je zkušební Připomínka pro Provozovatele. Zákazníci dostanou vlastní odkaz na odhlášení, ten tady nic neodhlásí.', 'pneukarnik-booking' ) );
+			->paragraph( __( 'Toto je zkušební Připomínka pro Provozovatele. Zákazníci dostanou vlastní odkaz na nastavení e‑mailů, ten tady nic nenastaví.', 'pneukarnik-booking' ) );
 		return $email->send( $to ) ? $to : null;
 	}
 
@@ -140,7 +140,7 @@ final class Pneukarnik_Reminder {
 	 * @param array{name:string,from:string} $season
 	 * @param bool                           $consented Výslovný souhlas, jinak nárok po návštěvě.
 	 */
-	private static function email( array $season, string $to, string $unsubscribe_url, bool $consented, string $subject_prefix = '' ): Pneukarnik_Email {
+	private static function email( array $season, string $to, string $settings_url, bool $consented, string $subject_prefix = '' ): Pneukarnik_Email {
 		$name  = mb_strtolower( Pneukarnik_Season::names()[ $season['name'] ] ?? '' );
 		$from  = Pneukarnik_Clock::at( $season['from'] );
 		$phone = Pneukarnik_Contact::phone();
@@ -159,13 +159,14 @@ final class Pneukarnik_Reminder {
 				$consented
 					? __( 'Připomínku dostáváte, protože jste s ní souhlasili.', 'pneukarnik-booking' )
 					: __( 'Připomínku dostáváte, protože jste u nás byli a při online rezervaci jste e‑maily s nabídkami a připomínkami neodmítli.', 'pneukarnik-booking' ),
-				__( 'Odhlásit Připomínky přezutí', 'pneukarnik-booking' ),
-				$unsubscribe_url
+				__( 'Nastavit, co vám posíláme', 'pneukarnik-booking' ),
+				$settings_url
 			);
 	}
 
 	/**
 	 * Odhlášení přímo z pošty jedním kliknutím (RFC 8058), vyžadují ho Gmail i Seznam u hromadné pošty.
+	 * POST na stránku nastavení odvolá všechny Nabídky a připomínky (Pneukarnik_Booking_Pages).
 	 *
 	 * @return list<string>
 	 */

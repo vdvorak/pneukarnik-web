@@ -6,9 +6,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Připomínka přezutí (Pneukarnik_Reminder) a odhlášení z e‑mailů (Pneukarnik_Subscriptions).
+ * Připomínka přezutí (Pneukarnik_Reminder) a nastavení e‑mailů (Pneukarnik_Subscriptions).
  *
- * POST /unsubscribe {token}          odhlášení z Připomínky podepsaným odkazem z e‑mailu
+ * GET  /email-settings?key=…         nastavení e‑mailů podle klíče z odkazu: {email, reminder, promotions}
+ * POST /email-settings {key, reminder, promotions}  uloží nastavení, vrátí nové
+ * POST /email-settings {key, nothing: true}         „Neposílat nic“
+ * POST /unsubscribe {token}          odkaz z Připomínky odeslané před stránkou nastavení, odvolá ji
  * POST /unsubscribe {email}          starý odkaz /cancel-subscription?email=…, jen starý odběr
  * GET  /admin/reminder               náhled: nejbližší Sezóna, od kdy se posílá, počet příjemců
  * POST /admin/reminder/test          zkušební Připomínka, jen na e‑mail Provozovatele z Nastavení
@@ -20,6 +23,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Pneukarnik_Rest_Reminder {
 
 	public function register_routes(): void {
+		register_rest_route(
+			PNEUKARNIK_REST_NAMESPACE,
+			'/email-settings',
+			[
+				[
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'email_settings' ],
+					'permission_callback' => '__return_true',
+				],
+				[
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'save_email_settings' ],
+					'permission_callback' => '__return_true',
+				],
+			]
+		);
 		register_rest_route(
 			PNEUKARNIK_REST_NAMESPACE,
 			'/unsubscribe',
@@ -49,6 +68,23 @@ class Pneukarnik_Rest_Reminder {
 		);
 	}
 
+	public function email_settings( WP_REST_Request $request ): WP_REST_Response {
+		return self::settings_response( $request->get_param( 'key' ) );
+	}
+
+	public function save_email_settings( WP_REST_Request $request ): WP_REST_Response {
+		/** @var mixed $body Tělo může být i jiná JSON hodnota než objekt. */
+		$body = $request->get_json_params();
+		$body = is_array( $body ) ? $body : [];
+		$key  = $body['key'] ?? null;
+		if ( true === ( $body['nothing'] ?? null ) ) {
+			Pneukarnik_Subscriptions::withdraw_everything( $key, 'nastaveni' );
+		} else {
+			Pneukarnik_Subscriptions::save_settings( $key, true === ( $body['reminder'] ?? null ), true === ( $body['promotions'] ?? null ) );
+		}
+		return self::settings_response( $key );
+	}
+
 	public function unsubscribe( WP_REST_Request $request ): WP_REST_Response {
 		/** @var mixed $body Tělo může být i jiná JSON hodnota než objekt. */
 		$body = $request->get_json_params();
@@ -74,6 +110,15 @@ class Pneukarnik_Rest_Reminder {
 			return self::refusal( Pneukarnik_Reminder::SEND_FAILED, 500 );
 		}
 		return self::no_store( new WP_REST_Response( [ 'sent_to' => $sent_to ], 200 ) );
+	}
+
+	private static function settings_response( mixed $key ): WP_REST_Response {
+		$settings = Pneukarnik_Subscriptions::settings( $key );
+		if ( null === $settings ) {
+			return self::refusal( Pneukarnik_Subscriptions::INVALID_TOKEN, 404 );
+		}
+		unset( $settings['url'] );
+		return self::no_store( new WP_REST_Response( $settings, 200 ) );
 	}
 
 	private static function refusal( string $code, int $status ): WP_REST_Response {

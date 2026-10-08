@@ -58,7 +58,8 @@ function pneukarnik_seo_head(): void {
 
 /**
  * Matomo bez cookies (disableCookies), web proto nepotřebuje cookie lištu. Jen když ho Provozovatel
- * nastavil. Tajné tokeny z adres (potvrzení, Zrušení, Objednat znovu) do Matoma neodejdou.
+ * nastavil. Tajné tokeny z adres (potvrzení, Zrušení, Objednat znovu, nastavení e‑mailů) ani e‑mail
+ * ze starého odkazu na odhlášení do Matoma neodejdou.
  */
 function pneukarnik_matomo(): void {
 	$matomo = class_exists( 'Pneukarnik_Seo' ) ? Pneukarnik_Seo::matomo() : null;
@@ -78,7 +79,7 @@ function pneukarnik_matomo(): void {
 			function withoutTokens(href) {
 				try {
 					var url = new URL(href);
-					['r', 'znovu'].forEach(function (name) {
+					['r', 'znovu', 'k', 't', 'email'].forEach(function (name) {
 						url.searchParams.delete(name);
 					});
 					return url.href;

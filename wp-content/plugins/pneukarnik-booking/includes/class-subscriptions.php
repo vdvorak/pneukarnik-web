@@ -16,18 +16,24 @@ if ( ! defined( 'ABSPATH' ) ) {
  *   claimed_at    nárok z online Rezervace, ve které Zákazník Nabídky a připomínky neodmítl (soft opt‑in).
  *                 Platí až po návštěvě: Termín nezrušené Rezervace s tímto e‑mailem proběhl, nebo visited_at.
  *   consented_at  výslovný souhlas (consent_source), platí hned.
- *   withdrawn_at  odmítnutí ve formuláři nebo odvolání (withdrawn_source: rezervace, odkaz, stary-odkaz).
+ *   withdrawn_at  odmítnutí ve formuláři nebo odvolání (withdrawn_source: rezervace, nastaveni, jedno-kliknuti,
+ *                 odkaz, stary-odkaz).
  *                 Má přednost, dokud ho nezmění nový výslovný souhlas nebo další online Rezervace
  *                 s nezaškrtnutým „Neposílat“ (ta založí nový nárok místo dřívějšího souhlasu).
  *   visited_at    Termín proběhlé Rezervace zapamatovaný při její anonymizaci, aby nárok přežil.
  * Rezervace zadaná Provozovatelem nárok nezakládá, za návštěvu se ale počítá.
  * Výmaz osobních údajů smaže všechny řádky e‑mailu.
  *
- * Odhlašovací odkaz /odhlaseni/?t={id}.{podpis} nese id řádku podepsané HMAC-SHA256 tajným klíčem
- * webu spolu s časem souhlasu (nebo nároku), e‑mail v něm není. Po odvolání a novém souhlasu nebo
- * nároku staré odkazy přestanou platit. Starý odkaz /cancel-subscription?email=… odhlašuje jen LEGACY
- * a zapamatuje si i e‑mail, který zatím nezná, aby ho převod starých souhlasů (#21) znovu
- * nepřihlásil: převod proto existující záznam nikdy nepřepisuje.
+ * Stránka nastavení e‑mailů /odhlaseni/?k={id}.{podpis}: klíč nese id některého řádku e‑mailu
+ * podepsané HMAC-SHA256 tajným klíčem webu spolu s e‑mailem, e‑mail v odkazu není. Platí, dokud
+ * výmaz osobních údajů řádky e‑mailu nesmaže. Zvlášť jde vypnout a zapnout Připomínku přezutí
+ * a Akce (i LEGACY), „Neposílat nic“ odvolá všechny druhy. Zapnutí je výslovný souhlas (nastaveni).
+ *
+ * Odkazy odeslané dřív fungují dál se stejným účinkem: /odhlaseni/?t={id}.{podpis} z Připomínek
+ * před stránkou nastavení odvolá Připomínku přezutí řádku id (podpis s časem souhlasu nebo nároku,
+ * po odvolání a novém souhlasu nebo nároku přestane platit). Starý odkaz /cancel-subscription?email=…
+ * odhlašuje jen LEGACY a zapamatuje si i e‑mail, který zatím nezná, aby ho převod starých souhlasů
+ * (#21) znovu nepřihlásil: převod proto existující záznam nikdy nepřepisuje.
  */
 final class Pneukarnik_Subscriptions {
 
@@ -95,27 +101,7 @@ final class Pneukarnik_Subscriptions {
 	 * Odmítne všechny druhy Nabídek a připomínek. Dřívější odmítnutí zůstane, jak bylo.
 	 */
 	public static function refuse( string $email, string $source ): void {
-		$email = self::normalize( $email );
-		if ( ! is_email( $email ) ) {
-			return;
-		}
-		global $wpdb;
-		$now = Pneukarnik_Clock::now()->format( 'Y-m-d H:i:s' );
-		foreach ( self::KINDS as $purpose ) {
-			$wpdb->query(
-				$wpdb->prepare(
-					'INSERT INTO %i (email, purpose, withdrawn_at, withdrawn_source) VALUES (%s, %s, %s, %s)
-					 ON DUPLICATE KEY UPDATE
-					   withdrawn_source = IF(withdrawn_at IS NULL, VALUES(withdrawn_source), withdrawn_source),
-					   withdrawn_at = COALESCE(withdrawn_at, VALUES(withdrawn_at))',
-					Pneukarnik_DB::subscriptions_table(),
-					$email,
-					$purpose,
-					$now,
-					$source
-				)
-			);
-		}
+		self::withdraw( $email, self::KINDS, $source );
 	}
 
 	/**
@@ -210,7 +196,8 @@ final class Pneukarnik_Subscriptions {
 	}
 
 	/**
-	 * Odhlášení odkazem z Připomínky. Opakované odhlášení je taky v pořádku.
+	 * Odhlášení odkazem z Připomínky odeslané před stránkou nastavení. Opakované odhlášení
+	 * je taky v pořádku.
 	 *
 	 * @return string DONE nebo INVALID_TOKEN
 	 */
@@ -237,24 +224,82 @@ final class Pneukarnik_Subscriptions {
 	 * proto jen ze starého odběru. Neznámý e‑mail dopadne stejně, odpověď neprozradí, kdo odebírá.
 	 */
 	public static function withdraw_legacy( mixed $email ): string {
-		$email = is_string( $email ) ? self::normalize( $email ) : '';
-		if ( is_email( $email ) ) {
-			global $wpdb;
-			$wpdb->query(
-				$wpdb->prepare(
-					'INSERT INTO %i (email, purpose, withdrawn_source, withdrawn_at) VALUES (%s, %s, %s, %s)
-					 ON DUPLICATE KEY UPDATE
-					   withdrawn_source = IF(withdrawn_at IS NULL, VALUES(withdrawn_source), withdrawn_source),
-					   withdrawn_at = COALESCE(withdrawn_at, VALUES(withdrawn_at))',
-					Pneukarnik_DB::subscriptions_table(),
-					$email,
-					self::LEGACY,
-					'stary-odkaz',
-					Pneukarnik_Clock::now()->format( 'Y-m-d H:i:s' )
-				)
-			);
+		self::withdraw( is_string( $email ) ? $email : '', [ self::LEGACY ], 'stary-odkaz' );
+		return self::DONE;
+	}
+
+	/**
+	 * Stránka nastavení e‑mailů podle klíče z odkazu: e‑mail, co mu smí chodit (u nároku bez ohledu
+	 * na návštěvu, Akce i ze starého souhlasu) a adresa stránky. Null = neplatný klíč.
+	 *
+	 * @return array{email:string,reminder:bool,promotions:bool,url:string}|null
+	 */
+	public static function settings( mixed $key ): ?array {
+		$email = self::email_from_key( $key );
+		if ( null === $email ) {
+			return null;
+		}
+		return [
+			'email'      => $email,
+			'reminder'   => self::is_active( $email, self::REMINDER ),
+			'promotions' => self::is_active( $email, self::PROMOTIONS ) || self::is_active( $email, self::LEGACY ),
+			'url'        => self::settings_url_for_key( (string) $key ),
+		];
+	}
+
+	/**
+	 * Uloží nastavení ze stránky: vypnutý druh odvolá (Akce i se starým souhlasem), zapnutý,
+	 * který neplatí, dostane výslovný souhlas. Platný souhlas nebo nárok zůstane, jak byl.
+	 * Žádost o hodnocení nemění.
+	 *
+	 * @return string DONE nebo INVALID_TOKEN
+	 */
+	public static function save_settings( mixed $key, bool $reminder, bool $promotions ): string {
+		$settings = self::settings( $key );
+		if ( null === $settings ) {
+			return self::INVALID_TOKEN;
+		}
+		$email = $settings['email'];
+		if ( ! $reminder ) {
+			self::withdraw( $email, [ self::REMINDER ], 'nastaveni' );
+		} elseif ( ! $settings['reminder'] ) {
+			self::consent( $email, self::REMINDER, 'nastaveni' );
+		}
+		if ( ! $promotions ) {
+			self::withdraw( $email, [ self::PROMOTIONS, self::LEGACY ], 'nastaveni' );
+		} elseif ( ! $settings['promotions'] ) {
+			self::consent( $email, self::PROMOTIONS, 'nastaveni' );
 		}
 		return self::DONE;
+	}
+
+	/**
+	 * „Neposílat nic“ ze stránky nastavení nebo odhlášení jedním kliknutím z pošty (List-Unsubscribe):
+	 * odvolá všechny druhy včetně Žádosti o hodnocení a starého souhlasu.
+	 *
+	 * @return string DONE nebo INVALID_TOKEN
+	 */
+	public static function withdraw_everything( mixed $key, string $source ): string {
+		$email = self::email_from_key( $key );
+		if ( null === $email ) {
+			return self::INVALID_TOKEN;
+		}
+		self::withdraw( $email, [ ...self::KINDS, self::LEGACY ], $source );
+		return self::DONE;
+	}
+
+	/**
+	 * Klíč stránky nastavení pro e‑mail odkazu z Připomínky odeslané před stránkou nastavení,
+	 * null = neplatný odkaz.
+	 */
+	public static function settings_key_by_token( mixed $token ): ?string {
+		$id = self::id_from_token( $token );
+		if ( null === $id ) {
+			return null;
+		}
+		global $wpdb;
+		$email = $wpdb->get_var( $wpdb->prepare( 'SELECT email FROM %i WHERE id = %d', Pneukarnik_DB::subscriptions_table(), $id ) );
+		return null === $email ? null : self::key( $id, (string) $email );
 	}
 
 	/**
@@ -267,15 +312,67 @@ final class Pneukarnik_Subscriptions {
 	}
 
 	/**
-	 * Odhlašovací odkaz pro řádek se souhlasem nebo nárokem, jinak prázdný.
+	 * Odkaz na stránku nastavení e‑mailů do Nabídek a připomínek (i do hlavičky List-Unsubscribe),
+	 * prázdný pro e‑mail bez záznamu.
 	 */
-	public static function unsubscribe_url( int $id ): string {
-		$since = self::since( $id );
-		return null === $since ? '' : add_query_arg( 't', self::token( $id, $since ), home_url( '/odhlaseni/' ) );
+	public static function settings_url( string $email ): string {
+		global $wpdb;
+		$email = self::normalize( $email );
+		$id    = $wpdb->get_var( $wpdb->prepare( 'SELECT MIN(id) FROM %i WHERE email = %s', Pneukarnik_DB::subscriptions_table(), $email ) );
+		return null === $id ? '' : self::settings_url_for_key( self::key( (int) $id, $email ) );
 	}
 
 	public static function normalize( string $email ): string {
 		return strtolower( trim( $email ) );
+	}
+
+	/**
+	 * Odvolá druhy e‑mailu, i ty, ke kterým zatím nemá záznam. Dřívější odvolání zůstane, jak bylo.
+	 *
+	 * @param list<string> $purposes
+	 */
+	private static function withdraw( string $email, array $purposes, string $source ): void {
+		$email = self::normalize( $email );
+		if ( ! is_email( $email ) ) {
+			return;
+		}
+		global $wpdb;
+		$now = Pneukarnik_Clock::now()->format( 'Y-m-d H:i:s' );
+		foreach ( $purposes as $purpose ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'INSERT INTO %i (email, purpose, withdrawn_at, withdrawn_source) VALUES (%s, %s, %s, %s)
+					 ON DUPLICATE KEY UPDATE
+					   withdrawn_source = IF(withdrawn_at IS NULL, VALUES(withdrawn_source), withdrawn_source),
+					   withdrawn_at = COALESCE(withdrawn_at, VALUES(withdrawn_at))',
+					Pneukarnik_DB::subscriptions_table(),
+					$email,
+					$purpose,
+					$now,
+					$source
+				)
+			);
+		}
+	}
+
+	private static function settings_url_for_key( string $key ): string {
+		return add_query_arg( 'k', $key, home_url( '/odhlaseni/' ) );
+	}
+
+	private static function key( int $id, string $email ): string {
+		return $id . '.' . hash_hmac( 'sha256', 'settings|' . $id . '|' . $email, wp_salt( 'pneukarnik' ) );
+	}
+
+	/**
+	 * E‑mail podle klíče stránky nastavení, null = neplatný nebo pozměněný klíč.
+	 */
+	private static function email_from_key( mixed $key ): ?string {
+		if ( ! is_string( $key ) || ! preg_match( '/^([1-9][0-9]*)\.[0-9a-f]{64}$/', $key, $m ) ) {
+			return null;
+		}
+		global $wpdb;
+		$email = $wpdb->get_var( $wpdb->prepare( 'SELECT email FROM %i WHERE id = %d', Pneukarnik_DB::subscriptions_table(), (int) $m[1] ) );
+		return null !== $email && hash_equals( self::key( (int) $m[1], (string) $email ), $key ) ? (string) $email : null;
 	}
 
 	private static function token( int $id, string $since ): string {

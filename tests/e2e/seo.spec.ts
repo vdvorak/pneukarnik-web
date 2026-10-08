@@ -115,20 +115,20 @@ test('Web nenastavuje cookies a Matomo měří bez nich a bez tajných tokenů z
 			return page.evaluate(() => (window as unknown as { __matomoQueue: unknown[][] }).__matomoQueue);
 		};
 
-		for (const path of ['/', serviceUrl, '/rezervace/?znovu=1.abcdef']) {
+		for (const path of ['/', serviceUrl, '/rezervace/?znovu=1.abcdef', '/odhlaseni/?k=1.abcdef']) {
 			await page.goto(path);
 			const commands = await queue();
 
 			expect(commands[0]).toEqual(['disableCookies']);
 			expect(commands).toContainEqual(['setSiteId', '7']);
 			expect(commands).toContainEqual(['setTrackerUrl', 'https://matomo.invalid/matomo.php']);
-			expect(commands).toContainEqual(['setCustomUrl', new URL(path.replace(/\?znovu=.*$/, ''), page.url()).href]);
-			expect(JSON.stringify(commands)).not.toContain('znovu');
+			expect(commands).toContainEqual(['setCustomUrl', new URL(path.replace(/\?.*$/, ''), page.url()).href]);
+			expect(JSON.stringify(commands)).not.toContain('abcdef');
 			await page.waitForLoadState('load');
 			expect(await context.cookies()).toEqual([]);
 			expect(await page.evaluate(() => document.cookie)).toBe('');
 		}
-		expect(matomo).toEqual(Array(3).fill('https://matomo.invalid/matomo.js'));
+		expect(matomo).toEqual(Array(4).fill('https://matomo.invalid/matomo.js'));
 		await context.close();
 	} finally {
 		setOptions(original);

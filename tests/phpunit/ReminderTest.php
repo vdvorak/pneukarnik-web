@@ -1,8 +1,9 @@
 <?php
 /**
  * Připomínka přezutí: příjemci podle Nabídek a připomínek (podrobně OffersTest), nejvýš jedna
- * Připomínka na e‑mail a Sezónu, odhlášení podepsaným odkazem i starým /cancel-subscription?email=…,
- * náhled a zkušební odeslání Provozovateli.
+ * Připomínka na e‑mail a Sezónu, odkaz na nastavení e‑mailů (podrobně EmailSettingsTest), odhlášení
+ * odkazy odeslanými dřív (podepsaným z Připomínky i starým /cancel-subscription?email=…), náhled
+ * a zkušební odeslání Provozovateli.
  */
 
 declare(strict_types=1);
@@ -106,7 +107,7 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 		$this->assertSame( [], $this->mails );
 	}
 
-	public function test_reminder_has_prefilled_booking_and_unsubscribe_link(): void {
+	public function test_reminder_has_prefilled_booking_and_email_settings_link(): void {
 		$this->book_online( 'jan@example.test' );
 
 		$this->run_reminders_at( self::BEFORE_SPRING );
@@ -116,8 +117,8 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 		$this->assertStringContainsString( '15. 3. 2027', $mail['text'] );
 		$this->assertSame( 'jan@example.test', $this->prefill( $this->prefill_token_from( $mail ) )->get_data()['email'] );
 		$this->assertMatchesRegularExpression( '~/rezervace/\?znovu=[^"]+&(#038;)?zdroj=pripominka-prezuti"~', $mail['html'], 'Zdroj příchodu pro Matomo' );
-		$unsubscribe = $this->unsubscribe_url_from( $mail );
-		$this->assertContains( [ 'List-Unsubscribe', '<' . $unsubscribe . '>' ], $mail['headers'] );
+		$this->assertMatchesRegularExpression( '~"http[^"]*/odhlaseni/\?k=[0-9]+\.[0-9a-f]{64}"~', $mail['html'], 'Odkaz na nastavení e‑mailů' );
+		$this->assertContains( [ 'List-Unsubscribe', '<' . Pneukarnik_Subscriptions::settings_url( 'jan@example.test' ) . '>' ], $mail['headers'] );
 		$this->assertContains( [ 'List-Unsubscribe-Post', 'List-Unsubscribe=One-Click' ], $mail['headers'] );
 	}
 
@@ -200,10 +201,10 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 		$this->assertSame( 404, $this->prefill( $token )->get_status() );
 	}
 
-	public function test_unsubscribe_link_withdraws_consent_right_away(): void {
+	public function test_old_unsubscribe_link_withdraws_consent_right_away(): void {
 		$this->book_online( 'jan@example.test' );
 		$this->run_reminders_at( self::BEFORE_SPRING );
-		$token = $this->unsubscribe_token_from( $this->mail_to( 'jan@example.test' ) );
+		$token = $this->old_unsubscribe_token( 'jan@example.test' );
 
 		$response = $this->rest( 'POST', '/unsubscribe', [ 'token' => $token ] );
 
@@ -217,15 +218,18 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 		$this->assertSame( 'unsubscribe.done', $again->get_data()['code'] );
 	}
 
-	public function test_unsubscribe_page_withdraws_consent_on_opening(): void {
+	public function test_old_unsubscribe_link_withdraws_consent_on_opening_and_shows_settings(): void {
 		$this->book_online( 'jan@example.test' );
 		$this->run_reminders_at( self::BEFORE_SPRING );
 
-		$this->go_to( $this->unsubscribe_url_from( $this->mail_to( 'jan@example.test' ) ) );
+		$this->go_to( home_url( '/odhlaseni/?t=' . $this->old_unsubscribe_token( 'jan@example.test' ) ) );
 
 		$this->assertSame( 'odhlaseni', Pneukarnik_Booking_Pages::current() );
-		$this->assertSame( 'unsubscribe.done', Pneukarnik_Booking_Pages::unsubscription()['code'] );
-		$this->assertFalse( Pneukarnik_Booking_Pages::unsubscription()['legacy'] );
+		$page = Pneukarnik_Booking_Pages::email_settings();
+		$this->assertSame( [ 'settings', 'reminder_off' ], [ $page['state'], $page['notice'] ] );
+		$this->assertSame( Pneukarnik_Subscriptions::settings_url( 'jan@example.test' ), $page['settings']['url'] );
+		$this->assertFalse( $page['settings']['reminder'] );
+		$this->assertTrue( $page['settings']['promotions'], 'Starý odkaz odhlašuje jen Připomínku přezutí' );
 		$this->run_reminders_at( '2027-10-05 10:00' );
 		$this->assertCount( 1, $this->mails );
 	}
@@ -257,7 +261,7 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 		$this->book_online( 'jan@example.test', '09:00' );
 		$this->book_online( 'eva@example.test', '11:00' );
 		$this->run_reminders_at( self::BEFORE_SPRING );
-		[ $id, $signature ] = explode( '.', $this->unsubscribe_token_from( $this->mail_to( 'jan@example.test' ) ) );
+		[ $id, $signature ] = explode( '.', $this->old_unsubscribe_token( 'jan@example.test' ) );
 
 		$response = $this->rest( 'POST', '/unsubscribe', [ 'token' => ( (int) $id + 1 ) . '.' . $signature ] );
 
@@ -270,7 +274,7 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	public function test_booking_after_unsubscribing_subscribes_again(): void {
 		$this->book_online( 'jan@example.test' );
 		$this->run_reminders_at( self::BEFORE_SPRING );
-		$this->rest( 'POST', '/unsubscribe', [ 'token' => $this->unsubscribe_token_from( $this->mail_to( 'jan@example.test' ) ) ] );
+		$this->rest( 'POST', '/unsubscribe', [ 'token' => $this->old_unsubscribe_token( 'jan@example.test' ) ] );
 
 		Pneukarnik_Clock::freeze( '2027-06-01 12:00' );
 		$this->book_online( 'jan@example.test', '09:00', '2027-06-10' );
@@ -283,7 +287,7 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	public function test_link_from_before_unsubscribing_and_booking_again_no_longer_works(): void {
 		$this->book_online( 'jan@example.test' );
 		$this->run_reminders_at( self::BEFORE_SPRING );
-		$old = $this->unsubscribe_token_from( $this->mail_to( 'jan@example.test' ) );
+		$old = $this->old_unsubscribe_token( 'jan@example.test' );
 		$this->rest( 'POST', '/unsubscribe', [ 'token' => $old ] );
 		Pneukarnik_Clock::freeze( '2027-06-01 12:00' );
 		$this->book_online( 'jan@example.test', '09:00', '2027-06-10' );
@@ -299,7 +303,7 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	public function test_link_from_before_unsubscribing_and_consenting_again_no_longer_works(): void {
 		$this->book_online( 'jan@example.test' );
 		$this->run_reminders_at( self::BEFORE_SPRING );
-		$old = $this->unsubscribe_token_from( $this->mail_to( 'jan@example.test' ) );
+		$old = $this->old_unsubscribe_token( 'jan@example.test' );
 		$this->rest( 'POST', '/unsubscribe', [ 'token' => $old ] );
 		Pneukarnik_Clock::freeze( '2027-06-01 12:00' );
 		Pneukarnik_Subscriptions::consent( 'jan@example.test', Pneukarnik_Subscriptions::REMINDER, 'test' );
@@ -315,7 +319,7 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	public function test_another_booking_keeps_the_unsubscribe_link_working(): void {
 		$this->book_online( 'jan@example.test', '09:00' );
 		$this->run_reminders_at( self::BEFORE_SPRING );
-		$token = $this->unsubscribe_token_from( $this->mail_to( 'jan@example.test' ) );
+		$token = $this->old_unsubscribe_token( 'jan@example.test' );
 		Pneukarnik_Clock::freeze( '2027-03-06 12:00' );
 		$this->book_online( 'jan@example.test', '09:00', '2027-03-10' );
 
@@ -332,13 +336,7 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 		$this->go_to( home_url( '/odhlaseni/?email=Stary%40example.test' ) );
 
 		$this->assertSame( 'odhlaseni', Pneukarnik_Booking_Pages::current() );
-		$this->assertSame(
-			[
-				'code'   => 'unsubscribe.done',
-				'legacy' => true,
-			],
-			Pneukarnik_Booking_Pages::unsubscription()
-		);
+		$this->assertSame( 'legacy', Pneukarnik_Booking_Pages::email_settings()['state'] );
 		$this->assertFalse( Pneukarnik_Subscriptions::is_active( 'stary@example.test', Pneukarnik_Subscriptions::LEGACY ) );
 	}
 
@@ -526,18 +524,12 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 	}
 
 	/**
-	 * @param array{html:string} $mail
+	 * Token odkazu /odhlaseni/?t=…, jaký Připomínky posílaly před stránkou nastavení e‑mailů:
+	 * id řádku Připomínky přezutí podepsané s časem souhlasu, jinak nároku.
 	 */
-	private function unsubscribe_url_from( array $mail ): string {
-		$this->assertSame( 1, preg_match( '~"(http[^"]*/odhlaseni/\?t=[0-9]+\.[0-9a-f]{64})"~', $mail['html'], $m ), 'Odkaz na odhlášení v e‑mailu' );
-		return html_entity_decode( $m[1] );
-	}
-
-	/**
-	 * @param array{html:string} $mail
-	 */
-	private function unsubscribe_token_from( array $mail ): string {
-		parse_str( (string) wp_parse_url( $this->unsubscribe_url_from( $mail ), PHP_URL_QUERY ), $query );
-		return (string) $query['t'];
+	private function old_unsubscribe_token( string $email ): string {
+		global $wpdb;
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT id, COALESCE(consented_at, claimed_at) AS since FROM %i WHERE email = %s AND purpose = %s', Pneukarnik_DB::subscriptions_table(), $email, Pneukarnik_Subscriptions::REMINDER ), ARRAY_A );
+		return $row['id'] . '.' . hash_hmac( 'sha256', 'unsubscribe|' . $row['id'] . '|' . $row['since'], wp_salt( 'pneukarnik' ) );
 	}
 }
