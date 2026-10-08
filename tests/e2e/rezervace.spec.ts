@@ -416,7 +416,7 @@ async function reorderLink(request: APIRequestContext, data: Record<string, unkn
 	const mail = await waitForMail(request, email, /^Potvrzení rezervace/);
 	const link = mail.html.match(/href="([^"]*\/rezervace\/\?znovu=[^"]+)"/)?.[1] ?? '';
 	expect(link).not.toBe('');
-	return link.replaceAll('&amp;', '&');
+	return link.replaceAll('&#038;', '&').replaceAll('&amp;', '&');
 }
 
 test('Odkaz „Objednat znovu“ z e‑mailu předvyplní kontaktní údaje, Služby a uskladněná kola', async ({ page, request }) => {
@@ -443,7 +443,47 @@ test('Odkaz „Objednat znovu“ z e‑mailu předvyplní kontaktní údaje, Slu
 	await expect(page.locator('[data-souhrn-delka]').first()).toHaveText('90 min');
 	await expect(page.locator('[data-souhrn-termin]').first()).toHaveText('—');
 	await expect(page.locator('#kalendar-dny [aria-pressed="true"]')).toHaveCount(0);
-	expect(page.url()).not.toContain('znovu');
+	expect(new URL(page.url()).searchParams.has('znovu')).toBe(false);
+});
+
+test('S Matomem odejdou kroky rezervace jako události se zdrojem příchodu, bez tokenů a osobních údajů', async ({ page, request }) => {
+	const date = upcomingWeekday(16);
+	const link = await reorderLink(request, { service_ids: [serviceId, extraId], date, time: '10:00', name: 'E2E Měřený zákazník' });
+	const token = new URL(link).searchParams.get('znovu') ?? '';
+	expect(new URL(link).searchParams.get('zdroj')).toBe('objednat-znovu');
+	const events: unknown[][] = [];
+	await page.exposeFunction('__matomo', (command: unknown[]) => events.push(command));
+	// Fronta Matoma, který události přijme, ale nikdy nepotvrdí (jako zablokovaný skript): formulář na něj nesmí čekat.
+	await page.addInitScript(() => {
+		const matomo = window as unknown as { _paq: unknown; __matomo: (command: unknown[]) => void };
+		matomo._paq = { push: (command: unknown[]) => matomo.__matomo(command.slice(0, 4)) };
+	});
+
+	await page.goto(link);
+	await expect(page.getByLabel('Služba', { exact: true })).toHaveValue(String(serviceId));
+	await pickDay(page, date);
+	await pickTime(page, '8:00–9:30');
+	await page.getByRole('button', { name: 'Rezervovat' }).click();
+	await expect(page.getByText('Bez souhlasu nemůžeme rezervaci přijmout.')).toBeVisible();
+	await page.getByLabel(/Souhlasím se zpracováním/).check();
+	await page.getByRole('button', { name: 'Rezervovat' }).click();
+	await expect(page).toHaveURL(/\/rezervace\/potvrzeni\//);
+
+	const event = (action: string, name = 'Objednat znovu') => ['trackEvent', 'Rezervace', action, name];
+	expect(events).toEqual([
+		event('Otevřel formulář'),
+		event('Vybral službu'),
+		event('Služba', serviceTitle),
+		event('Služba', extraTitle),
+		event('Vybral den'),
+		event('Vybral termín'),
+		event('booking.invalid_fields'),
+		event('Odeslal rezervaci'),
+	]);
+	// Názvy Služeb ano, údaje Zákazníka ne.
+	for (const secret of [token, 'Měřený', 'example.test', '603', '1AB']) {
+		expect(JSON.stringify(events)).not.toContain(secret);
+	}
 });
 
 test('Služba, kterou už nejde objednat online, se z „Objednat znovu“ nepředvyplní', async ({ page, request }) => {
@@ -484,7 +524,7 @@ test('Odkaz z Připomínky přezutí předvyplní kontaktní údaje, sezónní S
 		await expect(page.getByLabel('Kola mám uskladněná u vás')).toBeChecked();
 		await expect(page.getByLabel('Jméno nebo firma')).toHaveValue('E2E Sezónní zákazník');
 		await expect(page.locator('[data-souhrn-termin]').first()).toHaveText('—');
-		expect(page.url()).not.toContain('znovu');
+		expect(new URL(page.url()).searchParams.has('znovu')).toBe(false);
 	} finally {
 		deletePosts([seasonal]);
 	}

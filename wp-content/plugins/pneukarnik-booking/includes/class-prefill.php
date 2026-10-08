@@ -13,6 +13,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  * rezervovat online, a uskladněná kola. Odkaz z Připomínky přezutí vydá kontaktní údaje a ze
  * sezónní Rezervace téhož e‑mailu její sezónní Služby a uskladněná kola. Nikdy poznámku, Termín
  * ani nic dalšího z jiných Rezervací. Po anonymizaci Rezervace odkaz přestane fungovat.
+ *
+ * Odkazy nesou i nepodepsaný parametr zdroj (objednat-znovu, pripominka-prezuti), podle kterého
+ * rezervace.js měří v Matomu, odkud Zákazník přišel. Token do Matoma neodejde, zdroj ano.
  */
 final class Pneukarnik_Prefill {
 
@@ -21,11 +24,14 @@ final class Pneukarnik_Prefill {
 	private const SCOPE_BOOKING = 'prefill';
 	private const SCOPE_CONTACT = 'prefill-contact';
 
+	private const SOURCE_BOOKING  = 'objednat-znovu';
+	private const SOURCE_REMINDER = 'pripominka-prezuti';
+
 	/**
 	 * „Objednat znovu“: kontaktní údaje, Služby a uskladněná kola dané Rezervace.
 	 */
 	public static function url( int $booking_id ): string {
-		return self::url_with( self::token( self::SCOPE_BOOKING, $booking_id ) );
+		return self::url_with( self::token( self::SCOPE_BOOKING, $booking_id ), self::SOURCE_BOOKING );
 	}
 
 	/**
@@ -42,7 +48,7 @@ final class Pneukarnik_Prefill {
 				strtolower( trim( $email ) )
 			)
 		);
-		return $id > 0 ? self::url_with( self::token( self::SCOPE_CONTACT, $id ) ) : home_url( '/rezervace/' );
+		return $id > 0 ? self::url_with( self::token( self::SCOPE_CONTACT, $id ), self::SOURCE_REMINDER ) : add_query_arg( 'zdroj', self::SOURCE_REMINDER, home_url( '/rezervace/' ) );
 	}
 
 	/**
@@ -131,8 +137,14 @@ final class Pneukarnik_Prefill {
 		return null;
 	}
 
-	private static function url_with( string $token ): string {
-		return add_query_arg( 'znovu', $token, home_url( '/rezervace/' ) );
+	private static function url_with( string $token, string $source ): string {
+		return add_query_arg(
+			[
+				'znovu' => $token,
+				'zdroj' => $source,
+			],
+			home_url( '/rezervace/' )
+		);
 	}
 
 	private static function token( string $scope, int $booking_id ): string {

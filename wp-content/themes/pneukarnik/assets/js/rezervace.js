@@ -84,6 +84,50 @@ function storeContact(contact) {
 	}
 }
 
+/**
+ * Odkud Zákazník na rezervaci přišel: nepodepsaný parametr `zdroj` odkazů z e‑mailů, jinak přímo.
+ * @type {Record<string, string>}
+ */
+const SOURCES = { 'objednat-znovu': 'Objednat znovu', 'pripominka-prezuti': 'Připomínka přezutí', rozesilka: 'Rozesílka' };
+
+/** Jak dlouho nejvýš čekat na Matomo, než odchod na potvrzení uřízne poslední událost. */
+const TRACK_TIMEOUT = 500;
+
+/**
+ * Kroky rezervace jako události Matoma (kategorie Rezervace, název = zdroj příchodu). Jen když web
+ * Matomo nastavil (fronta `_paq` z inc/seo.php), jinak nic. Bez tokenů a osobních údajů: akce je
+ * krok, nebo u neúspěšného odeslání kód chyby. Vybrané Služby jdou zvlášť jako akce „Služba“
+ * s názvem Služby místo zdroje.
+ *
+ * @param {string} source
+ */
+function tracker(source) {
+	/**
+	 * @param {string} action
+	 * @param {{ name?: string, done?: () => void }} [options] name místo zdroje; done se zavolá po odeslání události (bez Matoma hned).
+	 */
+	return (action, { name = source, done } = {}) => {
+		const paq = /** @type {{ _paq?: { push: (command: unknown[]) => void } }} */ (/** @type {unknown} */ (window))._paq;
+		if (!paq) {
+			done?.();
+			return;
+		}
+		if (!done) {
+			paq.push(['trackEvent', 'Rezervace', action, name]);
+			return;
+		}
+		let finished = false;
+		const finish = () => {
+			if (finished) return;
+			finished = true;
+			done();
+		};
+		// Zablokovaný skript Matoma callback nezavolá, formulář proto dlouho nečeká.
+		paq.push(['trackEvent', 'Rezervace', action, name, undefined, undefined, finish]);
+		window.setTimeout(finish, TRACK_TIMEOUT);
+	};
+}
+
 /** @param {string} hhmm */
 const humanTime = (hhmm) => hhmm.replace(/^0/, '');
 
@@ -190,12 +234,25 @@ function init() {
 	const askStoredWheels = new Set(config.services.filter((service) => service.ask_stored_wheels).map((service) => String(service.id)));
 	const servicesById = new Map(config.services.map((service) => [String(service.id), service]));
 	const maxServices = Math.min(config.max_services, config.services.length);
+	const track = tracker(SOURCES[new URL(window.location.href).searchParams.get('zdroj') ?? ''] ?? 'Přímo');
 	let request = 0;
 	let daysRequest = 0;
 	let rows = 1;
 	let month = config.min_date.slice(0, 7);
 	/** @type {Set<string>} */
 	let availableDays = new Set();
+
+	/**
+	 * Krok „Vybral službu“ a ke každé nově vybrané Službě událost „Služba“ s jejím názvem.
+	 * @param {string[]} ids
+	 */
+	function trackServices(ids) {
+		track('Vybral službu');
+		for (const id of ids) {
+			const service = servicesById.get(id);
+			if (service) track('Služba', { name: service.name });
+		}
+	}
 
 	const serviceSelects = () => /** @type {HTMLSelectElement[]} */ ([...sluzby.querySelectorAll('select')]);
 	const serviceIds = () => serviceSelects().map((select) => select.value).filter(Boolean);
@@ -239,6 +296,7 @@ function init() {
 		syncServices();
 		syncStoredWheels();
 		syncGuides();
+		trackServices(known);
 		loadDays({ jump: true });
 		loadTerminy();
 		return true;
@@ -485,6 +543,7 @@ function init() {
 		button.setAttribute('aria-pressed', 'true');
 		setText(/** @type {HTMLElement} */ (document.getElementById('chyba-time')), '');
 		renderSummary();
+		track('Vybral termín');
 	}
 
 	async function loadTerminy() {
@@ -600,11 +659,12 @@ function init() {
 			if (response.status === 201) {
 				storeContact(zapamatovat.checked ? currentContact() : null);
 				leaving = true; // Tlačítko zůstane vypnuté, aby druhé kliknutí neposlalo Rezervaci znovu.
-				window.location.assign(data.confirmation_url);
+				track('Odeslal rezervaci', { done: () => window.location.assign(data.confirmation_url) });
 				return;
 			}
 			/** @type {ApiError} */
 			const error = data;
+			track(error.code ?? 'unknown');
 			if (error.code === 'booking.invalid_fields' && error.data?.errors) {
 				showFieldErrors(error.data.errors);
 			} else {
@@ -615,15 +675,18 @@ function init() {
 			}
 		} catch {
 			showMessage(messages.network);
+			track('network');
 		} finally {
 			if (!leaving) setSending(false);
 		}
 	}
 
-	sluzby.addEventListener('change', () => {
+	sluzby.addEventListener('change', (event) => {
 		syncServices();
 		syncStoredWheels();
 		syncGuides();
+		const { value } = /** @type {HTMLSelectElement} */ (event.target);
+		if (value) trackServices([value]);
 		loadDays({ jump: true });
 		loadTerminy();
 	});
@@ -647,11 +710,13 @@ function init() {
 		dny.querySelectorAll('[aria-pressed="true"]').forEach((pressed) => pressed.setAttribute('aria-pressed', 'false'));
 		button.setAttribute('aria-pressed', 'true');
 		setText(/** @type {HTMLElement} */ (document.getElementById('chyba-date')), '');
+		track('Vybral den');
 		loadTerminy();
 	});
 	predchozi.addEventListener('click', () => moveMonth(-1));
 	dalsi.addEventListener('click', () => moveMonth(1));
 	/** @type {HTMLElement} */ (document.getElementById('rezervace')).hidden = false;
+	track('Otevřel formulář');
 	const remembered = storedContact();
 	if (remembered) {
 		fillContact(remembered);
@@ -664,6 +729,8 @@ function init() {
 	syncStoredWheels();
 	syncGuides();
 	syncLeasing();
+	// Služba předvybraná z detailu Služby („Rezervovat“).
+	if (serviceIds().length) trackServices(serviceIds());
 	loadDays({ jump: true });
 	form.addEventListener('submit', send);
 	loadTerminy();

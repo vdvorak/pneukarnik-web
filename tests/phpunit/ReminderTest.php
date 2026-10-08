@@ -115,6 +115,7 @@ class ReminderTest extends Pneukarnik_REST_Test_Case {
 		$this->assertStringContainsString( 'přezout', mb_strtolower( $mail['subject'] ) );
 		$this->assertStringContainsString( '15. 3. 2027', $mail['text'] );
 		$this->assertSame( 'jan@example.test', $this->prefill( $this->prefill_token_from( $mail ) )->get_data()['email'] );
+		$this->assertMatchesRegularExpression( '~/rezervace/\?znovu=[^"]+&(#038;)?zdroj=pripominka-prezuti"~', $mail['html'], 'Zdroj příchodu pro Matomo' );
 		$unsubscribe = $this->unsubscribe_url_from( $mail );
 		$this->assertContains( [ 'List-Unsubscribe', '<' . $unsubscribe . '>' ], $mail['headers'] );
 		$this->assertContains( [ 'List-Unsubscribe-Post', 'List-Unsubscribe=One-Click' ], $mail['headers'] );

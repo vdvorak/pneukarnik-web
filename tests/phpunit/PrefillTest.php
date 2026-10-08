@@ -53,6 +53,12 @@ class PrefillTest extends Pneukarnik_REST_Test_Case {
 		$this->assertSame( 'no-store', $response->get_headers()['Cache-Control'] );
 	}
 
+	public function test_link_names_its_source_for_matomo_without_signing_it(): void {
+		$this->booked_prefill_token();
+
+		$this->assertMatchesRegularExpression( '~/rezervace/\?znovu=[0-9]+\.[0-9a-f]{64}&(#038;)?zdroj=objednat-znovu"~', $this->mail_to( self::CUSTOMER )['html'] );
+	}
+
 	public function test_service_no_longer_bookable_online_is_left_out(): void {
 		$phone_only = $this->create_service( 30, false, 'Klimatizace' );
 		$token      = $this->booked_prefill_token( services: [ $this->tyres, $phone_only, $this->alignment ] );
