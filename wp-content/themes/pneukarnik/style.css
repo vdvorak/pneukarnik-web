@@ -619,13 +619,11 @@ a.ikona-info:hover,button.ikona-info:hover{background:var(--brand-primary);color
 .zaskrtavaci input{flex:none;width:20px;height:20px;margin:0;accent-color:var(--brand-primary)}
 .zaskrtavaci label{cursor:pointer}
 .zaskrtavaci a{font-weight:700}
-/* „i“ jako na kartě Služby hned za textem otevře bublinu (popover) pod checkboxem; bez anchor positioning je bublina uprostřed obrazovky. */
+/* „i“ jako na kartě Služby hned za textem pod ním rozbalí nápovědu (akordeon). */
 .zaskrtavaci__info{margin:-2px 0 -2px 2px;vertical-align:middle;cursor:pointer}
-.zaskrtavaci:has(.zaskrtavaci__info){anchor-name:--zaskrtavaci-info}
-.zaskrtavaci__bublina{width:min(360px,calc(100vw - 32px));margin:auto;padding:14px 16px;border:1px solid var(--border-input);border-radius:var(--radius-sm);background:var(--surface-card);color:var(--text-body);box-shadow:var(--shadow-float);font-size:14px;line-height:1.45}
-@supports (anchor-name:--a){.zaskrtavaci__bublina{position-anchor:--zaskrtavaci-info;inset:auto;top:anchor(bottom);left:anchor(left);width:min(360px,anchor-size(width));margin:8px 0;position-try-fallbacks:flip-block}}
-.zaskrtavaci__bublina p,.zaskrtavaci__bublina ul{margin:0}
-.zaskrtavaci__bublina ul{margin:6px 0;padding-left:18px}
+.zaskrtavaci__info[aria-expanded="true"]{background:var(--brand-primary);color:var(--text-on-primary)}
+.zaskrtavaci__napoveda p,.zaskrtavaci__napoveda ul{margin:6px 0 0}
+.zaskrtavaci__napoveda ul{padding-left:18px}
 
 /* 1 Služba */
 .rezervace__sluzby{display:flex;flex-direction:column;gap:16px}

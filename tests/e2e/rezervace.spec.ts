@@ -71,14 +71,16 @@ test('Zákazník si z detailu Služby zarezervuje Termín, uvidí potvrzení a p
 	await page.getByLabel('SPZ').fill(customer.plate);
 	await page.getByLabel('Značka a model').fill('Škoda Fabia');
 	await page.getByLabel(/Souhlasím se zpracováním/).check();
-	// Nabídky a připomínky chodí, dokud je Zákazník neodmítne, „i“ za textem ukáže v bublině, co chodí.
+	// Nabídky a připomínky chodí, dokud je Zákazník neodmítne, „i“ za textem pod ním rozbalí, co chodí.
 	const refuse = page.getByLabel(/Neposílat nabídky a připomínky/);
 	await expect(refuse).not.toBeChecked();
 	await expect(page.getByText(/prosbu o hodnocení na Googlu/)).toBeHidden();
-	await page.getByRole('button', { name: 'Co posíláme' }).click();
+	const whatWeSend = page.getByRole('button', { name: 'Co posíláme' });
+	await whatWeSend.click();
+	await expect(whatWeSend).toHaveAttribute('aria-expanded', 'true');
 	await expect(page.getByText(/Připomínku přezutí před každou sezónou/)).toBeVisible();
 	await expect(page.getByText(/prosbu o hodnocení na Googlu/)).toBeVisible();
-	await page.keyboard.press('Escape');
+	await whatWeSend.click();
 	await expect(page.getByText(/prosbu o hodnocení na Googlu/)).toBeHidden();
 	await refuse.check();
 	const [sent] = await Promise.all([page.waitForRequest(/\/pneukarnik\/v1\/bookings$/), page.getByRole('button', { name: 'Rezervovat' }).click()]);
