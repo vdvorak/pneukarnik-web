@@ -1,4 +1,8 @@
+import { readFileSync } from 'node:fs';
 import { expect, type Page } from '@playwright/test';
+
+/** Cookies přihlášeného admina, ukládá je global-setup. */
+export const ADMIN_STATE = 'playwright/.auth/admin.json';
 
 /** Prefix názvů obsahu z testů, global-teardown je podle něj smaže. */
 export const E2E_PREFIX = 'E2E ';
@@ -7,12 +11,12 @@ export function uniqueTitle(name: string): string {
 	return `${E2E_PREFIX}${name} ${Date.now()}${Math.floor(Math.random() * 1000)}`;
 }
 
+/** Přihlásí stránku jako admina relací z global-setup (vlastní přihlášení v souběžných testech by si relace přepisovala). */
 export async function login(page: Page): Promise<void> {
-	await page.goto('/wp-login.php');
-	await page.fill('#user_login', 'admin');
-	await page.fill('#user_pass', 'admin');
-	await page.click('#wp-submit');
-	await page.waitForURL(/\/wp-admin\//);
+	const { cookies } = JSON.parse(readFileSync(ADMIN_STATE, 'utf8'));
+	await page.context().addCookies(cookies);
+	await page.goto('/wp-admin/');
+	await expect(page).toHaveURL(/\/wp-admin\/$/);
 }
 
 export type ServiceFields = {
