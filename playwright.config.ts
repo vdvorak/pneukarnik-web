@@ -3,6 +3,7 @@ import { defineConfig, devices } from '@playwright/test';
 // Web spouští `make up` (Docker), tady se jen testuje proti běžící instanci.
 export default defineConfig({
 	testDir: 'tests/e2e',
+	globalSetup: './tests/e2e/global-setup.ts',
 	globalTeardown: './tests/e2e/global-teardown.ts',
 	fullyParallel: true,
 	forbidOnly: !!process.env.CI,
