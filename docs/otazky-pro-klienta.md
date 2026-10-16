@@ -21,7 +21,8 @@ Provozovateli jdou tyto otázky jako rozhovor s ChatGPT, viz `docs/podklady-od-k
 ## Kontakty a provoz
 
 - [ ] **E-mail:** Zůstane `j.v.karnik@volny.cz`, nebo chcete adresu na doméně (např. `servis@pneukarnik.cz`)?
-- [ ] **Otevírací doba:** Platí Po–Pá 8:00–12:00 a 13:00–17:00, So–Ne zavřeno? Mění se během sezóny přezouvání (např. otevřeno i v sobotu)?
+- [x] **Otevírací doba:** Platí Po–Pá 8:00–12:00 a 13:00–17:00, So–Ne zavřeno? Mění se během sezóny přezouvání (např. otevřeno i v sobotu)?
+  > Z `docs/podklady-od-klienta/odpovedi-3.md`: platí, v Sezóně beze změny. Obvyklou dovolenou neví.
 - [ ] **Příjezd a parkování:** Je u servisu kde parkovat? Je něco, co je dobré vědět při příjezdu (vjezd z ulice, dvůr…)?
 - [ ] **Čekárna:** Může zákazník počkat na místě? Je k dispozici káva, Wi‑Fi?
   > Z `docs/podklady-od-klienta/odpovedi-2.md`: u většiny Služeb může zákazník počkat v servisu. U Geometrie je lepší vrátit se později, u Výměny oleje doporučeno a u Výměny tlumičů nutné nechat auto v servisu. Káva a Wi‑Fi: neodpověděl.
@@ -48,33 +49,50 @@ Provozovateli jdou tyto otázky jako rozhovor s ChatGPT, viz `docs/podklady-od-k
 ## Rezervace
 
 - [ ] **Leasingoví zákazníci:** Jaké podmínky mají leasingové společnosti? Platí pro ně jen jiné období pro objednávání přezutí (léto od 1. 4., zima od 1. 10.), nebo i něco dalšího? Jak poznáte, že jde o leasingový vůz?
+  > Z `docs/podklady-od-klienta/odpovedi-3.md`: podmínka: přezutí musí schválit leasingová společnost. Společnosti a jak leasingové auto pozná, neví.
 - [ ] **Leasing: co znamená „od 1. 4.“?** Že se leasingový zákazník může **objednat** (vytvořit rezervaci) až 1. 4. a později, nebo že **termín přezutí** musí být 1. 4. a později (objednat se může klidně v březnu)? A platí to jen pro přezutí, nebo pro všechny služby?
-- [ ] **Telefonické objednávky:** Kam si dnes zapisujete zákazníky, kteří se objednají po telefonu (diář, papír, administrace webu)? Pokud ne do webu, může se stát, že si online někdo zarezervuje stejný čas.
+  > Z `docs/podklady-od-klienta/odpovedi-3.md`: platí jen pro přezutí. Letní přezutí od 1. 4., zimní musí být hotové do 1. 11. (ne „od 1. 10.“). Jestli jde o den objednání, nebo Termín, neví. Web dnes hlídá leasingové datum u všech Služeb a jen jako „od“, ne „do“.
+- [x] **Telefonické objednávky:** Kam si dnes zapisujete zákazníky, kteří se objednají po telefonu (diář, papír, administrace webu)? Pokud ne do webu, může se stát, že si online někdo zarezervuje stejný čas.
+  > Z `docs/podklady-od-klienta/odpovedi-3.md`: zapisuje je do administrace webu.
 - [x] **Co si vzít s sebou:** Na webu je „technický průkaz, pojistný šroub, ofocený TP e-mailem při výměně dílů nebo oleje“. Platí to? Je toho víc?
   > Z `docs/podklady-od-klienta/odpovedi-2.md`: u Přezutí bezpečnostní klíč k diskům, u Geometrie, Přípravy na STK a Výměny tlumičů technický průkaz, u ostatních nic nebo neví. Ofocený TP e‑mailem nezmínil.
+  > Z `docs/podklady-od-klienta/odpovedi-3.md`: technický průkaz a pojistný šroub, při výměně dílů nebo oleje předem e‑mailem fotografii technického průkazu (tedy jak na starém webu).
 - [x] **Které služby jdou rezervovat online** a které jen po telefonu?
   > Z `docs/podklady-od-klienta/odpovedi-2.md`: všechny online, Uskladnění jen spolu s Přezutím. Omezení online rezervace v Sezóně (otázka „Sezóna přezouvání“) tím vyřešené není.
 - [x] **Kapacita:** Kolik aut můžete obsluhovat současně?
   > Jedna dílna, jedno auto najednou (odpověděl vývojář).
-- [ ] **Sezóna přezouvání:** V jakém období ji máte (zhruba od–do na jaře a na podzim)? Dnešní web v sezóně (nastaveno 1. 3.–30. 11.) dovolí online rezervovat **jen sezónní služby**, autoservis se tedy dá objednat jen po telefonu. Je to záměr, který má platit dál?
-- [ ] **Upozornění na novou rezervaci:** Dnes vám o nové rezervaci nepřijde e‑mail, vidíte ji jen v administraci. Chcete e‑mail o každé nové rezervaci? Nebo rezervace rovnou v kalendáři v telefonu (Google Kalendář apod.)?
-- [ ] **Odběr novinek:** Ve formuláři je „chci dostávat informace o slevách“. Posíláte zákazníkům něco? (Odesílání je na webu vypnuté.)
-- [ ] **Víc služeb najednou:** Jak často chce zákazník při jedné návštěvě víc věcí (přezutí + geometrie, olej + klimatizace)?
+- [x] **Sezóna přezouvání:** V jakém období ji máte (zhruba od–do na jaře a na podzim)? Dnešní web v sezóně (nastaveno 1. 3.–30. 11.) dovolí online rezervovat **jen sezónní služby**, autoservis se tedy dá objednat jen po telefonu. Je to záměr, který má platit dál?
+  > Z `docs/podklady-od-klienta/odpovedi-3.md`: jaro 15. 3.–30. 4., podzim 1. 10.–15. 11. Autoservis má jít online objednat i v Sezóně, pravidlo „v Sezóně jen sezónní Služby“ tedy platit nemá.
+- [x] **Upozornění na novou rezervaci:** Dnes vám o nové rezervaci nepřijde e‑mail, vidíte ji jen v administraci. Chcete e‑mail o každé nové rezervaci? Nebo rezervace rovnou v kalendáři v telefonu (Google Kalendář apod.)?
+  > Z `docs/podklady-od-klienta/odpovedi-3.md`: e‑mail o každé nové Rezervaci a administrace webu.
+- [x] **Odběr novinek:** Ve formuláři je „chci dostávat informace o slevách“. Posíláte zákazníkům něco? (Odesílání je na webu vypnuté.)
+  > Z `docs/podklady-od-klienta/odpovedi-3.md`: slevy ani novinky dnes neposílá. Připomínku přezutí před Sezónou chce, se souhlasem Zákazníka.
+- [x] **Víc služeb najednou:** Jak často chce zákazník při jedné návštěvě víc věcí (přezutí + geometrie, olej + klimatizace)?
+  > Z `docs/podklady-od-klienta/odpovedi-3.md`: občas.
 - [x] **Uskladněná kola:** Potřebujete při objednání vědět, že zákazník má u vás kola uskladněná (abyste je předem připravili)?
   > Z `docs/podklady-od-klienta/odpovedi-2.md`: ne, ptát se nechce.
 - [ ] **Jak dopředu:** Na kolik dní nebo týdnů dopředu se zákazník může objednat? A nejpozději kolik hodin předem?
-- [ ] **Zrušení:** Do kdy může zákazník rezervaci sám zrušit (např. den předem)? Co když nepřijde?
-- [ ] **Potvrzování:** Má být rezervace potvrzená hned automaticky, nebo ji chcete před potvrzením vidět a schválit?
+  > Z `docs/podklady-od-klienta/odpovedi-3.md`: nejpozději den předem. Jak dlouho dopředu nejvýš, neví.
+- [x] **Zrušení:** Do kdy může zákazník rezervaci sám zrušit (např. den předem)? Co když nepřijde?
+  > Z `docs/podklady-od-klienta/odpovedi-3.md`: nejpozději den předem (Lhůta zrušení 24 hodin). Když Zákazník nepřijde, zavolají mu.
+- [x] **Potvrzování:** Má být rezervace potvrzená hned automaticky, nebo ji chcete před potvrzením vidět a schválit?
+  > Z `docs/podklady-od-klienta/odpovedi-3.md`: automaticky.
 
 ## Technika a přístupy
 
 - [ ] **Doména a DNS:** Kdo spravuje doménu `pneukarnik.cz` (registrátor, DNS)? Budeme potřebovat nastavit záznamy pro e‑maily (SPF/DKIM), aby potvrzení rezervací nechodila do spamu.
+  > Z `docs/podklady-od-klienta/odpovedi-3.md`: neví.
 - [ ] **Hosting:** U koho je web hostovaný a kdo k němu má přístup?
+  > Z `docs/podklady-od-klienta/odpovedi-3.md`: neví.
 - [ ] **Google:** Máte Google Firmu (profil na Mapách) a Google Search Console? Kdo k nim má přístup?
+  > Z `docs/podklady-od-klienta/odpovedi-3.md`: kdo má přístup ke Google Mapám, neví.
 - [ ] **Reklama:** Platíte nebo plánujete reklamu (Google Ads, Facebook/Instagram)? Pokud ano, bude web potřebovat měřicí kódy a souhlas s cookies.
+  > Z `docs/podklady-od-klienta/odpovedi-3.md`: ano, podrobnosti neví.
 
 ## Podklady
 
 - [ ] **Logo ve vektoru:** Máme logo jen v rozlišení 200×200 px. Máte ho ve větším rozlišení nebo ve vektoru (SVG, AI, PDF, EPS)? Případně kdo ho tvořil?
+  > Z `docs/podklady-od-klienta/odpovedi-3.md`: neví.
 - [ ] **Fotky:** Můžeme udělat nové fotky dílny, týmu a práce? Staré fotky na webu jsou z ledna 2022.
+  > Z `docs/podklady-od-klienta/odpovedi-3.md`: ano, domluvit konkrétní termín.
 - [ ] **Recenze:** Smíme na webu zobrazit hodnocení z Google?

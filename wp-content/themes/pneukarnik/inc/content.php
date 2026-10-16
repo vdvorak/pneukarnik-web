@@ -115,7 +115,7 @@ function pneukarnik_default_pages(): array {
 				. $heading( 'Cookies a měření návštěvnosti' )
 				. $paragraph( 'Web nepoužívá cookies, které by vyžadovaly souhlas. Mapa se načte z Google Maps až po vašem kliknutí. Návštěvnost měříme nástrojem Matomo v režimu bez cookies, adresy stránek odesíláme bez osobních údajů a odkazů z e‑mailů. [Kde Matomo běží a jak dlouho data uchovává, upřesní vývojář.]' )
 				. $heading( 'Vaše práva' )
-				. $paragraph( 'Máte právo na přístup k údajům, jejich opravu, výmaz, omezení zpracování a odvolání souhlasu. Stížnost můžete podat Úřadu pro ochranu osobních údajů. [Kontakt pro uplatnění práv doplní Provozovatel.]' ),
+				. $paragraph( 'Máte právo na přístup k údajům, jejich opravu, výmaz, omezení zpracování a odvolání souhlasu. Práva uplatníte telefonicky nebo e‑mailem u správce, kontakty najdete výše. Stížnost můžete podat Úřadu pro ochranu osobních údajů.' ),
 		],
 	];
 }

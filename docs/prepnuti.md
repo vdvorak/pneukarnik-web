@@ -115,6 +115,11 @@ Stejné jako v sekci Přepnutí níže (bez kroku 1, zálohou kopie je `kopie/`)
 
 - [ ] Provozovatel dostane vlastní účet (Uživatelé → Přidat, role Administrátor nebo Editor) a heslo k serveru.
 - [ ] Provozovatel doplní Služby (viz Výsledek zkoušky), Nastavení (kontakty, Pracovní doba, Sezóny, Lhůta zrušení), stránky O nás, Kontakt, Ochrana osobních údajů (perex do výňatku stránky) a Průvodce.
+  Nastavení podle `docs/podklady-od-klienta/odpovedi-3.md`:
+  - Pracovní doba Po–Pá 8:00–12:00 a 13:00–17:00, So–Ne zavřeno.
+  - Sezóny: jarní 03-15 až 04-30 s leasingem od 04-01, podzimní 10-01 až 11-15. Podzimní leasing („hotové do 1. 11.“) zatím nastavit nejde, viz `docs/otazky-pro-klienta.md`.
+  - Předstih pro dnešek 1440 min (objednat se jde nejpozději den předem), Lhůta zrušení 24 hodin, Horizont zůstává 60 dní (Provozovatel neví).
+  - E‑mail o každé nové online Rezervaci zapnutý.
 - [ ] Zkušební rezervace, Zrušení odkazem z e‑mailu, PDF přehled a iCal.
 - [ ] Cron je vypnutý. Anonymizaci, Připomínky přezutí a Termínu, Rozesílky a recenze jde spustit ručně, když je potřeba vyzkoušet: plugin WP Crontrol, nebo dočasně `DISABLE_WP_CRON` na `false`.
 - [ ] Návrat zpět (nacvičení): znovu nahrát soubory a `kopie.sql` podle kroků 5 a 6 a v phpMyAdminu smazat tabulky `tstpk_`, které přidal nový plugin (`tstpk_pneukarnik_booking_services`, `…_day_exceptions`, `…_subscriptions`). Starý web na kopii musí naběhnout, pak krok 7 zopakovat. Proto `kopie/` lokálně smaž až po této zkoušce.

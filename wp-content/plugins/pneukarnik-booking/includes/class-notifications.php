@@ -23,8 +23,8 @@ final class Pneukarnik_Notifications {
 	public static function texts(): array {
 		return [
 			'intro'     => [ __( 'Úvod potvrzení', 'pneukarnik-booking' ), "Dobrý den,\nděkujeme za rezervaci. Těšíme se na vás." ],
-			'bring'     => [ __( 'Co si vzít s sebou (každá položka na řádek)', 'pneukarnik-booking' ), "Technický průkaz vozidla\nKlíč k pojistným šroubům kol" ],
-			'signature' => [ __( 'Podpis', 'pneukarnik-booking' ), "S pozdravem\nPneuservis a autoservis Jan Kárník" ],
+			'bring'     => [ __( 'Co si vzít s sebou (každá položka na řádek)', 'pneukarnik-booking' ), "Technický průkaz vozidla\nKlíč k pojistným šroubům kol\nPři výměně dílů nebo oleje nám předem pošlete e‑mailem fotografii technického průkazu" ],
+			'signature' => [ __( 'Podpis', 'pneukarnik-booking' ), "S pozdravem\nJan Kárník" ],
 		];
 	}
 

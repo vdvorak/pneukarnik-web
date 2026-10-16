@@ -8,6 +8,7 @@
 
 get_header();
 the_post();
+$pneukarnik_phone      = Pneukarnik_Contact::phone();
 $pneukarnik_email      = Pneukarnik_Contact::email();
 $pneukarnik_controller = array_filter(
 	[
@@ -28,6 +29,10 @@ $pneukarnik_controller = array_filter(
 					<dt><?php echo esc_html( $pneukarnik_label ); ?></dt>
 					<dd><?php echo esc_html( $pneukarnik_value ); ?></dd>
 				<?php endforeach; ?>
+				<?php if ( '' !== $pneukarnik_phone ) : ?>
+					<dt><?php esc_html_e( 'Telefon', 'pneukarnik' ); ?></dt>
+					<dd><a href="<?php echo esc_url( pneukarnik_tel_href( $pneukarnik_phone ) ); ?>"><?php echo esc_html( $pneukarnik_phone ); ?></a></dd>
+				<?php endif; ?>
 				<?php if ( '' !== $pneukarnik_email ) : ?>
 					<dt><?php esc_html_e( 'E‑mail', 'pneukarnik' ); ?></dt>
 					<dd><a href="<?php echo esc_url( 'mailto:' . $pneukarnik_email ); ?>"><?php echo esc_html( $pneukarnik_email ); ?></a></dd>
