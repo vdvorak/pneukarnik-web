@@ -136,7 +136,7 @@ function pneukarnik_default_guides(): array {
 		'uskladneni-pneumatik' => [
 			'Uskladnění pneumatik u nás',
 			'Kola nemusíte skladovat doma, uschováme je do další sezóny.',
-			"<h2>Jak uskladnění funguje</h2>\n<p>[Jak kola převezmeme, kde a jak je skladujeme a jak je při dalším přezutí připravíme, doplní Provozovatel.]</p>\n<h2>Cena</h2>\n<p>[Cena a co zahrnuje, doplní Provozovatel.]</p>\n<h2>Při rezervaci</h2>\n<p>Když máte kola uskladněná u nás, zaškrtněte to v rezervačním formuláři, ať je máme připravená.</p>",
+			"<h2>Jak uskladnění funguje</h2>\n<p>Kola nám necháte při přezutí. Umyjeme je, zkontrolujeme a uložíme ve vlastním skladu, v regálech, v suchu a temnu. Na další sezónu je máme připravená.</p>\n<h2>Cena</h2>\n<p>370 Kč za sezónu za sadu 4 kol. V ceně je uskladnění, mytí a kontrola kol.</p>\n<h2>Při rezervaci</h2>\n<p>Uskladnění zvlášť neobjednáváte, stačí si zarezervovat přezutí. Chcete kola vyzvednout jindy než při přezutí? Domluvíme se.</p>",
 			2,
 		],
 		'kdy-vymenit'          => [

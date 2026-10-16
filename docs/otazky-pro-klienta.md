@@ -24,18 +24,25 @@ Provozovateli jdou tyto otázky jako rozhovor s ChatGPT, viz `docs/podklady-od-k
 - [ ] **Otevírací doba:** Platí Po–Pá 8:00–12:00 a 13:00–17:00, So–Ne zavřeno? Mění se během sezóny přezouvání (např. otevřeno i v sobotu)?
 - [ ] **Příjezd a parkování:** Je u servisu kde parkovat? Je něco, co je dobré vědět při příjezdu (vjezd z ulice, dvůr…)?
 - [ ] **Čekárna:** Může zákazník počkat na místě? Je k dispozici káva, Wi‑Fi?
+  > Z `docs/podklady-od-klienta/odpovedi-2.md`: u většiny Služeb může zákazník počkat v servisu. U Geometrie je lepší vrátit se později, u Výměny oleje doporučeno a u Výměny tlumičů nutné nechat auto v servisu. Káva a Wi‑Fi: neodpověděl.
 - [ ] **Platba:** Jde platit kartou? Fakturace pro firmy?
 - [ ] **Náhradní vozidlo:** Nabízíte ho?
 - [ ] **Sociální sítě:** Máte Facebook, Instagram nebo Google Firmu? Pošlete prosím odkazy.
 
 ## Služby a ceny
 
-- [ ] **Ceny pneuservisu:** Chcete na webu ceník přezutí a uskladnění podle velikosti kola (např. do 15", 16–17", 18"+, SUV, dodávka)? Pokud ano, pošlete prosím ceny.
-- [ ] **Ceny autoservisu:** U kterých služeb ukázat „od X Kč“ a u kterých raději „cena dle vozu“? Jsou současné ceny na webu aktuální?
-- [ ] **Co cena zahrnuje:** Např. přezutí = demontáž, montáž, vyvážení, ventilek? Uskladnění = za sezónu, včetně mytí kol?
+- [x] **Ceny pneuservisu:** Chcete na webu ceník přezutí a uskladnění podle velikosti kola (např. do 15", 16–17", 18"+, SUV, dodávka)? Pokud ano, pošlete prosím ceny.
+  > Z `docs/podklady-od-klienta/odpovedi-2.md`: jednotná cena přezutí 650 Kč, uskladnění 370 Kč za sezónu za sadu 4 kol. Ceník podle velikosti kola nemá.
+- [x] **Ceny autoservisu:** U kterých služeb ukázat „od X Kč“ a u kterých raději „cena dle vozu“? Jsou současné ceny na webu aktuální?
+  > Z `docs/podklady-od-klienta/odpovedi-2.md`: pevná cena Příprava na STK 390 Kč, Nástřik podvozku 1 500 Kč, Prohlídka před dovolenou 399 Kč, Dekarbonizace 1 690 Kč. „Od“ Geometrie 860 Kč, Servis klimatizace 750 Kč, Dezinfekce ozonem 299 Kč (dřív 600 Kč), Autodiagnostika od 635 Kč u vozů do roku 2022 a od 750 Kč od roku 2022. Dle vozu výměny destiček, výfuku, tlumičů a žárovek, Oprava čelních skel podle rozsahu poškození, Výměna oleje „od“ podle množství oleje bez částky.
+- [x] **Co cena zahrnuje:** Např. přezutí = demontáž, montáž, vyvážení, ventilek? Uskladnění = za sezónu, včetně mytí kol?
+  > Z `docs/podklady-od-klienta/odpovedi-2.md`: přezutí = demontáž a montáž kol, vyvážení, kontrola tlaku a optimalizace kol. Uskladnění = za sezónu za sadu 4 kol, včetně mytí a kontroly.
 - [ ] **Prodej pneumatik:** Prodáváte pneumatiky? Jaké značky? Chcete na webu formulář „Poptat pneumatiky“ (rozměr, sezóna, počet kusů)?
-- [ ] **Chybějící služby:** Děláte něco, co na webu není? Např. opravy defektů, vyvažování, plnění dusíkem, pneu pro motocykly, dodávky, SUV, prodej disků.
+  > Z `docs/podklady-od-klienta/odpovedi-2.md`: prodává všechny druhy pneumatik a formulář chce (rozměr, letní/zimní, počet kusů). Značky a objednání na přání neví.
+- [x] **Chybějící služby:** Děláte něco, co na webu není? Např. opravy defektů, vyvažování, plnění dusíkem, pneu pro motocykly, dodávky, SUV, prodej disků.
+  > Z `docs/podklady-od-klienta/odpovedi-2.md`: ano, všechno z návrhu: opravy defektů, vyvažování kol, huštění dusíkem, pneu pro motocykly, dodávky a SUV, prodej kol a disků, prodej pneumatik, opravy pneumatik na elektrokoloběžkách. Ceny, časy a podrobnosti neví. Žádnou z 17 původních Služeb nepřestal dělat.
 - [ ] **Délka služeb:** Jak dlouho trvají jednotlivé služby (kvůli rezervaci termínů)?
+  > Z `docs/podklady-od-klienta/odpovedi-2.md`: Geometrie 180 minut, ostatní Služby autoservisu a Duše a pláště na elektrokoloběžky 60 minut, Uskladnění samostatný blok nepotřebuje. U Přezutí neví, podle velikosti disků a typu vozidla.
 - [ ] **Akce a termín:** Platí akční cena, když se zákazník objedná v době akce, ale na termín až po jejím konci? Web zatím ukazuje akční cenu ve výběru služby podle dne objednání, ne podle termínu.
 
 ## Rezervace
@@ -43,15 +50,18 @@ Provozovateli jdou tyto otázky jako rozhovor s ChatGPT, viz `docs/podklady-od-k
 - [ ] **Leasingoví zákazníci:** Jaké podmínky mají leasingové společnosti? Platí pro ně jen jiné období pro objednávání přezutí (léto od 1. 4., zima od 1. 10.), nebo i něco dalšího? Jak poznáte, že jde o leasingový vůz?
 - [ ] **Leasing: co znamená „od 1. 4.“?** Že se leasingový zákazník může **objednat** (vytvořit rezervaci) až 1. 4. a později, nebo že **termín přezutí** musí být 1. 4. a později (objednat se může klidně v březnu)? A platí to jen pro přezutí, nebo pro všechny služby?
 - [ ] **Telefonické objednávky:** Kam si dnes zapisujete zákazníky, kteří se objednají po telefonu (diář, papír, administrace webu)? Pokud ne do webu, může se stát, že si online někdo zarezervuje stejný čas.
-- [ ] **Co si vzít s sebou:** Na webu je „technický průkaz, pojistný šroub, ofocený TP e-mailem při výměně dílů nebo oleje“. Platí to? Je toho víc?
-- [ ] **Které služby jdou rezervovat online** a které jen po telefonu?
+- [x] **Co si vzít s sebou:** Na webu je „technický průkaz, pojistný šroub, ofocený TP e-mailem při výměně dílů nebo oleje“. Platí to? Je toho víc?
+  > Z `docs/podklady-od-klienta/odpovedi-2.md`: u Přezutí bezpečnostní klíč k diskům, u Geometrie, Přípravy na STK a Výměny tlumičů technický průkaz, u ostatních nic nebo neví. Ofocený TP e‑mailem nezmínil.
+- [x] **Které služby jdou rezervovat online** a které jen po telefonu?
+  > Z `docs/podklady-od-klienta/odpovedi-2.md`: všechny online, Uskladnění jen spolu s Přezutím. Omezení online rezervace v Sezóně (otázka „Sezóna přezouvání“) tím vyřešené není.
 - [x] **Kapacita:** Kolik aut můžete obsluhovat současně?
   > Jedna dílna, jedno auto najednou (odpověděl vývojář).
 - [ ] **Sezóna přezouvání:** V jakém období ji máte (zhruba od–do na jaře a na podzim)? Dnešní web v sezóně (nastaveno 1. 3.–30. 11.) dovolí online rezervovat **jen sezónní služby**, autoservis se tedy dá objednat jen po telefonu. Je to záměr, který má platit dál?
 - [ ] **Upozornění na novou rezervaci:** Dnes vám o nové rezervaci nepřijde e‑mail, vidíte ji jen v administraci. Chcete e‑mail o každé nové rezervaci? Nebo rezervace rovnou v kalendáři v telefonu (Google Kalendář apod.)?
 - [ ] **Odběr novinek:** Ve formuláři je „chci dostávat informace o slevách“. Posíláte zákazníkům něco? (Odesílání je na webu vypnuté.)
 - [ ] **Víc služeb najednou:** Jak často chce zákazník při jedné návštěvě víc věcí (přezutí + geometrie, olej + klimatizace)?
-- [ ] **Uskladněná kola:** Potřebujete při objednání vědět, že zákazník má u vás kola uskladněná (abyste je předem připravili)?
+- [x] **Uskladněná kola:** Potřebujete při objednání vědět, že zákazník má u vás kola uskladněná (abyste je předem připravili)?
+  > Z `docs/podklady-od-klienta/odpovedi-2.md`: ne, ptát se nechce.
 - [ ] **Jak dopředu:** Na kolik dní nebo týdnů dopředu se zákazník může objednat? A nejpozději kolik hodin předem?
 - [ ] **Zrušení:** Do kdy může zákazník rezervaci sám zrušit (např. den předem)? Co když nepřijde?
 - [ ] **Potvrzování:** Má být rezervace potvrzená hned automaticky, nebo ji chcete před potvrzením vidět a schválit?
