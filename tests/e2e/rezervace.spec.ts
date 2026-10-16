@@ -273,7 +273,7 @@ test('Z plného měsíce kalendář sám přejde na měsíc nejbližšího voln�
 	}
 });
 
-test('V Sezóně jde online jen sezónní Služba a leasing až od leasingového data', async ({ page }) => {
+test('V Sezóně jde online i autoservis a leasingové přezutí až od leasingového data', async ({ page }) => {
 	const first = upcomingWeekday(8);
 	const leasingFrom = upcomingWeekday(9);
 	const seasonalTitle = uniqueTitle('Sezónní přezutí');
@@ -300,15 +300,18 @@ test('V Sezóně jde online jen sezónní Služba a leasing až od leasingového
 		await page.goto('/rezervace/');
 		await page.getByLabel('Služba', { exact: true }).selectOption(String(serviceId));
 		await showMonth(first);
-		await expect(page.locator(`[data-date="${first}"]`)).toBeDisabled();
-		await expect(page.getByText(/je sezóna přezouvání a online jde objednat jen přezutí/)).toBeVisible();
+		await expect(page.locator(`[data-date="${first}"]`)).toBeEnabled();
 		await expect(page.getByLabel('Kola mám uskladněná u vás')).toBeHidden();
+		await page.getByLabel('Vozidlo je na leasing').check();
+		await expect(page.getByText('Přezutí musí předem schválit leasingová společnost.')).toBeVisible();
+		await expect(page.locator(`[data-date="${first}"]`)).toBeEnabled(); // Leasingové období platí jen pro přezutí.
 
 		await page.getByLabel('Služba', { exact: true }).selectOption({ label: `${seasonalTitle} (600\u00a0Kč)` }); // Výběr ukazuje i cenu.
+		await expect(page.locator(`[data-date="${first}"]`)).toBeDisabled();
+		await expect(page.getByText(/Vozidla na leasing přezouváme v podzimní sezóně od/)).toBeVisible();
+		await page.getByLabel('Vozidlo je na leasing').uncheck();
 		await expect(page.locator(`[data-date="${first}"]`)).toBeEnabled();
 		await page.getByLabel('Vozidlo je na leasing').check();
-		await expect(page.locator(`[data-date="${first}"]`)).toBeDisabled();
-		await expect(page.getByText(/Vozidla na leasing objednáváme/)).toBeVisible();
 
 		await pickDay(page, leasingFrom);
 		await pickTime(page, '8:00–9:00');

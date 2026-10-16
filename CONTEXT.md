@@ -59,7 +59,7 @@ Konkrétní den, kdy je zavřeno nebo platí jiná Pracovní doba (dovolená, sv
 _Avoid_: zavřený den, closed date, uzavírka
 
 **Sezóna**:
-Období přezouvání. Jsou dvě, **jarní** a **podzimní**, každá s datem od–do. Během Sezóny lze online rezervovat jen Služby označené jako sezónní. Sezóna určuje i datum, od kterého se mohou objednávat Leasingoví zákazníci.
+Období přezouvání. Jsou dvě, **jarní** a **podzimní**, každá s datem od–do. Před každou chodí Připomínka přezutí. Online rezervaci Služeb Sezóna neomezuje, autoservis jde objednat i během ní. Sezóna má i leasingové období (od, do, nebo obojí), ve kterém mohou Leasingoví zákazníci přezouvat. Služby označené jako sezónní jsou přezutí a s ním související práce.
 _Avoid_: pneu sezóna, season
 
 **Pohotovost**:
@@ -104,7 +104,7 @@ _Avoid_: newsletter, odběr, marketingové e‑maily, sdělení (tím je Oznáme
 - Provozovatel má jednu dílnu a obsluhuje **vždy jen jedno vozidlo najednou**.
 - Dvě **Rezervace** se nesmí časově překrývat (dílna je jedna).
 - **Rezervace** obsahuje jednu nebo více **Služeb**. Doba, po kterou zabírá dílnu, je součet jejich **Délek**.
-- **Leasingový zákazník** si v **Sezóně** může zarezervovat přezutí až od data stanoveného pro leasing (zda se datum vztahuje k vytvoření Rezervace, nebo k Termínu, upřesní Provozovatel).
+- **Leasingový zákazník** si v **Sezóně** může zarezervovat přezutí (sezónní Službu) jen s Termínem v leasingovém období Sezóny, např. na jaře od 1. 4., na podzim nejpozději do 31. 10. Ostatní Služby objednává bez omezení. Přezutí musí předem schválit leasingová společnost, to web jen připomene. Zda se data nevztahují spíš k vytvoření Rezervace, upřesní Provozovatel.
 - **Zákazník** nemá účet. Každá rezervace nese jeho údaje samostatně (viz ADR 0002).
 
 ## Example dialogue

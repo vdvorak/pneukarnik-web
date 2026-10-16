@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Vytvoření, úprava a načtení Rezervace.
  *
- * Postup: validace polí → pravidla každé Služby → pravidla dne (Sezóna, leasing) → Termín je
+ * Postup: validace polí → pravidla každé Služby → pravidla dne (leasing v Sezóně) → Termín je
  * v nabídce dne → se zámkem dne a v transakci ověřit, že úsek nic nepřekrývá, a zapsat.
  * Dílna má kapacitu 1.
  * Rezervace má 1..n Služeb a zabírá dílnu po dobu součtu jejich Délek.
@@ -260,36 +260,28 @@ class Pneukarnik_Booking {
 	}
 
 	/**
-	 * Proč Služby nejde online rezervovat na daný den, nebo null, když jde. V Sezóně jen sezónní
-	 * Služby, Leasingový zákazník až od leasingového data Sezóny. Odmítnutí nese Sezónu,
-	 * aby web mohl vysvětlit proč.
+	 * Proč Služby nejde online rezervovat na daný den, nebo null, když jde. Leasingový zákazník
+	 * se sezónní Službou (přezutím) jen v leasingovém období Sezóny, ostatní Služby a Zákazníci
+	 * bez omezení. Odmítnutí nese Sezónu, aby web mohl vysvětlit proč.
 	 *
 	 * @param list<Pneukarnik_Service> $services
-	 * @return array{ok:false,code:string,status:int,season:array{name:string,from:string,to:string,leasing_from:string|null}}|null
+	 * @return array{ok:false,code:string,status:int,season:array{name:string,from:string,to:string,leasing_from:string|null,leasing_to:string|null}}|null
 	 */
 	public static function day_refusal( array $services, bool $leasing, string $date ): ?array {
-		$season = Pneukarnik_Season::for_date( $date );
-		if ( null === $season ) {
+		$tyre_change = array_filter( $services, static fn( Pneukarnik_Service $service ): bool => $service->seasonal );
+		if ( ! $leasing || ! $tyre_change || Pneukarnik_Season::allows_leasing( $date ) ) {
 			return null;
 		}
-		foreach ( $services as $service ) {
-			if ( ! $service->seasonal ) {
-				return self::error( 'booking.seasonal_only', 422 ) + [ 'season' => $season ];
-			}
-		}
-		if ( $leasing && ! Pneukarnik_Season::allows_leasing( $date ) ) {
-			return self::error( 'booking.leasing_date', 422 ) + [ 'season' => $season ];
-		}
-		return null;
+		return self::error( 'booking.leasing_date', 422 ) + [ 'season' => Pneukarnik_Season::for_date( $date ) ];
 	}
 
 	/**
 	 * Dny měsíce s alespoň jedním volným Termínem pro online Rezervaci Služeb a omezení
-	 * (Sezóna, leasing), kvůli kterým jiné takové dny nabídnuté nejsou.
+	 * (leasingové období Sezóny), kvůli kterým jiné takové dny nabídnuté nejsou.
 	 *
 	 * @param list<Pneukarnik_Service> $services
 	 * @param string                   $month YYYY-MM
-	 * @return array{days:list<string>,restrictions:list<array{code:string,season:array{name:string,from:string,to:string,leasing_from:string|null}}>}
+	 * @return array{days:list<string>,restrictions:list<array{code:string,season:array{name:string,from:string,to:string,leasing_from:string|null,leasing_to:string|null}}>}
 	 */
 	public static function available_days( array $services, int $duration, bool $leasing, string $month ): array {
 		$days         = [];

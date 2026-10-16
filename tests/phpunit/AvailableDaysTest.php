@@ -128,7 +128,7 @@ class AvailableDaysTest extends Pneukarnik_REST_Test_Case {
 		$this->set_seasons( [ '03-01', '03-31', '03-22' ] );
 		$seasonal = $this->create_service( 60, true );
 
-		$this->assertSame( '2027-04-01', $this->available_days_response( $this->hour, '2027-03' )['first_day'], 'Mimo sezónní Služby až po Sezóně' );
+		$this->assertSame( '2027-03-11', $this->available_days_response( $this->hour, '2027-03', true )['first_day'], 'Leasing jiné Služby bez omezení' );
 		$this->assertSame( '2027-03-11', $this->available_days_response( $seasonal, '2027-03' )['first_day'] );
 		$this->assertSame( '2027-03-22', $this->available_days_response( $seasonal, '2027-03', true )['first_day'], 'Leasing až od leasingového data' );
 	}

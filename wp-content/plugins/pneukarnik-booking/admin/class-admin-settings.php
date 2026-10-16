@@ -57,7 +57,7 @@ class Pneukarnik_Admin_Settings {
 				<div class="notice notice-error"><p><?php esc_html_e( 'Pracovní doba se neuložila: každý blok musí mít začátek před koncem a dva bloky se nesmí překrývat. Ostatní nastavení se uložilo.', 'pneukarnik-booking' ); ?></p></div>
 			<?php endif; ?>
 			<?php if ( isset( $_GET['season_error'] ) ) : ?>
-				<div class="notice notice-error"><p><?php esc_html_e( 'Sezóny se neuložily: zadejte den a měsíc (např. 15. 3.), od i do, od před do, leasingové datum uvnitř Sezóny a Sezóny se nesmí překrývat. Ostatní nastavení se uložilo.', 'pneukarnik-booking' ); ?></p></div>
+				<div class="notice notice-error"><p><?php esc_html_e( 'Sezóny se neuložily: zadejte den a měsíc (např. 15. 3.), od i do, od před do, leasing od a do uvnitř Sezóny, leasing od před leasing do a Sezóny se nesmí překrývat. Ostatní nastavení se uložilo.', 'pneukarnik-booking' ); ?></p></div>
 			<?php endif; ?>
 			<?php if ( isset( $_GET['saved'] ) ) : ?>
 				<div class="notice notice-success"><p><?php esc_html_e( 'Nastavení uložena.', 'pneukarnik-booking' ); ?></p></div>
@@ -160,7 +160,7 @@ class Pneukarnik_Admin_Settings {
 				</table>
 
 				<h2><?php esc_html_e( 'Sezóny', 'pneukarnik-booking' ); ?></h2>
-				<p class="description"><?php esc_html_e( 'Každý rok stejně. Termín v Sezóně (včetně dnů od a do) jde online rezervovat jen se sezónními Službami. Leasingoví zákazníci dostanou v Sezóně Termíny až od leasingového data. Prázdné od a do = Sezóna se nepoužije.', 'pneukarnik-booking' ); ?></p>
+				<p class="description"><?php esc_html_e( 'Každý rok stejně. Leasingoví zákazníci dostanou v Sezóně pro sezónní Služby (přezutí) jen Termíny od leasing od do leasing do (včetně), ostatní Služby bez omezení. Před Sezónou chodí Připomínka přezutí. Prázdné od a do = Sezóna se nepoužije, prázdné leasing od nebo do = bez omezení z té strany.', 'pneukarnik-booking' ); ?></p>
 				<table class="form-table">
 					<?php foreach ( Pneukarnik_Season::names() as $key => $label ) : ?>
 						<tr>
@@ -171,6 +171,7 @@ class Pneukarnik_Admin_Settings {
 									'from'         => __( 'od', 'pneukarnik-booking' ),
 									'to'           => __( 'do', 'pneukarnik-booking' ),
 									'leasing_from' => __( 'leasing od', 'pneukarnik-booking' ),
+									'leasing_to'   => __( 'leasing do', 'pneukarnik-booking' ),
 								];
 								?>
 								<?php foreach ( $fields as $field => $field_label ) : ?>
@@ -466,7 +467,7 @@ class Pneukarnik_Admin_Settings {
 		$posted  = (array) wp_unslash( $_POST['season'] ?? [] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- hodnoty projdou parse_day_month().
 		$seasons = [];
 		foreach ( array_keys( Pneukarnik_Season::names() ) as $key ) {
-			foreach ( [ 'from', 'to', 'leasing_from' ] as $field ) {
+			foreach ( [ 'from', 'to', 'leasing_from', 'leasing_to' ] as $field ) {
 				$seasons[ $key ][ $field ] = self::parse_day_month( (string) ( $posted[ $key ][ $field ] ?? '' ) );
 			}
 		}

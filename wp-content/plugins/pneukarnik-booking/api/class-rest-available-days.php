@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * GET /wp-json/pneukarnik/v1/available-days?service_ids[]=&month=YYYY-MM&leasing=1
  * Dny měsíce, které mají pro Rezervaci daných Služeb alespoň jeden volný Termín.
  * Kalendář rezervačního formuláře podle nich zašedí ostatní dny. restrictions říkají, které
- * Sezóny (jen sezónní Služby, leasingové datum) v měsíci vyřadily jinak volné dny. first_day je
+ * leasingová období Sezón v měsíci vyřadila jinak volné dny. first_day je
  * nejbližší volný den v celém horizontu (null = žádný), kalendář podle něj přeskočí plné měsíce.
  */
 class Pneukarnik_Rest_Available_Days {

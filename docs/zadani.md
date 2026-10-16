@@ -49,7 +49,7 @@ První verzi textů napíše vývojář, Provozovatel je zkontroluje.
 - **Akce**: Služba, cena (nepovinná, Akce bez ceny je např. kontrola brzd zdarma), platnost od–do. Zobrazení: štítek na kartě, blok v detailu. Vlastní sekci nemá: Služba s Akcí je napřed na Úvodu i ve své Kategorii na stránce Služby.
 - **Oznámení**: text, platnost od–do, „zobrazit i u rezervace“. Může jich být víc, nahoře se ukazuje nejnovější.
 - **Pracovní doba** pro každý den v týdnu (0–2 bloky), **Výjimky** (zavřeno / jiná doba, opakovat každý rok), státní svátky ČR předvyplněné.
-- **Sezóny** jarní a podzimní (od–do, datum pro leasing).
+- **Sezóny** jarní a podzimní (od–do, leasingové období od–do).
 - **Google recenze**: zapnout/vypnout.
 - **Pohotovost**: pokud platí, telefon výrazně v hlavičce.
 - Klíčové texty e‑mailů (úvod, podpis, co si vzít s sebou).
@@ -59,8 +59,8 @@ První verzi textů napíše vývojář, Provozovatel je zkontroluje.
 - Jedna dílna, **jedno vozidlo najednou**. Rezervace se nepřekrývají.
 - Rezervace má **jednu nebo více Služeb**. Zabírá dílnu po dobu součtu jejich Délek.
 - Termíny začínají na **mřížce** s krokem nastavitelným v adminu (např. 30 min). Termín je volný, jen když je volný celý úsek a vejde se do jednoho bloku Pracovní doby. Dnes jen s nastavitelným předstihem.
-- V **Sezóně** lze online rezervovat jen sezónní Služby.
-- **Leasingový zákazník**: zaškrtne „vozidlo je na leasing“ + uvede společnost. Systém vynutí leasingové datum Sezóny (k čemu se datum vztahuje, upřesní Provozovatel).
+- V **Sezóně** lze online rezervovat všechny Služby, i autoservis (Provozovatel, `docs/podklady-od-klienta/odpovedi-3.md`).
+- **Leasingový zákazník**: zaškrtne „vozidlo je na leasing“ + uvede společnost. U sezónní Služby (přezutí) systém vynutí leasingové období Sezóny pro Termín (jestli se nevztahuje k vytvoření Rezervace, upřesní Provozovatel).
 - **Formulář:** jméno/firma, telefon, e‑mail, SPZ, značka a model (volitelné), poznámka, leasing + společnost, „kola mám uskladněná u vás“ (u pneuslužeb, pokud to Provozovatel chce), souhlas GDPR, nezaškrtnuté políčko souhlasu s Připomínkou přezutí a Akcemi (ADR 0004).
 - Bez registrace a účtů (ADR 0002). Místo toho:
   - předvyplnění údajů v prohlížeči,

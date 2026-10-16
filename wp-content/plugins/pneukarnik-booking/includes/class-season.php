@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Sezóny: jarní a podzimní, každá s datem od–do a leasingovým datem (viz CONTEXT.md).
+ * Sezóny: jarní a podzimní, každá s datem od–do a leasingovým obdobím od–do (viz CONTEXT.md).
  * Data se ukládají jako MM-DD a opakují se každý rok. Sezóna nepřechází přes Nový rok.
  * Do Sezóny patří Termín podle svého data, hraniční dny od a do včetně.
  */
@@ -28,9 +28,10 @@ final class Pneukarnik_Season {
 	}
 
 	/**
-	 * Uložené Sezóny. Prázdné od a do = Sezóna není nastavená, prázdné leasing od = bez omezení.
+	 * Uložené Sezóny. Prázdné od a do = Sezóna není nastavená, prázdné leasing od nebo do = bez
+	 * omezení z té strany.
 	 *
-	 * @return array<string, array{from:string,to:string,leasing_from:string}> MM-DD
+	 * @return array<string, array{from:string,to:string,leasing_from:string,leasing_to:string}> MM-DD
 	 */
 	public static function get_all(): array {
 		$saved   = get_option( self::OPTION, [] );
@@ -41,6 +42,7 @@ final class Pneukarnik_Season {
 				'from'         => (string) ( $season['from'] ?? '' ),
 				'to'           => (string) ( $season['to'] ?? '' ),
 				'leasing_from' => (string) ( $season['leasing_from'] ?? '' ),
+				'leasing_to'   => (string) ( $season['leasing_to'] ?? '' ),
 			];
 		}
 		return $seasons;
@@ -48,9 +50,9 @@ final class Pneukarnik_Season {
 
 	/**
 	 * Uloží obě Sezóny, nebo nic, když nejsou platné: od i do vyplněné společně, od ≤ do,
-	 * leasing od uvnitř Sezóny a Sezóny se nepřekrývají.
+	 * leasing od a do uvnitř Sezóny, leasing od ≤ leasing do a Sezóny se nepřekrývají.
 	 *
-	 * @param array<string, array{from:string,to:string,leasing_from:string}> $seasons MM-DD
+	 * @param array<string, array{from:string,to:string,leasing_from:string,leasing_to:string}> $seasons MM-DD
 	 */
 	public static function save( array $seasons ): bool {
 		$clean = [];
@@ -59,6 +61,7 @@ final class Pneukarnik_Season {
 				'from'         => (string) ( $seasons[ $name ]['from'] ?? '' ),
 				'to'           => (string) ( $seasons[ $name ]['to'] ?? '' ),
 				'leasing_from' => (string) ( $seasons[ $name ]['leasing_from'] ?? '' ),
+				'leasing_to'   => (string) ( $seasons[ $name ]['leasing_to'] ?? '' ),
 			];
 			if ( ! self::is_valid( $season ) ) {
 				return false;
@@ -77,7 +80,7 @@ final class Pneukarnik_Season {
 	 * Sezóna, do které patří den, s daty v roce toho dne, nebo null.
 	 *
 	 * @param string $date YYYY-MM-DD
-	 * @return array{name:string,from:string,to:string,leasing_from:string|null}|null YYYY-MM-DD
+	 * @return array{name:string,from:string,to:string,leasing_from:string|null,leasing_to:string|null}|null YYYY-MM-DD
 	 */
 	public static function for_date( string $date ): ?array {
 		$year      = substr( $date, 0, 4 );
@@ -89,6 +92,7 @@ final class Pneukarnik_Season {
 					'from'         => "{$year}-{$season['from']}",
 					'to'           => "{$year}-{$season['to']}",
 					'leasing_from' => '' !== $season['leasing_from'] ? "{$year}-{$season['leasing_from']}" : null,
+					'leasing_to'   => '' !== $season['leasing_to'] ? "{$year}-{$season['leasing_to']}" : null,
 				];
 			}
 		}
@@ -96,29 +100,35 @@ final class Pneukarnik_Season {
 	}
 
 	/**
-	 * Leasingové pravidlo, jediné místo: v Sezóně musí být datum Termínu ≥ leasingové datum dané Sezóny.
-	 * Provozovatel ještě potvrdí, jestli se datum nevztahuje k okamžiku vytvoření
-	 * (docs/otazky-pro-klienta.md), pak se změní jen tady.
+	 * Leasingové pravidlo, jediné místo: v Sezóně musí datum Termínu ležet v leasingovém období
+	 * dané Sezóny (od a do včetně). Provozovatel ještě potvrdí, jestli se data nevztahují
+	 * k okamžiku vytvoření (docs/otazky-pro-klienta.md), pak se změní jen tady.
 	 *
 	 * @param string $date Datum Termínu YYYY-MM-DD.
 	 */
 	public static function allows_leasing( string $date ): bool {
 		$season = self::for_date( $date );
-		return null === $season || null === $season['leasing_from'] || $date >= $season['leasing_from'];
+		return null === $season
+			|| ( ( null === $season['leasing_from'] || $date >= $season['leasing_from'] )
+				&& ( null === $season['leasing_to'] || $date <= $season['leasing_to'] ) );
 	}
 
 	/**
-	 * @param array{from:string,to:string,leasing_from:string} $season
+	 * @param array{from:string,to:string,leasing_from:string,leasing_to:string} $season
 	 */
 	private static function is_valid( array $season ): bool {
 		if ( '' === $season['from'] && '' === $season['to'] ) {
-			return '' === $season['leasing_from'];
+			return '' === $season['leasing_from'] && '' === $season['leasing_to'];
 		}
 		if ( ! self::is_month_day( $season['from'] ) || ! self::is_month_day( $season['to'] ) || $season['from'] > $season['to'] ) {
 			return false;
 		}
-		return '' === $season['leasing_from']
-			|| ( self::is_month_day( $season['leasing_from'] ) && $season['from'] <= $season['leasing_from'] && $season['leasing_from'] <= $season['to'] );
+		foreach ( [ $season['leasing_from'], $season['leasing_to'] ] as $leasing ) {
+			if ( '' !== $leasing && ! ( self::is_month_day( $leasing ) && $season['from'] <= $leasing && $leasing <= $season['to'] ) ) {
+				return false;
+			}
+		}
+		return '' === $season['leasing_from'] || '' === $season['leasing_to'] || $season['leasing_from'] <= $season['leasing_to'];
 	}
 
 	private static function is_month_day( string $value ): bool {

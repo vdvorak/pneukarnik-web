@@ -144,7 +144,8 @@ get_header();
 							</p>
 							<p class="pole rezervace__leasing" id="rez-leasing-spolecnost" hidden>
 								<label class="pole__popisek" for="rez-leasing_company"><?php esc_html_e( 'Leasingová společnost', 'pneukarnik' ); ?></label>
-								<input id="rez-leasing_company" type="text" name="leasing_company" autocomplete="off" aria-describedby="chyba-leasing_company">
+								<input id="rez-leasing_company" type="text" name="leasing_company" autocomplete="off" aria-describedby="napoveda-leasing_company chyba-leasing_company">
+								<span class="pole__napoveda" id="napoveda-leasing_company"><?php esc_html_e( 'Přezutí musí předem schválit leasingová společnost.', 'pneukarnik' ); ?></span>
 								<span class="pole__chyba" id="chyba-leasing_company"></span>
 							</p>
 						</div>

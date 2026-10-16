@@ -9,7 +9,7 @@
 /**
  * @typedef {{ enabled: boolean, disabled_message: string, services: {id: number, slug: string, name: string, duration: number, ask_stored_wheels: boolean, guide: {url: string, title: string} | null}[], max_services: number, selected: number, min_date: string, max_date: string, api: string, nonce: string, phone: string, privacy_url: string }} Config
  * @typedef {{ time_start: string, time_end: string }} Termin
- * @typedef {{ name: 'spring' | 'autumn', from: string, to: string, leasing_from: string | null }} Season
+ * @typedef {{ name: 'spring' | 'autumn', from: string, to: string, leasing_from: string | null, leasing_to: string | null }} Season
  * @typedef {{ code: string, data?: { status: number, errors?: Record<string, string>, season?: Season, disabled_message?: string } }} ApiError
  * @typedef {{ code: string, season: Season }} Restriction
  */
@@ -47,8 +47,7 @@ function errorMessages(phone) {
 		'booking.slot_taken': 'Vybraný termín si mezitím rezervoval někdo jiný. Vyberte prosím jiný.',
 		'booking.slot_unavailable': 'Vybraný termín už není v nabídce. Vyberte prosím jiný.',
 		'booking.service_not_bookable': `Tuto službu teď online objednat nejde.${call}`,
-		'booking.seasonal_only': `V sezóně přezouvání jde online objednat jen přezutí a související služby.${call}`,
-		'booking.leasing_date': 'Vozidla na leasing v sezóně přezouvání objednáváme až od data, které určují leasingové společnosti.',
+		'booking.leasing_date': 'Vozidla na leasing v sezóně přezouvání přezouváme jen v termínech, které určují leasingové společnosti.',
 		'booking.service_not_found': 'Vybraná služba už není v nabídce.',
 		'booking.rate_limited': `Odeslali jste příliš mnoho rezervací.${call}`,
 		'booking.disabled': `Online rezervace jsou teď vypnuté.${call}`,
@@ -136,23 +135,19 @@ const shortWeekday = new Intl.DateTimeFormat('cs', { weekday: 'short', timeZone:
 const SEASON_NAMES = { spring: 'jarní', autumn: 'podzimní' };
 
 /**
- * Proč Sezóna nedovolí online Rezervaci, s daty Sezóny.
+ * Proč Sezóna nedovolí online Rezervaci, s leasingovým obdobím Sezóny.
  * @param {string} code
  * @param {Season} season
- * @param {string} phone
  * @returns {string | undefined}
  */
-function seasonText(code, season, phone) {
+function seasonText(code, season) {
 	/** @param {string} ymd */
 	const day = (ymd) => dayMonth.format(utcDate(ymd));
-	if (code === 'booking.seasonal_only') {
-		const call = phone ? ` na ${phone}` : '';
-		return `Od ${day(season.from)} do ${day(season.to)} je sezóna přezouvání a online jde objednat jen přezutí a související služby. Ostatní služby v tu dobu objednáváme telefonicky${call}.`;
+	if (code !== 'booking.leasing_date' || !(season.leasing_from || season.leasing_to)) {
+		return undefined;
 	}
-	if (code === 'booking.leasing_date' && season.leasing_from) {
-		return `Vozidla na leasing objednáváme v ${SEASON_NAMES[season.name]} sezóně až od ${day(season.leasing_from)}, tak to určují leasingové společnosti.`;
-	}
-	return undefined;
+	const period = [season.leasing_from && `od ${day(season.leasing_from)}`, season.leasing_to && `nejpozději do ${day(season.leasing_to)}`].filter(Boolean).join(' ');
+	return `Vozidla na leasing přezouváme v ${SEASON_NAMES[season.name]} sezóně ${period}, tak to určují leasingové společnosti.`;
 }
 
 const monthTitle = new Intl.DateTimeFormat('cs', { month: 'long', year: 'numeric', timeZone: 'UTC' });
@@ -333,7 +328,7 @@ function init() {
 	const explain = (error) =>
 		(error.code === 'booking.disabled' && error.data?.disabled_message
 			? `${error.data.disabled_message}${callText(config.phone)}`
-			: (error.data?.season && seasonText(error.code, error.data.season, config.phone)) ?? messages[error.code]);
+			: (error.data?.season && seasonText(error.code, error.data.season)) ?? messages[error.code]);
 
 	/** Dotaz na dostupnost: vybrané Služby a typ Zákazníka. */
 	function availabilityQuery() {
@@ -500,11 +495,11 @@ function init() {
 			showFirstDay(firstDay);
 			availableDays = new Set(days);
 			setText(stav, availableDays.size ? 'Zašedlé dny nemají volný termín.' : 'V tomto měsíci nejsou volné termíny.');
-			// Proč Sezóna nedovolí některé dny: leasing jako informace, jen sezónní Služby jako upozornění.
+			// Proč Sezóna nedovolí některé dny: leasingové období jako informace.
 			omezeni.replaceChildren(
 				...restrictions.flatMap((restriction) => {
-					const text = seasonText(restriction.code, restriction.season, config.phone);
-					return text ? [notice(text, restriction.code === 'booking.leasing_date' ? 'info' : '')] : [];
+					const text = seasonText(restriction.code, restriction.season);
+					return text ? [notice(text, 'info')] : [];
 				}),
 			);
 			renderCalendar();

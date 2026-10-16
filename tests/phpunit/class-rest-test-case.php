@@ -74,10 +74,10 @@ abstract class Pneukarnik_REST_Test_Case extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Jarní a podzimní Sezóna jako [od, do, leasing od] ve formátu MM-DD, null = Sezóna nenastavená.
+	 * Jarní a podzimní Sezóna jako [od, do, leasing od, leasing do] ve formátu MM-DD, null = Sezóna nenastavená.
 	 *
-	 * @param array{0:string,1:string,2?:string}|null $spring
-	 * @param array{0:string,1:string,2?:string}|null $autumn
+	 * @param array{0:string,1:string,2?:string,3?:string}|null $spring
+	 * @param array{0:string,1:string,2?:string,3?:string}|null $autumn
 	 */
 	protected function set_seasons( ?array $spring, ?array $autumn = null ): void {
 		$this->assertTrue( Pneukarnik_Season::save( self::seasons( $spring, $autumn ) ) );
@@ -86,15 +86,16 @@ abstract class Pneukarnik_REST_Test_Case extends WP_UnitTestCase {
 	/**
 	 * Sezóny ve tvaru pro Pneukarnik_Season::save(), parametry viz set_seasons().
 	 *
-	 * @param array{0:string,1:string,2?:string}|null $spring
-	 * @param array{0:string,1:string,2?:string}|null $autumn
-	 * @return array<string, array{from:string,to:string,leasing_from:string}>
+	 * @param array{0:string,1:string,2?:string,3?:string}|null $spring
+	 * @param array{0:string,1:string,2?:string,3?:string}|null $autumn
+	 * @return array<string, array{from:string,to:string,leasing_from:string,leasing_to:string}>
 	 */
 	protected static function seasons( ?array $spring, ?array $autumn ): array {
 		$season = static fn( ?array $s ): array => [
 			'from'         => $s[0] ?? '',
 			'to'           => $s[1] ?? '',
 			'leasing_from' => $s[2] ?? '',
+			'leasing_to'   => $s[3] ?? '',
 		];
 		return [
 			'spring' => $season( $spring ),

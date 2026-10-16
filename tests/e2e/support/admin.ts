@@ -60,7 +60,7 @@ export async function publishService(page: Page, s: ServiceFields): Promise<void
 	for (const title of s.related ?? []) await page.getByLabel(title).check();
 	if (s.duration !== undefined) await page.getByLabel('Délka (minuty) *').fill(String(s.duration));
 	if (s.bookable) await page.getByLabel(/Rezervovatelná online/).check();
-	if (s.seasonal) await page.getByLabel(/Sezónní \(v Sezóně/).check();
+	if (s.seasonal) await page.getByLabel(/Sezónní, tedy přezutí/).check();
 	if (s.askStoredWheels) await page.getByLabel(/Ptát se na uskladněná kola/).check();
 	if (s.featured) await page.getByLabel(/Nejžádanější/).check();
 	if (s.icon) await page.getByRole('group', { name: 'Ikona' }).getByLabel(s.icon, { exact: true }).check();
@@ -187,7 +187,7 @@ const dayMonth = (date: string) => {
 export async function saveAutumnSeason(page: Page, season: { from: string; to: string; leasingFrom: string } | null): Promise<void> {
 	await page.goto('/wp-admin/admin.php?page=pneukarnik-settings');
 	for (const name of ['spring', 'autumn']) {
-		for (const field of ['from', 'to', 'leasing_from']) await page.locator(`input[name="season[${name}][${field}]"]`).fill('');
+		for (const field of ['from', 'to', 'leasing_from', 'leasing_to']) await page.locator(`input[name="season[${name}][${field}]"]`).fill('');
 	}
 	if (season) {
 		await page.getByLabel('Podzimní od').fill(dayMonth(season.from));

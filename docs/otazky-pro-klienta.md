@@ -51,7 +51,7 @@ Provozovateli jdou tyto otázky jako rozhovor s ChatGPT, viz `docs/podklady-od-k
 - [ ] **Leasingoví zákazníci:** Jaké podmínky mají leasingové společnosti? Platí pro ně jen jiné období pro objednávání přezutí (léto od 1. 4., zima od 1. 10.), nebo i něco dalšího? Jak poznáte, že jde o leasingový vůz?
   > Z `docs/podklady-od-klienta/odpovedi-3.md`: podmínka: přezutí musí schválit leasingová společnost. Společnosti a jak leasingové auto pozná, neví.
 - [ ] **Leasing: co znamená „od 1. 4.“?** Že se leasingový zákazník může **objednat** (vytvořit rezervaci) až 1. 4. a později, nebo že **termín přezutí** musí být 1. 4. a později (objednat se může klidně v březnu)? A platí to jen pro přezutí, nebo pro všechny služby?
-  > Z `docs/podklady-od-klienta/odpovedi-3.md`: platí jen pro přezutí. Letní přezutí od 1. 4., zimní musí být hotové do 1. 11. (ne „od 1. 10.“). Jestli jde o den objednání, nebo Termín, neví. Web dnes hlídá leasingové datum u všech Služeb a jen jako „od“, ne „do“.
+  > Z `docs/podklady-od-klienta/odpovedi-3.md`: platí jen pro přezutí. Letní přezutí od 1. 4., zimní musí být hotové do 1. 11. (ne „od 1. 10.“). Jestli jde o den objednání, nebo Termín, neví. Web hlídá leasingové období Sezóny (od, do) jen u sezónních Služeb a vůči Termínu. „Do 1. 11.“ je nastavené jako poslední den 31. 10., ověřit telefonem. U leasingové společnosti web připomene, že přezutí musí předem schválit.
 - [x] **Telefonické objednávky:** Kam si dnes zapisujete zákazníky, kteří se objednají po telefonu (diář, papír, administrace webu)? Pokud ne do webu, může se stát, že si online někdo zarezervuje stejný čas.
   > Z `docs/podklady-od-klienta/odpovedi-3.md`: zapisuje je do administrace webu.
 - [x] **Co si vzít s sebou:** Na webu je „technický průkaz, pojistný šroub, ofocený TP e-mailem při výměně dílů nebo oleje“. Platí to? Je toho víc?
@@ -62,7 +62,7 @@ Provozovateli jdou tyto otázky jako rozhovor s ChatGPT, viz `docs/podklady-od-k
 - [x] **Kapacita:** Kolik aut můžete obsluhovat současně?
   > Jedna dílna, jedno auto najednou (odpověděl vývojář).
 - [x] **Sezóna přezouvání:** V jakém období ji máte (zhruba od–do na jaře a na podzim)? Dnešní web v sezóně (nastaveno 1. 3.–30. 11.) dovolí online rezervovat **jen sezónní služby**, autoservis se tedy dá objednat jen po telefonu. Je to záměr, který má platit dál?
-  > Z `docs/podklady-od-klienta/odpovedi-3.md`: jaro 15. 3.–30. 4., podzim 1. 10.–15. 11. Autoservis má jít online objednat i v Sezóně, pravidlo „v Sezóně jen sezónní Služby“ tedy platit nemá.
+  > Z `docs/podklady-od-klienta/odpovedi-3.md`: jaro 15. 3.–30. 4., podzim 1. 10.–15. 11. Autoservis má jít online objednat i v Sezóně, pravidlo „v Sezóně jen sezónní Služby“ je zrušené.
 - [x] **Upozornění na novou rezervaci:** Dnes vám o nové rezervaci nepřijde e‑mail, vidíte ji jen v administraci. Chcete e‑mail o každé nové rezervaci? Nebo rezervace rovnou v kalendáři v telefonu (Google Kalendář apod.)?
   > Z `docs/podklady-od-klienta/odpovedi-3.md`: e‑mail o každé nové Rezervaci a administrace webu.
 - [x] **Odběr novinek:** Ve formuláři je „chci dostávat informace o slevách“. Posíláte zákazníkům něco? (Odesílání je na webu vypnuté.)
