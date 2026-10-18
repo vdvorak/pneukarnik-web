@@ -47,6 +47,8 @@ final class Pneukarnik_Service {
 		public readonly bool $seasonal,
 		public readonly bool $ask_stored_wheels,
 		public readonly bool $featured,
+		/** Detail má formulář „Poptat pneumatiky“ (Poptávka). */
+		public readonly bool $inquiry,
 		public readonly int $order,
 		/** Název ikony ze sady icons(), prázdný = bez ikony. */
 		public readonly string $icon,
@@ -129,6 +131,7 @@ final class Pneukarnik_Service {
 			seasonal: '' !== $meta( '_service_is_seasonal' ),
 			ask_stored_wheels: '' !== $meta( '_service_ask_stored_wheels' ),
 			featured: '' !== $meta( '_service_featured' ),
+			inquiry: '' !== $meta( '_service_inquiry' ),
 			order: $post->menu_order,
 			icon: self::valid_icon( $meta( '_service_icon' ) ),
 			seo_title: $meta( '_service_seo_title' ),
@@ -171,6 +174,19 @@ final class Pneukarnik_Service {
 				'meta_value' => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 			]
 		);
+	}
+
+	/**
+	 * Zveřejněná Služba s formulářem Poptávky, první v pořadí z administrace. Null = Poptávka na webu není.
+	 */
+	public static function for_inquiry(): ?self {
+		return self::query(
+			[
+				'meta_key'       => '_service_inquiry', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'meta_value'     => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+				'posts_per_page' => 1,
+			]
+		)[0] ?? null;
 	}
 
 	/**
@@ -276,6 +292,13 @@ final class Pneukarnik_Service {
 
 	public function url(): string {
 		return (string) get_permalink( $this->id );
+	}
+
+	/**
+	 * Adresa formuláře Poptávky v detailu Služby.
+	 */
+	public function inquiry_url(): string {
+		return $this->url() . '#' . Pneukarnik_Inquiry::ANCHOR;
 	}
 
 	/**

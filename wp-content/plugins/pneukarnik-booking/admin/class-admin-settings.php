@@ -38,6 +38,7 @@ class Pneukarnik_Admin_Settings {
 		$booking_disabled_msg = Pneukarnik_Booking::online_disabled_message();
 		$create_limit         = Pneukarnik_Rate_Limit::limit( Pneukarnik_Rate_Limit::CREATE );
 		$cancel_limit         = Pneukarnik_Rate_Limit::limit( Pneukarnik_Rate_Limit::CANCEL );
+		$inquiry_limit        = Pneukarnik_Rate_Limit::limit( Pneukarnik_Rate_Limit::INQUIRY );
 		$ical_url             = Pneukarnik_Rest_Calendar::url();
 		$days_labels          = [
 			'mon' => 'Pondělí',
@@ -95,7 +96,13 @@ class Pneukarnik_Admin_Settings {
 						<th><label for="pnk-cancel-limit"><?php esc_html_e( 'Limit pokusů o Zrušení z jedné IP za hodinu', 'pneukarnik-booking' ); ?></label></th>
 						<td>
 							<input id="pnk-cancel-limit" type="number" name="cancel_rate_limit" value="<?php echo esc_attr( (string) $cancel_limit ); ?>" min="<?php echo (int) Pneukarnik_Rate_Limit::MIN; ?>" max="<?php echo (int) Pneukarnik_Rate_Limit::MAX; ?>">
-							<p class="description"><?php esc_html_e( 'Limity chrání kalendář před zahlcením. Platí jen pro nepřihlášené, přihlášený Provozovatel je nemá.', 'pneukarnik-booking' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="pnk-inquiry-limit"><?php esc_html_e( 'Limit Poptávek pneumatik z jedné IP za hodinu', 'pneukarnik-booking' ); ?></label></th>
+						<td>
+							<input id="pnk-inquiry-limit" type="number" name="inquiry_rate_limit" value="<?php echo esc_attr( (string) $inquiry_limit ); ?>" min="<?php echo (int) Pneukarnik_Rate_Limit::MIN; ?>" max="<?php echo (int) Pneukarnik_Rate_Limit::MAX; ?>">
+							<p class="description"><?php esc_html_e( 'Limity chrání kalendář a e‑mail před zahlcením. Platí jen pro nepřihlášené, přihlášený Provozovatel je nemá.', 'pneukarnik-booking' ); ?></p>
 						</td>
 					</tr>
 				</table>
@@ -433,6 +440,7 @@ class Pneukarnik_Admin_Settings {
 		Pneukarnik_Booking::save_online( ! empty( $_POST['booking_enabled'] ), (string) wp_unslash( $_POST['booking_disabled_msg'] ?? '' ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitizuje save_online().
 		Pneukarnik_Rate_Limit::save_limit( Pneukarnik_Rate_Limit::CREATE, (int) ( $_POST['rate_limit'] ?? Pneukarnik_Rate_Limit::limit( Pneukarnik_Rate_Limit::CREATE ) ) );
 		Pneukarnik_Rate_Limit::save_limit( Pneukarnik_Rate_Limit::CANCEL, (int) ( $_POST['cancel_rate_limit'] ?? Pneukarnik_Rate_Limit::limit( Pneukarnik_Rate_Limit::CANCEL ) ) );
+		Pneukarnik_Rate_Limit::save_limit( Pneukarnik_Rate_Limit::INQUIRY, (int) ( $_POST['inquiry_rate_limit'] ?? Pneukarnik_Rate_Limit::limit( Pneukarnik_Rate_Limit::INQUIRY ) ) );
 
 		// Scalar options
 		update_option( 'pneukarnik_grid_step', max( 5, min( 240, (int) ( $_POST['grid_step'] ?? 30 ) ) ) );

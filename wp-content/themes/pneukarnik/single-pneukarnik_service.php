@@ -2,6 +2,7 @@
 /**
  * Detail Služby: PageHero s drobečkem na Kategorii, obsah ve dvou třetinách a vpravo přilepená karta
  * Cena (na mobilu pod hero, akce řeší mobilní lišta). Nevyplněné volitelné části se nevykreslí.
+ * Služba s Poptávkou má formulář „Poptat pneumatiky“ hned pod Akcí.
  *
  * @package Pneukarnik
  */
@@ -23,6 +24,9 @@ $promotion = Pneukarnik_Promotion::current_for( $service->id );
 				<?php
 				if ( $promotion ) {
 					pneukarnik_promotion_block( $promotion );
+				}
+				if ( $service->inquiry ) {
+					pneukarnik_inquiry_form();
 				}
 				?>
 

@@ -56,6 +56,18 @@ add_action(
 	static function (): void {
 		$version = (string) wp_get_theme()->get( 'Version' );
 		wp_enqueue_style( 'pneukarnik', get_stylesheet_uri(), [], $version );
+		if ( is_singular( 'pneukarnik_service' ) && class_exists( 'Pneukarnik_Service' ) && Pneukarnik_Service::from_post( get_post() )->inquiry ) {
+			wp_enqueue_script(
+				'pneukarnik-poptavka',
+				get_theme_file_uri( 'assets/js/poptavka.js' ),
+				[],
+				$version,
+				[
+					'strategy'  => 'defer',
+					'in_footer' => true,
+				]
+			);
+		}
 		if ( class_exists( 'Pneukarnik_Booking_Pages' ) && 'rezervace' === Pneukarnik_Booking_Pages::current() ) {
 			wp_enqueue_script(
 				'pneukarnik-rezervace',

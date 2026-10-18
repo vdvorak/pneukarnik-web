@@ -1,6 +1,6 @@
 <?php
 /**
- * Úvod v pořadí ze zadání: (Oznámení v hlavičce) → hero s telefonem, Rezervovat a otevírací dobou
+ * Úvod v pořadí ze zadání: (Oznámení v hlavičce) → hero s telefonem, Rezervovat, odkazem na Poptávku a otevírací dobou
  * Dnes / Zítra → Co pro vás uděláme (Služby s Akcí, nejžádanější, odkaz na všechny) → proč k nám →
  * Google recenze → otevírací doba na 7 dní a mapa. Sekce bez obsahu se nevykreslí.
  *
@@ -15,6 +15,7 @@ $pneukarnik_why_us     = pneukarnik_why_us();
 $pneukarnik_reviews    = Pneukarnik_Reviews::summary();
 $pneukarnik_year       = pneukarnik_founded_year();
 $pneukarnik_phone      = Pneukarnik_Contact::phone();
+$pneukarnik_inquiry    = Pneukarnik_Service::for_inquiry();
 
 get_header();
 ?>
@@ -40,6 +41,9 @@ get_header();
 					<a class="button button--secondary" href="<?php echo esc_url( pneukarnik_tel_href( $pneukarnik_phone ) ); ?>"><span aria-hidden="true">☎ </span><?php echo esc_html( $pneukarnik_phone ); ?></a>
 				<?php endif; ?>
 			</p>
+			<?php if ( $pneukarnik_inquiry ) : ?>
+				<p class="uvod__poptavka"><a class="arrow-link" href="<?php echo esc_url( $pneukarnik_inquiry->inquiry_url() ); ?>"><?php esc_html_e( 'Poptat pneumatiky', 'pneukarnik' ); ?></a></p>
+			<?php endif; ?>
 			<?php pneukarnik_today_tomorrow_hours(); ?>
 		</div>
 	</section>

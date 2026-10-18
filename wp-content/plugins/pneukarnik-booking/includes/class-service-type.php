@@ -78,6 +78,7 @@ final class Pneukarnik_Service_Type {
 			'_service_is_seasonal'       => 'boolean',
 			'_service_ask_stored_wheels' => 'boolean',
 			'_service_featured'          => 'boolean',
+			'_service_inquiry'           => 'boolean',
 			'_service_icon'              => 'string',
 			'_service_seo_title'         => 'string',
 			'_service_seo_description'   => 'string',

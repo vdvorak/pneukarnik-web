@@ -88,10 +88,13 @@ function pneukarnik_service_price_card( Pneukarnik_Service $service ): void {
 		<?php if ( '' !== $service->price_note ) : ?>
 			<p class="cena-sluzby__zahrnuje"><?php esc_html_e( 'Cena zahrnuje:', 'pneukarnik' ); ?> <?php echo esc_html( $service->price_note ); ?></p>
 		<?php endif; ?>
-		<?php if ( $service->bookable || '' !== $phone ) : ?>
+		<?php if ( $service->bookable || $service->inquiry || '' !== $phone ) : ?>
 			<p class="cena-sluzby__akce">
 				<?php if ( $service->bookable ) : ?>
 					<a class="button button--block" href="<?php echo esc_url( pneukarnik_booking_url( $service ) ); ?>"><?php esc_html_e( 'Rezervovat', 'pneukarnik' ); ?></a>
+				<?php endif; ?>
+				<?php if ( $service->inquiry ) : ?>
+					<a class="button button--block" href="#<?php echo esc_attr( Pneukarnik_Inquiry::ANCHOR ); ?>"><?php esc_html_e( 'Poptat pneumatiky', 'pneukarnik' ); ?></a>
 				<?php endif; ?>
 				<?php if ( '' !== $phone ) : ?>
 					<a class="button button--secondary button--block" href="<?php echo esc_url( pneukarnik_tel_href( $phone ) ); ?>">
@@ -103,10 +106,109 @@ function pneukarnik_service_price_card( Pneukarnik_Service $service ): void {
 				<?php endif; ?>
 			</p>
 		<?php endif; ?>
-		<?php if ( ! $service->bookable ) : ?>
+		<?php if ( ! $service->bookable && ! $service->inquiry ) : ?>
 			<p class="cena-sluzby__poznamka"><?php esc_html_e( 'Tuto službu objednáváme jen telefonicky.', 'pneukarnik' ); ?></p>
 		<?php endif; ?>
 	</aside>
+	<?php
+}
+
+/**
+ * Formulář Poptávky („Poptat pneumatiky“) v detailu Služby. Odešle ho poptavka.js na REST API pluginu,
+ * bez JavaScriptu zůstane schovaný a místo něj je telefon a e‑mail.
+ */
+function pneukarnik_inquiry_form(): void {
+	$phone   = Pneukarnik_Contact::phone();
+	$email   = Pneukarnik_Contact::email();
+	$privacy = get_privacy_policy_url();
+	?>
+	<section class="sluzba__cast poptavka" id="<?php echo esc_attr( Pneukarnik_Inquiry::ANCHOR ); ?>" aria-labelledby="poptavka-nadpis">
+		<h2 id="poptavka-nadpis"><?php esc_html_e( 'Poptat pneumatiky', 'pneukarnik' ); ?></h2>
+		<p class="poptavka__uvod"><?php esc_html_e( 'Napište nám rozměr a počet kusů, ozveme se vám s nabídkou.', 'pneukarnik' ); ?></p>
+		<noscript>
+			<p class="notice notice--info">
+				<?php
+				$contacts = array_filter( [ $phone, $email ] );
+				echo esc_html(
+					$contacts
+						/* translators: %s: telefon a/nebo e‑mail Provozovatele */
+						? sprintf( __( 'Formulář potřebuje zapnutý JavaScript. Poptat pneumatiky můžete i na %s.', 'pneukarnik' ), implode( ' nebo ', $contacts ) )
+						: __( 'Formulář potřebuje zapnutý JavaScript.', 'pneukarnik' )
+				);
+				?>
+			</p>
+		</noscript>
+		<form class="card poptavka__form" id="poptavka-form" data-api="<?php echo esc_url( rest_url( PNEUKARNIK_REST_NAMESPACE . '/inquiries' ) ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>" data-phone="<?php echo esc_attr( $phone ); ?>" novalidate hidden>
+			<div class="poptavka__pole">
+				<p class="pole">
+					<label class="pole__popisek" for="pop-size"><?php esc_html_e( 'Rozměr pneumatik', 'pneukarnik' ); ?></label>
+					<input id="pop-size" type="text" name="size" autocomplete="off" aria-describedby="napoveda-pop-size chyba-pop-size">
+					<span class="pole__napoveda" id="napoveda-pop-size"><?php esc_html_e( 'Najdete ho na boku pneumatiky, například 205/55 R16.', 'pneukarnik' ); ?></span>
+					<span class="pole__chyba" id="chyba-pop-size"></span>
+				</p>
+				<p class="pole">
+					<label class="pole__popisek" for="pop-pieces"><?php esc_html_e( 'Počet kusů', 'pneukarnik' ); ?></label>
+					<input id="pop-pieces" type="number" name="pieces" value="4" min="1" max="<?php echo (int) Pneukarnik_Inquiry::MAX_PIECES; ?>" inputmode="numeric" aria-describedby="chyba-pop-pieces">
+					<span class="pole__chyba" id="chyba-pop-pieces"></span>
+				</p>
+				<fieldset class="pole pole--siroke poptavka__sezona" aria-describedby="chyba-pop-season">
+					<legend class="pole__popisek"><?php esc_html_e( 'Pneumatiky', 'pneukarnik' ); ?></legend>
+					<span class="poptavka__volby">
+						<?php foreach ( Pneukarnik_Inquiry::seasons() as $value => $label ) : ?>
+							<span class="zaskrtavaci">
+								<input type="radio" name="season" value="<?php echo esc_attr( $value ); ?>" id="pop-season-<?php echo esc_attr( $value ); ?>">
+								<label for="pop-season-<?php echo esc_attr( $value ); ?>"><?php echo esc_html( $label ); ?></label>
+							</span>
+						<?php endforeach; ?>
+					</span>
+					<span class="pole__chyba" id="chyba-pop-season"></span>
+				</fieldset>
+				<?php
+				// name => [ popisek, typ, autocomplete, na celou šířku ].
+				$fields = [
+					'name'  => [ __( 'Jméno nebo firma', 'pneukarnik' ), 'text', 'name', true ],
+					'phone' => [ __( 'Telefon', 'pneukarnik' ), 'tel', 'tel', false ],
+					'email' => [ __( 'E‑mail', 'pneukarnik' ), 'email', 'email', false ],
+				];
+				foreach ( $fields as $name => [ $label, $type, $autocomplete, $wide ] ) :
+					?>
+					<p class="pole<?php echo $wide ? ' pole--siroke' : ''; ?>">
+						<label class="pole__popisek" for="pop-<?php echo esc_attr( $name ); ?>"><?php echo esc_html( $label ); ?></label>
+						<input id="pop-<?php echo esc_attr( $name ); ?>" type="<?php echo esc_attr( $type ); ?>" name="<?php echo esc_attr( $name ); ?>" autocomplete="<?php echo esc_attr( $autocomplete ); ?>" aria-describedby="<?php echo 'name' === $name ? '' : 'napoveda-pop-kontakt '; ?>chyba-pop-<?php echo esc_attr( $name ); ?>">
+						<span class="pole__chyba" id="chyba-pop-<?php echo esc_attr( $name ); ?>"></span>
+					</p>
+				<?php endforeach; ?>
+				<p class="pole__napoveda pole--siroke poptavka__kontakt" id="napoveda-pop-kontakt"><?php esc_html_e( 'Stačí telefon, nebo e‑mail.', 'pneukarnik' ); ?></p>
+				<p class="pole pole--siroke">
+					<label class="pole__popisek" for="pop-note">
+						<?php esc_html_e( 'Poznámka', 'pneukarnik' ); ?>
+						<span class="pole__nepovinne"><?php esc_html_e( 'nepovinné', 'pneukarnik' ); ?></span>
+					</label>
+					<textarea id="pop-note" name="note" rows="3" aria-describedby="napoveda-pop-note chyba-pop-note"></textarea>
+					<span class="pole__napoveda" id="napoveda-pop-note"><?php esc_html_e( 'Například oblíbená značka, zátěžový index nebo vůz.', 'pneukarnik' ); ?></span>
+					<span class="pole__chyba" id="chyba-pop-note"></span>
+				</p>
+				<?php // Past na roboty: člověk pole nevidí, robot ho vyplní a Poptávka neodejde. ?>
+				<p class="poptavka__past" aria-hidden="true">
+					<label for="pop-<?php echo esc_attr( Pneukarnik_Inquiry::HONEYPOT ); ?>"><?php esc_html_e( 'Web', 'pneukarnik' ); ?></label>
+					<input id="pop-<?php echo esc_attr( Pneukarnik_Inquiry::HONEYPOT ); ?>" type="text" name="<?php echo esc_attr( Pneukarnik_Inquiry::HONEYPOT ); ?>" tabindex="-1" autocomplete="off">
+				</p>
+			</div>
+			<?php if ( '' !== $privacy ) : ?>
+				<p class="poptavka__zasady">
+					<?php esc_html_e( 'Údaje použijeme jen k odpovědi na poptávku.', 'pneukarnik' ); ?>
+					<a href="<?php echo esc_url( $privacy ); ?>"><?php esc_html_e( 'Zásady ochrany osobních údajů', 'pneukarnik' ); ?></a>
+				</p>
+			<?php endif; ?>
+			<div class="poptavka__odeslat">
+				<div id="poptavka-zprava" role="alert"></div>
+				<p><button type="submit" class="button"><?php esc_html_e( 'Odeslat poptávku', 'pneukarnik' ); ?></button></p>
+			</div>
+		</form>
+		<div class="notice notice--info poptavka__hotovo" id="poptavka-hotovo" tabindex="-1" hidden>
+			<p><strong><?php esc_html_e( 'Děkujeme, poptávku jsme přijali.', 'pneukarnik' ); ?></strong> <?php esc_html_e( 'Ozveme se vám s nabídkou.', 'pneukarnik' ); ?></p>
+		</div>
+	</section>
 	<?php
 }
 
@@ -582,14 +684,18 @@ function pneukarnik_mobile_bar(): void {
 	if ( ! $on_page ) {
 		return;
 	}
-	$booking = pneukarnik_booking_url( is_singular( Pneukarnik_Service::POST_TYPE ) ? Pneukarnik_Service::from_post( get_post() ) : null );
+	$service = is_singular( Pneukarnik_Service::POST_TYPE ) ? Pneukarnik_Service::from_post( get_post() ) : null;
 	$phone   = Pneukarnik_Contact::phone();
 	?>
 	<nav class="mobilni-lista" aria-label="<?php esc_attr_e( 'Rychlý kontakt', 'pneukarnik' ); ?>">
 		<?php if ( '' !== $phone ) : ?>
 			<a class="mobilni-lista__zavolat" href="<?php echo esc_url( pneukarnik_tel_href( $phone ) ); ?>"><?php esc_html_e( 'Zavolat', 'pneukarnik' ); ?></a>
 		<?php endif; ?>
-		<a class="mobilni-lista__rezervovat" href="<?php echo esc_url( $booking ); ?>"><?php esc_html_e( 'Rezervovat', 'pneukarnik' ); ?></a>
+		<?php if ( $service && $service->inquiry && ! $service->bookable ) : ?>
+			<a class="mobilni-lista__rezervovat" href="#<?php echo esc_attr( Pneukarnik_Inquiry::ANCHOR ); ?>"><?php esc_html_e( 'Poptat', 'pneukarnik' ); ?></a>
+		<?php else : ?>
+			<a class="mobilni-lista__rezervovat" href="<?php echo esc_url( pneukarnik_booking_url( $service ) ); ?>"><?php esc_html_e( 'Rezervovat', 'pneukarnik' ); ?></a>
+		<?php endif; ?>
 	</nav>
 	<?php
 }

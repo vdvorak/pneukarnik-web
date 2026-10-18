@@ -802,7 +802,7 @@ class Pneukarnik_Booking {
 		$check( 'company', $company, false );
 
 		$phone = sanitize_text_field( $text( 'phone' ) );
-		$check( 'phone', $phone, true, static fn( string $v ): bool => (bool) preg_match( '/^\+?\d{9,15}$/', (string) preg_replace( '/[\s\-\/().]/', '', $v ) ) );
+		$check( 'phone', $phone, true, [ self::class, 'valid_phone' ] );
 
 		$email = sanitize_text_field( $text( 'email' ) );
 		$check( 'email', $email, $online, static fn( string $v ): bool => (bool) is_email( $v ) );
@@ -845,6 +845,13 @@ class Pneukarnik_Booking {
 			],
 			$errors,
 		];
+	}
+
+	/**
+	 * Telefon: 9 až 15 číslic, volitelně s předvolbou „+“, mezery, pomlčky, lomítka, tečky a závorky se ignorují.
+	 */
+	public static function valid_phone( string $phone ): bool {
+		return (bool) preg_match( '/^\+?\d{9,15}$/', (string) preg_replace( '/[\s\-\/().]/', '', $phone ) );
 	}
 
 	/**

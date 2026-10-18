@@ -348,7 +348,10 @@ final class Pneukarnik_Notifications {
 		);
 	}
 
-	private static function provozovatel_email(): string {
+	/**
+	 * Kam chodí e‑maily Provozovateli: e‑mail z Kontaktů, bez něj e‑mail správce WordPressu.
+	 */
+	public static function provozovatel_email(): string {
 		$email = Pneukarnik_Contact::email();
 		return '' !== $email ? $email : (string) get_option( 'admin_email' );
 	}

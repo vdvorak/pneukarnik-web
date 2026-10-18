@@ -100,18 +100,20 @@ function pneukarnik_default_pages(): array {
 		],
 		'ochrana-osobnich-udaju' => [
 			'Ochrana osobních údajů',
-			'Jak zacházíme s údaji, které nám svěříte při rezervaci.',
+			'Jak zacházíme s údaji, které nám svěříte při rezervaci nebo poptávce.',
 			// Správce (firma, adresa, IČ, e‑mail) vypíše šablona z Nastavení.
 			$paragraph( '[Zástupné znění. Finální text napíše vývojář a schválí Provozovatel.]' )
 				. $heading( 'Jaké údaje zpracováváme a proč' )
 				. $list(
 					[
 						'Rezervace: jméno nebo firma, telefon, e‑mail, SPZ, značka a model vozu a poznámka, abychom vás mohli objednat, potvrdit Termín a ozvat se při změně.',
+						'Poptávka pneumatik: rozměr, letní nebo zimní, počet kusů, jméno nebo firma, telefon nebo e‑mail a poznámka, abychom vám mohli poslat nabídku. Poptávku na webu neukládáme, dojde nám jen e‑mailem.',
 						'Nabídky a připomínky: e‑mail, abychom vám posílali Připomínku přezutí před každou sezónou nebo naše akce, jen když jste s tím souhlasili (zaškrtnutím při online rezervaci nebo odkazem z potvrzení rezervace). Souhlas můžete kdykoli odvolat odkazem v každém z těchto e‑mailů, všechno nebo jen připomínku či akce. E‑mail se záznamem o souhlasu nebo odvolání uchováváme i po anonymizaci Rezervace. Na vaši žádost ho smažeme.',
 					]
 				)
 				. $heading( 'Jak dlouho údaje uchováváme' )
 				. $paragraph( 'Osobní údaje z Rezervace se automaticky anonymizují 1 rok po Termínu. Zůstane jen to, jakou Službu a kdy jsme dělali.' )
+				. $paragraph( 'E‑mail s Poptávkou pneumatik smažeme, až ji vyřídíme. [Lhůtu upřesní Provozovatel.]' )
 				. $heading( 'Cookies a měření návštěvnosti' )
 				. $paragraph( 'Web nepoužívá cookies, které by vyžadovaly souhlas. Mapa se načte z Google Maps až po vašem kliknutí. Návštěvnost měříme nástrojem Matomo v režimu bez cookies, adresy stránek odesíláme bez osobních údajů a odkazů z e‑mailů. [Kde Matomo běží a jak dlouho data uchovává, upřesní vývojář.]' )
 				. $heading( 'Vaše práva' )

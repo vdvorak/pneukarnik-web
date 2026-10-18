@@ -27,7 +27,7 @@ Design se řeší samostatně.
 /ochrana-osobnich-udaju
 ```
 
-**Úvod** (v tomto pořadí): aktivní Oznámení → hero (CTA Rezervovat + telefon, obojí viditelné bez scrollování) → „Co pro vás uděláme“ (6 karet: Služby s platnou Akcí, pak nejžádanější, zbytek doplní další v pořadí z administrace; pod nimi odkaz na všechny Služby) → proč my (rok založení, BestDrive, vybavení) → Google recenze → Pracovní doba a mapa.
+**Úvod** (v tomto pořadí): aktivní Oznámení → hero (CTA Rezervovat + telefon, obojí viditelné bez scrollování, pod nimi odkaz „Poptat pneumatiky“, když je Poptávka zapnutá) → „Co pro vás uděláme“ (6 karet: Služby s platnou Akcí, pak nejžádanější, zbytek doplní další v pořadí z administrace; pod nimi odkaz na všechny Služby) → proč my (rok založení, BestDrive, vybavení) → Google recenze → Pracovní doba a mapa.
 
 **Detail Služby** (povinné jsou jen 1, 4 a 8):
 1. název + perex,
@@ -38,6 +38,8 @@ Design se řeší samostatně.
 6. časté dotazy,
 7. aktivní Akce,
 8. CTA Rezervovat / Zavolat + související Služby.
+
+Služba, které Provozovatel zapne **Poptávku** (Prodej pneumatik), má v detailu formulář „Poptat pneumatiky“: rozměr, letní/zimní, počet kusů, jméno, telefon nebo e‑mail a poznámka. Poptávka odejde jen e‑mailem Provozovateli (Reply-To na Zákazníka), na webu se neukládá a Zákazník potvrzovací e‑mail nedostane. Úvod na formulář odkazuje (#50).
 
 První verzi textů napíše vývojář, Provozovatel je zkontroluje.
 
@@ -100,6 +102,5 @@ První verzi textů napíše vývojář, Provozovatel je zkontroluje.
 - Německá verze (odloženo).
 - Zákaznické účty a uložená vozidla (ADR 0002).
 - Samostatná stránka pro firmy a leasing.
-- Poptávkový formulář na pneumatiky.
 - Blog / Novinky.
 - Platby online.
