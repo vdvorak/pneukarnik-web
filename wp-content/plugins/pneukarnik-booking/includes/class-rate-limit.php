@@ -6,7 +6,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Ochrana veřejné rezervace: kolikrát za hodinu smí jedna IP vytvořit Rezervaci a zkusit Zrušení.
+ * Ochrana veřejných formulářů: kolikrát za hodinu smí jedna IP vytvořit Rezervaci, zkusit Zrušení
+ * a odeslat Poptávku.
  * Přihlášený Provozovatel limit nemá. Okno je pevná hodina od prvního započteného pokusu,
  * počítá se podle Pneukarnik_Clock. IPv6 se počítá po /64, kterou má jedna přípojka celou.
  * Za proxy vrátí skutečnou IP filtr `pneukarnik_client_ip` (výchozí REMOTE_ADDR).
@@ -17,18 +18,22 @@ final class Pneukarnik_Rate_Limit {
 	public const CREATE = 'create';
 	/** Každý pokus o Zrušení odkazem, i s neplatným tokenem. */
 	public const CANCEL = 'cancel';
+	/** Odeslané Poptávky (nevalidní se nepočítají). */
+	public const INQUIRY = 'inquiry';
 
 	public const MIN = 1;
 	public const MAX = 100;
 
 	private const OPTIONS = [
-		self::CREATE => 'pneukarnik_rate_limit',
-		self::CANCEL => 'pneukarnik_cancel_rate_limit',
+		self::CREATE  => 'pneukarnik_rate_limit',
+		self::CANCEL  => 'pneukarnik_cancel_rate_limit',
+		self::INQUIRY => 'pneukarnik_inquiry_rate_limit',
 	];
 
 	private const DEFAULTS = [
-		self::CREATE => 10,
-		self::CANCEL => 10,
+		self::CREATE  => 10,
+		self::CANCEL  => 10,
+		self::INQUIRY => 5,
 	];
 
 	public static function limit( string $action ): int {

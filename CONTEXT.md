@@ -36,6 +36,10 @@ _Avoid_: sleva, novinka, promo
 Doba, po kterou Služba zabírá dílnu, včetně rezervy na úklid a zpoždění. Nastavuje ji Provozovatel u každé Služby.
 _Avoid_: duration, trvání, časový rozestup
 
+**Poptávka**:
+Žádost Zákazníka o nabídku pneumatik z formuláře „Poptat pneumatiky“: rozměr, letní nebo zimní, počet kusů a kontakt (telefon, e‑mail, nebo obojí). Formulář je v detailu Služby, které ho Provozovatel zapne (Prodej pneumatik), a odkazuje na něj Úvod. Na webu se neukládá, jen odejde e‑mailem Provozovateli a ten se Zákazníkovi ozve sám. Není to Rezervace: nemá Termín ani nezabírá dílnu.
+_Avoid_: objednávka, dotaz, nabídka
+
 ### Rezervace a provoz
 
 **Rezervace**:

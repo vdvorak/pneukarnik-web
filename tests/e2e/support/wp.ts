@@ -109,6 +109,11 @@ export function setPostStatus(id: number, status: string): void {
 	wpCli(['wp', 'post', 'update', String(id), `--post_status=${status}`, '--quiet']);
 }
 
+/** Pořadí Služby z administrace (menu_order), nižší jde dřív. */
+export function setMenuOrder(id: number, order: number): void {
+	wpCli(['wp', 'post', 'update', String(id), `--menu_order=${order}`, '--quiet']);
+}
+
 /** Smaže příspěvky (i Služby) natrvalo. */
 export function deletePosts(ids: number[]): void {
 	if (ids.length) wpCli(['wp', 'post', 'delete', ...ids.map(String), '--force', '--quiet']);

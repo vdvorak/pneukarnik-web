@@ -487,6 +487,8 @@ a.ikona-info:hover,button.ikona-info:hover{background:var(--brand-primary);color
 .uvod__hero h1{margin:0;max-width:640px}
 .uvod__perex{margin:0;max-width:520px;font-size:19px;line-height:1.6;color:rgba(255,255,255,.88)}
 .uvod__cta{margin:0;display:flex;flex-wrap:wrap;gap:12px}
+.uvod__poptavka{margin:-6px 0 0;font-size:16px}
+.uvod__poptavka .arrow-link,.uvod__poptavka .arrow-link:hover{color:var(--brand-accent)}
 .uvod__dnes{max-width:520px;margin:8px 0 0;padding-top:18px;border-top:1px solid var(--border-on-dark);display:flex;flex-wrap:wrap;gap:8px 24px;font-size:15px}
 .uvod__dnes-den{opacity:.7}
 .uvod__dnes-doba{color:var(--brand-accent)}
@@ -567,6 +569,25 @@ a.ikona-info:hover,button.ikona-info:hover{background:var(--brand-primary);color
 .cena-sluzby__zahrnuje{font-size:15px;line-height:1.55;color:var(--text-muted)}
 .cena-sluzby .cena-sluzby__akce{display:flex;flex-direction:column;gap:10px;margin-top:8px}
 .cena-sluzby__poznamka{font-size:14px;color:var(--text-muted)}
+
+/* Poptávka pneumatik v detailu Služby. */
+.poptavka{scroll-margin-top:24px}
+.poptavka__uvod{margin:0;font-size:17px;color:var(--text-soft)}
+.poptavka > noscript .notice,.poptavka__hotovo{margin:0}
+.poptavka__hotovo p{margin:0}
+.poptavka__form{--card-pad:clamp(20px,4vw,32px);--card-gap:20px}
+.poptavka__pole{position:relative;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:16px 20px}
+.poptavka__sezona{border:0;padding:0;min-width:0}
+.poptavka__sezona legend{padding:0;margin-bottom:6px}
+.poptavka__volby{display:flex;flex-wrap:wrap;gap:10px 28px}
+.poptavka__volby .zaskrtavaci{font-size:16px;color:var(--text-body)}
+.poptavka__kontakt{margin:-8px 0 0}
+.poptavka__past{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
+.poptavka__zasady{margin:0;font-size:14px;color:var(--text-muted)}
+.poptavka__zasady a{font-weight:700}
+.poptavka__odeslat{display:flex;flex-direction:column;gap:12px}
+.poptavka__odeslat > [role="alert"]:empty{display:none}
+.poptavka__odeslat .notice,.poptavka__odeslat p{margin:0}
 
 @media (max-width:999px){
 	.sluzba{grid-template-columns:minmax(0,1fr)}

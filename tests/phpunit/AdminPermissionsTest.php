@@ -19,6 +19,7 @@ class AdminPermissionsTest extends Pneukarnik_REST_Test_Case {
 		'GET /pneukarnik/v1/slots',
 		'GET /pneukarnik/v1/available-days',
 		'POST /pneukarnik/v1/bookings',
+		'POST /pneukarnik/v1/inquiries', // Poptávka, chráněná limitem IP a pastí na roboty (InquiryTest).
 		'GET /pneukarnik/v1/cancellation',
 		'POST /pneukarnik/v1/cancellation',
 		'GET /pneukarnik/v1/prefill',
