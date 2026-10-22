@@ -59,7 +59,7 @@ test('Služba z administrace je na rozcestníku i v detailu se všemi částmi v
 	await expect(price.getByText('Cena zahrnuje: osobní auto do 16"')).toBeVisible();
 	await expect(price.getByRole('link', { name: 'Rezervovat' })).toHaveAttribute('href', new RegExp(`/rezervace/\\?sluzba=${slug}$`));
 	await expect(price.getByRole('link', { name: 'Zavolat +420 775 565 326' })).toHaveAttribute('href', 'tel:+420775565326');
-	await expect(price.getByText('Tuto službu objednáváme jen telefonicky.')).toHaveCount(0);
+	await expect(price.getByText('Online se samostatně neobjednává.')).toHaveCount(0);
 	await expect(page.getByText('Můžete, máme čekárnu.')).toBeHidden();
 
 	// Na mobilu je karta Cena pod hero jen s cenou, Rezervovat s touto Službou je v liště.
@@ -97,12 +97,12 @@ test('Služba jen na telefon s cenou dle vozu ukáže jen vyplněné části a Z
 	await expect(page.locator('main h2')).toHaveText(['Cena']);
 	const price = page.getByRole('complementary', { name: 'Cena' });
 	await expect(price.getByText('Cena dle vozu')).toBeVisible();
-	await expect(price.getByText('Tuto službu objednáváme jen telefonicky.')).toBeVisible();
+	await expect(price.getByText('Online se samostatně neobjednává.')).toBeVisible();
 	await expect(page.getByRole('main').getByRole('link', { name: 'Rezervovat' })).toHaveCount(0);
 	await expect(price.getByRole('link', { name: /Zavolat/ })).toBeVisible();
 
 	await page.setViewportSize({ width: 375, height: 700 });
-	await expect(price.getByText('Tuto službu objednáváme jen telefonicky.')).toBeInViewport();
+	await expect(price.getByText('Online se samostatně neobjednává.')).toBeInViewport();
 	await expect(page.getByRole('navigation', { name: 'Rychlý kontakt' }).getByRole('link', { name: 'Rezervovat' })).toHaveAttribute('href', /\/rezervace\/$/);
 });
 

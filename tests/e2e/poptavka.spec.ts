@@ -8,7 +8,7 @@ let title = '';
 
 test.beforeAll(() => {
 	title = uniqueTitle('Prodej pneumatik');
-	serviceId = createService(title, `e2e-prodej-pneumatik-${Date.now()}`, 'pneuservis', { _service_inquiry: '1' });
+	serviceId = createService(title, `e2e-prodej-pneumatik-${Date.now()}`, 'pneuservis', { _service_inquiry: '1', _service_price: '', _service_price_by_vehicle: '1' });
 	// První Služba s Poptávkou v pořadí, na ni odkáže Úvod.
 	setMenuOrder(serviceId, -100);
 });
@@ -23,7 +23,9 @@ test('Z Úvodu se Zákazník dostane k formuláři Poptávky a odeslaná Poptáv
 
 	await expect(page).toHaveURL(/\/pneuservis\/e2e-prodej-pneumatik-\d+\/#poptavka$/);
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText(title);
-	await expect(page.getByRole('complementary', { name: 'Cena' }).getByRole('link', { name: 'Poptat pneumatiky' })).toHaveAttribute('href', '#poptavka');
+	const price = page.getByRole('complementary', { name: 'Cena' });
+	await expect(price.getByText('Cena na dotaz')).toBeVisible();
+	await expect(price.getByRole('link', { name: 'Poptat pneumatiky' })).toHaveAttribute('href', '#poptavka');
 	const form = page.getByRole('region', { name: 'Poptat pneumatiky' });
 
 	await form.getByRole('button', { name: 'Odeslat poptávku' }).click();

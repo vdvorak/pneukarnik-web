@@ -8,11 +8,11 @@
 declare(strict_types=1);
 
 /**
- * Cena Služby pro web: „600 Kč“, „od 600 Kč“, nebo „Cena dle vozu“.
+ * Cena Služby pro web: „600 Kč“, „od 600 Kč“, nebo „Cena dle vozu“ (u Služby s Poptávkou „Cena na dotaz“).
  */
 function pneukarnik_price_label( Pneukarnik_Service $service ): string {
 	if ( $service->price_by_vehicle || null === $service->price ) {
-		return __( 'Cena dle vozu', 'pneukarnik' );
+		return $service->inquiry ? __( 'Cena na dotaz', 'pneukarnik' ) : __( 'Cena dle vozu', 'pneukarnik' );
 	}
 	$amount = pneukarnik_amount( $service->price );
 	/* translators: %s: částka, např. 600 Kč */
@@ -107,7 +107,7 @@ function pneukarnik_service_price_card( Pneukarnik_Service $service ): void {
 			</p>
 		<?php endif; ?>
 		<?php if ( ! $service->bookable && ! $service->inquiry ) : ?>
-			<p class="cena-sluzby__poznamka"><?php esc_html_e( 'Tuto službu objednáváme jen telefonicky.', 'pneukarnik' ); ?></p>
+			<p class="cena-sluzby__poznamka"><?php esc_html_e( 'Online se samostatně neobjednává.', 'pneukarnik' ); ?></p>
 		<?php endif; ?>
 	</aside>
 	<?php
@@ -494,7 +494,7 @@ function pneukarnik_hero_photo(): void {
  */
 function pneukarnik_category_lead( string $category ): string {
 	$leads = [
-		Pneukarnik_Service::PNEUSERVIS => __( 'Přezutí, uskladnění, prodej pneu, geometrie a opravy defektů.', 'pneukarnik' ),
+		Pneukarnik_Service::PNEUSERVIS => __( 'Přezutí, uskladnění a prodej pneumatik. Na dotaz i opravy defektů, vyvažování a huštění dusíkem.', 'pneukarnik' ),
 		Pneukarnik_Service::AUTOSERVIS => __( 'Příprava na STK, klimatizace, brzdy, olej, diagnostika a další.', 'pneukarnik' ),
 	];
 	return $leads[ $category ] ?? '';
