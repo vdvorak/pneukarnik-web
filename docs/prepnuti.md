@@ -1,6 +1,6 @@
 # Přepnutí na nový web
 
-Checklist pro #23. Nový web nahradí starý **ve stejné instalaci WordPressu a databázi** (prefix `hwjcw_`): odstraní se stará šablona a pluginy, data zůstanou a převod (#21) je načte. Kroky označené „ověřeno“ prošly zkouškou nad zálohou živé databáze (`make zkouska`, viz níže). Ostatní potřebují hosting a čekají na #23.
+Checklist pro #23. Nový web nahradí starý **ve stejné instalaci WordPressu a databázi**: obsah se připraví na testovací kopii (tabulky `tstpk_`) a ostrý web při přepnutí přejde na její tabulky. Staré tabulky živého webu (`hwjcw_`) zůstanou beze změny a převod (#21) z nich znovu načte Rezervace a souhlasy. Kroky označené „ověřeno“ prošly zkouškou nad zálohou živé databáze (`make zkouska` a Výsledek zkoušky přepnutí níže).
 
 ## Zkouška lokálně
 
@@ -10,11 +10,11 @@ make zkouska DUMP=/tmp/zaloha.sql   # web http://localhost:8090 (zkouska / zkous
 make zkouska-down                   # po zkoušce smazat, jsou tam osobní údaje zákazníků
 ```
 
-`make zkouska` založí oddělené prostředí (vývojové na :8080 se nemění), nahraje zálohu a provede kroky přepnutí ze skriptu `docker/cli/prepnuti.sh`. Všechny e‑maily skončí v Mailpitu zkoušky. Staré pluginy (WP Mail SMTP …) se nenačtou, jejich soubory v kontejneru nejsou.
+`make zkouska` založí oddělené prostředí (vývojové na :8080 se nemění), nahraje zálohu a provede nad starou databází kroky ze skriptu `docker/cli/prepnuti.sh` (nový web nad tabulkami `hwjcw_`, hodí se na zkoušku převodu). Všechny e‑maily skončí v Mailpitu zkoušky. Staré pluginy (WP Mail SMTP …) se nenačtou, jejich soubory v kontejneru nejsou.
 
 ## Rozhodnout před přepnutím
 
-- **Kde připravit obsah.** Co Provozovatel nastaví na testovací kopii (perexy Služeb, Nastavení, Průvodci, stránky), se samo na ostrý web nepřenese. Doporučení: připravit vše na testovací kopii a při přepnutí její databázi nasadit na ostrý web, do ní nahrát čerstvou tabulku `hwjcw_reservations` ze živého webu a převod spustit znovu. Převod je opakovatelný, takže přidá jen Rezervace a souhlasy, které mezitím na starém webu přibyly.
+- **Kde připravit obsah:** na testovací kopii (rozhodnuto 2026‑10‑22, obsah tam je). Ostrý web při přepnutí přejde na její tabulky `tstpk_` (změna `$table_prefix`), staré `hwjcw_` zůstanou jako archiv a cesta zpět. Rezervace, souhlasy a Rozesílky kopie se zahodí a převedou se znovu z čerstvé staré tabulky, ať na ostrém webu nezůstane nic zkušebního ani Rezervace zrušená na starém webu po vytvoření kopie.
 - **E‑mail s novým odkazem na Zrušení** převedeným budoucím Rezervacím: ano (rozhodl vývojář s Provozovatelem). Na kopii převádět bez e‑mailu, naostro s ním.
 - **Zálohy ostrého webu.** Všechny Rezervace a souhlasy jsou jen v databázi. Zjistit u Webglobe, jak často a jak dlouho databázi zálohují a jak se záloha obnoví. Když to nestačí (třeba jen týden zpětně), domluvit vlastní pravidelný export.
 - **Cron na hostingu.** Zjistit, jestli Webglobe umí spouštět naplánovaný příkaz (cron). Plánované úlohy pluginu (anonymizace, Připomínky přezutí a Termínu, Rozesílky, recenze) jinak běží přes WP‑Cron, tedy jen když někdo otevře web a web si úspěšně zavolá sám sebe.
@@ -81,25 +81,27 @@ Hosting má **jedinou databázi**, kopie proto bydlí ve stejné databázi jako 
 
 ### 7. Kroky přepnutí na kopii
 
-Stejné jako v sekci Přepnutí níže (bez kroku 1, zálohou kopie je `kopie/`), v tomto pořadí:
+Nový web nad tabulkami `tstpk_` (zálohou kopie je `kopie/`), v tomto pořadí:
 
-- [ ] Pluginy: hromadně **deaktivovat všechny** staré pluginy (krok 4). Kvůli WordPressu 7.1 to musí být před aktualizací.
-- [ ] Nástěnka → Aktualizace: WordPress na 7.1, pak „Aktualizovat databázi“, pokud ji WordPress nabídne (krok 3).
-- [ ] Nahrát šablonu a plugin z repa (krok 2). Zipy připravíš v kořeni repa:
+- [ ] Pluginy: hromadně **deaktivovat všechny** staré pluginy. Kvůli WordPressu 7.1 to musí být před aktualizací.
+- [ ] Nástěnka → Aktualizace: WordPress na 7.1, pak „Aktualizovat databázi“, pokud ji WordPress nabídne. Ověřeno: 58975 → 61833.
+- [ ] Nahrát šablonu a plugin z repa. Zipy připravíš v kořeni repa:
   ```sh
   (cd wp-content/themes && zip -rq ../../pneukarnik.zip pneukarnik)
   (cd wp-content/plugins && zip -rq ../../pneukarnik-booking.zip pneukarnik-booking)
   ```
   Vzhled → Motivy → Přidat → Nahrát `pneukarnik.zip`. Pluginy → Přidat → Nahrát `pneukarnik-booking.zip`. Plugin ze starého pokusu tam už je, zvolit **„Nahradit stávající“**. Jiná cesta je SFTP: starý adresář `wp-content/plugins/pneukarnik-booking` nejdřív smazat, ať nezůstanou staré soubory. Pro opakované nahrávání jen šablony a pluginu (po dalších commitech) jde použít `make deploy-test` (`docker/deploy/deploy-test.sh`, přístup napevno pro `test.pneukarnik.cz`): přes FTPS zrcadlí oba adresáře i s mazáním starých souborů, heslo zadáš interaktivně. Jiný přístup jde přepsat přes `HOST=… FTP_USER=… REMOTE=… make deploy-test`.
-- [ ] Aktivovat šablonu Pneukarník a plugin Pneukarnik Booking (krok 4).
-- [ ] Nastavení → Trvalé odkazy → Uložit (krok 5). WordPress doplní svůj blok do `.htaccess`, blok s heslem musí zůstat nahoře.
-- [ ] Rezervace → Převod ze starého webu **bez e‑mailu Zákazníkům** (krok 6) a projít report (krok 7).
-- [ ] Smazat staré pluginy podle kroku 8. WP Mail SMTP nechat kvůli kroku 8 níže. (`/nova/` v kopii není.)
+- [ ] Aktivovat šablonu Pneukarník a plugin Pneukarnik Booking. Databáze pluginu se dorovná z verze 1.2 (starý pokus).
+- [ ] Nastavení → Trvalé odkazy → Uložit. Struktura `/%year%/%monthnum%/%day%/%postname%/` může zůstat, nové stránky na ní fungují. WordPress doplní svůj blok do `.htaccess`, blok s heslem musí zůstat nahoře.
+- [ ] Rezervace → Převod ze starého webu **bez e‑mailu Zákazníkům** a projít report.
+- [ ] Smazat staré pluginy (Pods, Timber, Complianz, W3 Total Cache, Contact Form 7, Email Log). WP Mail SMTP nechat kvůli kroku 8 níže. (`/nova/` v kopii není.)
 - [ ] `wp-content/debug.log` je prázdný.
 
 ### 8. E‑maily: SMTP, SPF, DKIM
 
-- [ ] Administrace Webglobe: e‑mailová schránka na doméně pro odesílání, např. `rezervace@pneukarnik.cz`. Poznamenat si údaje SMTP (server, port, šifrování).
+Stav k 2026‑10‑22 (veřejné DNS a nastavení WP Mail SMTP v kopii): DNS domény je u Onebitu (Webglobe, `ns.onebit.cz`). Živý web posílá přes `mail.webglobe.cz:465` z `info@pneukarnik.cz`. SPF `v=spf1 mx include:_spf.onebit.cz ~all` ten server povoluje, DKIM `default._domainkey` existuje, DMARC chybí. Zbývá tedy hlavně DMARC a zkouška doručení.
+
+- [ ] Administrace Webglobe: e‑mailová schránka na doméně pro odesílání (dnes `info@pneukarnik.cz`, jiná jen když bude důvod). Poznamenat si údaje SMTP (server, port, šifrování).
 - [ ] DNS `pneukarnik.cz` (u Webglobe nebo jinde):
   - **SPF:** TXT záznam `v=spf1 … -all` obsahuje poštovní servery Webglobe. Přesné znění (`include:` …) dá administrace nebo podpora Webglobe. Smí být jen jeden SPF záznam.
   - **DKIM:** zapnout pro doménu v administraci pošty Webglobe a ověřit, že se v DNS objevil záznam `…._domainkey`.
@@ -113,11 +115,13 @@ Stejné jako v sekci Přepnutí níže (bez kroku 1, zálohou kopie je `kopie/`)
 
 ### 9. Obsah a ověření
 
+Služby, Průvodci, Nastavení a oba účty jsou na kopii doplněné podle odpovědí Provozovatele (2026‑10‑22, import tabulek `options`, `posts`, `postmeta`, `users` a `usermeta` vyrobený lokálně přes WP‑CLI). Provozovatel je zkontroluje, otevřené zůstává: cena Dekarbonizace (web „od 1 690 Kč“, starý web 2 290 Kč nad 2 000 cm³), finální text Ochrany osobních údajů.
+
 - [ ] Účty (Uživatelé → Přidat), administrátorem zůstává vývojář:
   - Provozovatel: role **Provozovatel** (Služby, Akce, Průvodci, stránky, Rezervace, Nastavení, Výjimky, E‑maily Zákazníkům; ne pluginy, uživatelé a Převod).
   - Technici: společný účet s rolí **Rezervace – prohlížení** (kalendář, seznam a PDF přehled dne).
   - Oběma heslo k testovací kopii.
-- [ ] Provozovatel doplní Služby (viz Výsledek zkoušky), Nastavení (kontakty, Pracovní doba, Sezóny, Lhůta zrušení), stránky O nás, Kontakt, Ochrana osobních údajů (perex do výňatku stránky) a Průvodce.
+- [ ] Provozovatel doplní Služby (viz Výsledek zkoušky převodu), Nastavení (kontakty, Pracovní doba, Sezóny, Lhůta zrušení), stránky O nás, Kontakt, Ochrana osobních údajů (perex do výňatku stránky) a Průvodce.
   Nastavení podle `docs/podklady-od-klienta/odpovedi-3.md`:
   - Pracovní doba Po–Pá 8:00–12:00 a 13:00–17:00, So–Ne zavřeno.
   - Sezóny: jarní 15. 3. až 30. 4. s leasing od 1. 4., podzimní 1. 10. až 15. 11. s leasing do 31. 10. („hotové do 1. 11.“, ověřit telefonem, viz `docs/otazky-pro-klienta.md`).
@@ -142,30 +146,70 @@ Stejné jako v sekci Přepnutí níže (bez kroku 1, zálohou kopie je `kopie/`)
 - [ ] Cron je vypnutý. Anonymizaci, Připomínky přezutí a Termínu, Rozesílky a recenze jde spustit ručně, když je potřeba vyzkoušet: plugin WP Crontrol, nebo dočasně `DISABLE_WP_CRON` na `false`.
 - [ ] Návrat zpět (nacvičení): znovu nahrát soubory a `kopie.sql` podle kroků 5 a 6 a v phpMyAdminu smazat tabulky `tstpk_`, které přidal nový plugin (`tstpk_pneukarnik_booking_services`, `…_day_exceptions`, `…_subscriptions`). Starý web na kopii musí naběhnout, pak krok 7 zopakovat. Proto `kopie/` lokálně smaž až po této zkoušce.
 
-**Po zkoušce** (nebo až kopie nebude potřeba): smazat adresář subdomény a v phpMyAdminu **jen tabulky `tstpk_`** (filtr tabulek `tstpk_`, Zaškrtnout vše, Odstranit). Lokálně smazat `kopie/`. Všude jsou osobní údaje zákazníků.
+**Tabulky `tstpk_` nemazat:** při přepnutí se z nich stane ostrý web. Adresář subdomény a lokální `kopie/` se mažou až v kroku 10 přepnutí, všude jsou osobní údaje zákazníků.
 
 ## Přepnutí (mimo sezónu, cíl leden–únor 2027)
 
-1. [ ] Záloha celého webu (Duplicator) a databáze.
-2. [ ] Nahrát šablonu `pneukarnik` a plugin `pneukarnik-booking`.
-3. [ ] `wp core update-db` (nebo Nástěnka → Aktualizovat databázi). Ověřeno: 58975 → 61833.
-4. [ ] Vypnout všechny staré pluginy, aktivovat šablonu Pneukarník a plugin Pneukarnik Booking. Ověřeno: databáze pluginu se dorovná z verze 1.2 (starý pokus) na 1.12.
-5. [ ] Nastavení → Trvalé odkazy → Uložit (přegeneruje adresy). Struktura `/%year%/%monthnum%/%day%/%postname%/` může zůstat, nové stránky na ní fungují (ověřeno).
-6. [ ] Rezervace → Převod ze starého webu (s e‑mailem podle rozhodnutí). Ověřeno, viz Výsledek zkoušky.
-7. [ ] Projít report převodu: chybné Rezervace a budoucí překryvy vyřešit se Zákazníky telefonicky.
-8. [ ] Smazat `/nova/`, staré pluginy (Pods, Timber, Complianz, W3 Total Cache, Contact Form 7, Email Log, WP Mail SMTP podle nového SMTP, Duplicator až po přepnutí) a starou šablonu `tmechanics-theme`.
-9. [ ] Kontrola přesměrování: všechny adresy z `docs/stare-url.md` vrátí 301 na stránku s 200. Ověřeno (45 z 45).
-10. [ ] Sitemapa (`/wp-sitemap.xml`) do Search Console. Adresy z přehledu Stránky doplnit do `docs/stare-url.md`.
-11. [ ] Archivovat `hwjcw_reservations` (export SQL mimo web) a zapsat datum ručního smazání tabulky za rok (zadání).
-12. [ ] Plánované úlohy běží: Nástroje → Stav webu bez chyby „smyčkový požadavek“ (loopback) a v pluginu WP Crontrol žádná úloha `pneukarnik_…` po termínu. Když hosting cron umí: do `wp-config.php` `define( 'DISABLE_WP_CRON', true );` a na hostingu každých 15 minut spouštět `wp-cron.php` (např. `wget -q -O - https://pneukarnik.cz/wp-cron.php?doing_wp_cron`). Pak znovu ověřit ve WP Crontrol.
-13. [ ] Zálohy podle rozhodnutí výše (Webglobe, případně vlastní export) běží a jedna obnova je vyzkoušená.
+Ostrý web přejde na tabulky testovací kopie: v jeho `wp-config.php` se změní `$table_prefix` z `hwjcw_` na `tstpk_`. Obsah, Nastavení a účty z kopie tak platí rovnou. Staré tabulky `hwjcw_` přepnutí nemění (ověřeno součty), zůstanou jako archiv a cesta zpět. Rezervace a souhlasy se převedou znovu z čerstvé staré tabulky.
+
+**Potřebuješ:** totéž co pro kopii (administrace Webglobe, phpMyAdmin, SFTP, FTPS přes `lftp` s přístupem do `/public_html/www`, Docker) a zhruba dvě hodiny večer. Kopie musí být hotová: co se na ní uloží po exportu v kroku 3, na ostrý web nepřejde. Na kopii se nezadávají skutečné Rezervace, Rezervace, souhlasy a Rozesílky kopie se v kroku 3 zahodí.
+
+1. [ ] **Zálohy:** živý web Duplicatorem (soubory i databáze), archiv stáhnout. phpMyAdmin → Exportovat celou databázi.
+2. [ ] **Údržba:** do `www` (SFTP) nahrát soubor `.maintenance` s obsahem `<?php $upgrading = time();`. Web i administrace ukazují „Probíhá plánovaná údržba“: starý web nepřijme Rezervaci a nový plugin nic nenačte, dokud se v kroku 6 nepřepne prefix (starý plugin `pneukarnik-booking` je na živém webu aktivní, nové soubory by jinak hned dorovnaly tabulky `hwjcw_`).
+3. [ ] **Export kopie:** phpMyAdmin → Struktura → filtr `tstpk_` → Zaškrtnout vše → Se zaškrtnutými: Exportovat (SQL). V repu:
+   ```sh
+   make ostry DUMP=~/Downloads/…_tstpk.sql
+   ```
+   Vznikne `ostry/` (v gitu ignorovaný, jsou v něm osobní údaje): `ostry.sql` s adresami `https://pneukarnik.cz`, zapnutou indexací a bez Rezervací, souhlasů a Rozesílek kopie, a `ostry/wordpress/` s jádrem WordPressu ve verzi, pro kterou je databáze. Skript sám zkontroluje, že `ostry.sql` vytváří a maže jen tabulky `tstpk_`, nikde v něm není `hwjcw_` ani adresa kopie.
+4. [ ] **Import:** phpMyAdmin → Import → `ostry/ostry.sql` (přes 18 MB: `gzip` a importovat `.sql.gz`). Nahradí tabulky `tstpk_`, `hwjcw_` nemění. Testovací kopie od teď přesměrovává na pneukarnik.cz.
+5. [ ] **Staré Rezervace:** phpMyAdmin → SQL:
+   ```sql
+   SET SESSION sql_mode = '';
+   DROP TABLE IF EXISTS tstpk_reservations;
+   CREATE TABLE tstpk_reservations LIKE hwjcw_reservations;
+   INSERT INTO tstpk_reservations SELECT * FROM hwjcw_reservations;
+   SELECT (SELECT COUNT(*) FROM hwjcw_reservations) AS stara, (SELECT COUNT(*) FROM tstpk_reservations) AS kopie;
+   ```
+   Obě čísla musí být stejná. Bez `sql_mode` MySQL odmítne staré řádky s datem `0000-00-00`, tabulka zůstane prázdná a převod pak nic nepřevede (ověřeno).
+6. [ ] **Soubory v `www`:**
+   - Webglobe → Hosting → Web → `www`: PHP 8.3 (nejméně 8.1).
+   - `make deploy-ostry` (`docker/deploy/deploy-ostry.sh`): jádro z `ostry/wordpress` (`wp-admin` a `wp-includes` se zrcadlí i s mazáním, soubory v kořeni se přepíšou), šablona a plugin, smaže `wp-content/advanced-cache.php` (W3 Total Cache). Ostatní soubory (`wp-content/uploads`, staré pluginy a šablona, `wp-config.php`) nechá.
+   - `wp-config.php` (SFTP): `$table_prefix = 'tstpk_';` a smazat řádek `define('WP_CACHE', true); // Added by W3 Total Cache`. Nic dalšího, přístupy k databázi platí.
+   - `.htaccess`: smazat bloky `# BEGIN W3TC …` až `# END W3TC …`, blok WordPressu a ostatní nechat. `aios-bootstrap.php` v kořeni nemazat, může ho načítat `.user.ini`.
+7. [ ] **Spuštění:** smazat `.maintenance` a přihlásit se (účty z kopie). Když WordPress nabídne „Aktualizovat databázi“, potvrdit, pak Nástěnka → Aktualizace → Překlady. Nastavení → Trvalé odkazy → Uložit. Nástroje → Stav webu bez kritických problémů.
+8. [ ] **E‑mail funguje:** WP Mail SMTP → Nástroje → Testovací e‑mail na vlastní adresu dojde. Musí to být před převodem: e‑mail s novým odkazem na Zrušení převod pošle jen jednou, Rezervacím převedeným při nefunkční poště ho znovu nepošle.
+9. [ ] **Převod:** Rezervace → Převod ze starého webu **s e‑mailem** Zákazníkům. V reportu musí být Služby přeskočené (vazba z kopie), počet odeslaných e‑mailů rovný budoucím Rezervacím. Chybné Rezervace a budoucí překryvy vyřešit se Zákazníky telefonicky.
+10. [ ] **Kopie pryč:** smazat subdoménu `test` a její adresář (běží nad stejnými tabulkami jako ostrý web). Lokálně smazat `kopie/` a `ostry/`.
+11. [ ] Zkušební Rezervace na vlastní adresu v Gmailu a na Seznamu (SPF, DKIM, DMARC jako v kroku 8 kopie), Zrušení odkazem z e‑mailu, PDF přehled, iCal. Rezervaci pak zrušit.
+12. [ ] Kontrola přesměrování: všechny adresy z `docs/stare-url.md` vrátí 301 na stránku s 200. Staré Služby `/service/…` vedou na detail své Služby, ne na Úvod jako v tabulce (ta platí pro vývojový web bez těch Služeb). Ověřeno zkouškou (57 adres).
+13. [ ] Sitemapa (`/wp-sitemap.xml`) do Search Console (doména už má ověření v DNS, zjistit, čí účet). Adresy z přehledu Stránky doplnit do `docs/stare-url.md`.
+14. [ ] Plánované úlohy běží: Nástroje → Stav webu bez chyby „smyčkový požadavek“ (loopback) a v pluginu WP Crontrol žádná úloha `pneukarnik_…` po termínu. Když hosting cron umí: do `wp-config.php` `define( 'DISABLE_WP_CRON', true );` a na hostingu každých 15 minut spouštět `wp-cron.php` (např. `wget -q -O - https://pneukarnik.cz/wp-cron.php?doing_wp_cron`). Pak znovu ověřit ve WP Crontrol.
+15. [ ] Zálohy podle rozhodnutí výše (Webglobe, případně vlastní export) běží a jedna obnova je vyzkoušená.
+16. [ ] **Úklid** (po pár dnech provozu, až nebude potřeba cesta zpět): v `www` smazat `/nova/`, staré pluginy (Pods, Timber, Complianz, W3 Total Cache, Contact Form 7, Email Log, Duplicator), starou šablonu `tmechanics-theme`, `wp-content/cache` a `wp-content/w3tc-config`. WP Mail SMTP zůstává (je aktivní).
+17. [ ] **Archiv:** `hwjcw_reservations` exportovat (SQL mimo web) a zapsat datum ručního smazání tabulky za rok (zadání). Ostatní tabulky `hwjcw_` smazat (filtr `hwjcw_`) až po úklidu, dřív ne.
 
 ## Návrat zpět
 
-- [ ] Obnovit zálohu z kroku 1 (Duplicator: soubory i databáze). Nový web do starých tabulek nezapisuje (jen čte `hwjcw_reservations` a staré Služby), takže starý web po obnovení šablony a pluginů běží s daty z okamžiku přepnutí. Rezervace vzniklé mezitím na novém webu je třeba přepsat ručně.
-- [ ] Vyzkoušet na testovací kopii.
+Tabulky `hwjcw_` přepnutí nemění, návrat je hlavně o souborech:
 
-## Výsledek zkoušky (záloha z 2026‑07‑20, převod 2026‑10‑03 a 04)
+- [ ] `.maintenance` do `www` (krok 2).
+- [ ] `wp-config.php`: `$table_prefix = 'hwjcw_';` a zpět `define('WP_CACHE', true); // Added by W3 Total Cache`.
+- [ ] Z archivu Duplicatoru (krok 1) nahrát zpět `wp-admin`, `wp-includes`, soubory v kořeni (kromě `wp-config.php`), `wp-content/plugins/pneukarnik-booking`, `wp-content/advanced-cache.php` a `.htaccess`. Ostatní staré pluginy a šablona v `www` zůstaly, dokud neproběhl úklid (krok 16), potom nahrát i je.
+- [ ] Smazat `.maintenance`. Starý web běží s daty z okamžiku přepnutí. Rezervace vzniklé mezitím na novém webu (Rezervace → seznam od data přepnutí) přepsat do starého ručně.
+- Tabulky `tstpk_` nechat, přepnutí jde zopakovat od kroku 3.
+- Vyzkoušeno lokálně jen pro databázi (součty `hwjcw_` před a po přepnutí stejné). Starý web s obnovenými soubory se nezkoušel, obnova souborů z Duplicatoru je standardní.
+
+## Výsledek zkoušky přepnutí (2026‑10‑22)
+
+Lokálně na MySQL 5.7: tabulky `hwjcw_` ze zálohy živého webu z 2026‑10‑06 a `tstpk_` z kopie s doplněným obsahem. Na staré tabulce nasimulovaný provoz po vytvoření kopie: nová Rezervace a zrušení jedné převedené. Pak kroky 3–5, web nad `tstpk_` a převod (krok 9).
+
+- `make ostry`: 6 656 adres kopie přepsaných, z kopie pryč 1 032 Rezervací (z toho 8 zkušebních), 94 souhlasů, WordPress 7.1.2.
+- Krok 5 bez `sql_mode` spadl na datu `0000-00-00` a nechal prázdnou tabulku, proto `SET SESSION sql_mode = ''`.
+- Převod: Služby 17 přeskočené, Rezervace 930 (nová převedená, zrušená ne), chybné 2 (`0000-00-00`), souhlasy 95. E‑maily se ve zkoušce neodeslaly (WP‑CLI bez pošty), odesílání pokrývají testy pluginu.
+- Úvod, Služby, Rezervace, Průvodci, stránky a sitemapa 200, staré adresy 301, `debug.log` bez chyb.
+- Součty (`CHECKSUM TABLE`) všech 58 tabulek `hwjcw_` před a po přepnutí stejné.
+
+## Výsledek zkoušky převodu (záloha z 2026‑07‑20, převod 2026‑10‑03 a 04)
 
 - Převod 3,7–4,4 s. Služby 17 (16 převzatých ze starého pokusu, 1 nový koncept), Rezervace 838–840 (podle data převodu), přeskočeno 3 097, chybná 1 (datum `0000-00-00`), souhlasy 93. Opakovaný převod nic nepřidá.
 - Překryvy existují jen v minulosti (chyba starého webu: tříhodinová Geometrie a v ní další Rezervace), report je proto nehlásí.

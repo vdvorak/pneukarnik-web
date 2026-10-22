@@ -1,6 +1,7 @@
 # Testovací kopie (make kopie): databáze stejná jako na hostingu Webglobe (Percona Server 5.7.44,
 # kompatibilní s MySQL 5.7), aby export šel importovat přes phpMyAdmin. MariaDB by do něj zapsala
-# řazení a zápisy, které 5.7 nezná. Živý web má prefix tabulek hwjcw_.
+# řazení a zápisy, které 5.7 nezná. Živý web má prefix tabulek hwjcw_, kopie tstpk_ (TABLE_PREFIX,
+# make ostry).
 services:
   db:
     image: mysql:5.7.44
@@ -13,7 +14,7 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
   wordpress:
     environment:
-      WORDPRESS_TABLE_PREFIX: hwjcw_
+      WORDPRESS_TABLE_PREFIX: ${TABLE_PREFIX:-hwjcw_}
   cli:
     environment:
-      WORDPRESS_TABLE_PREFIX: hwjcw_
+      WORDPRESS_TABLE_PREFIX: ${TABLE_PREFIX:-hwjcw_}

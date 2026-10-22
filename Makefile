@@ -9,7 +9,7 @@ export BASE_URL := http://localhost:$(WP_PORT)
 COMPOSE := docker compose
 TOOLS   := $(COMPOSE) run --rm tools
 
-.PHONY: help up down reset logs wp test test-php test-e2e lint fix check zkouska zkouska-down kopie deploy-test
+.PHONY: help up down reset logs wp test test-php test-e2e lint fix check zkouska zkouska-down kopie deploy-test ostry deploy-ostry
 
 help: ## Vypíše příkazy
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-10s %s\n", $$1, $$2}'
@@ -73,3 +73,9 @@ kopie: ## Testovací kopie pro hosting s jednou databází (prefix tstpk_), make
 
 deploy-test: ## Nahraje šablonu a plugin na testovací kopii přes FTPS (heslo se vyžádá interaktivně)
 	HOST="$(HOST)" FTP_USER="$(FTP_USER)" REMOTE="$(REMOTE)" PORT="$(PORT)" sh docker/deploy/deploy-test.sh
+
+ostry: ## Databáze kopie a jádro WordPressu pro ostrý web (přepnutí), make ostry DUMP=export_tstpk.sql
+	DUMP="$(DUMP)" sh docker/kopie/ostry.sh
+
+deploy-ostry: ## Při přepnutí nahraje jádro z make ostry, šablonu a plugin na ostrý web přes FTPS
+	HOST="$(HOST)" FTP_USER="$(FTP_USER)" REMOTE="$(REMOTE)" PORT="$(PORT)" sh docker/deploy/deploy-ostry.sh
