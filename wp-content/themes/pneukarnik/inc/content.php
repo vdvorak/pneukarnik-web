@@ -12,7 +12,7 @@
 declare(strict_types=1);
 
 /** Při přidání výchozího obsahu zvyšte, chybějící obsah se doplní při dalším požadavku. */
-const PNEUKARNIK_CONTENT_VERSION = '1';
+const PNEUKARNIK_CONTENT_VERSION = '2';
 
 /** Fotky galerie O nás v assets/img/galerie (soubor bez přípony => popisek). */
 const PNEUKARNIK_GALLERY = [
