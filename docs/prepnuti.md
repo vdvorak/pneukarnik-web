@@ -15,7 +15,7 @@ make zkouska-down                   # po zkoušce smazat, jsou tam osobní údaj
 ## Rozhodnout před přepnutím
 
 - **Kde připravit obsah.** Co Provozovatel nastaví na testovací kopii (perexy Služeb, Nastavení, Průvodci, stránky), se samo na ostrý web nepřenese. Doporučení: připravit vše na testovací kopii a při přepnutí její databázi nasadit na ostrý web, do ní nahrát čerstvou tabulku `hwjcw_reservations` ze živého webu a převod spustit znovu. Převod je opakovatelný, takže přidá jen Rezervace a souhlasy, které mezitím na starém webu přibyly.
-- **E‑mail s novým odkazem na Zrušení** převedeným budoucím Rezervacím: ano/ne (Provozovatel).
+- **E‑mail s novým odkazem na Zrušení** převedeným budoucím Rezervacím: ano (rozhodl vývojář s Provozovatelem). Na kopii převádět bez e‑mailu, naostro s ním.
 - **Zálohy ostrého webu.** Všechny Rezervace a souhlasy jsou jen v databázi. Zjistit u Webglobe, jak často a jak dlouho databázi zálohují a jak se záloha obnoví. Když to nestačí (třeba jen týden zpětně), domluvit vlastní pravidelný export.
 - **Cron na hostingu.** Zjistit, jestli Webglobe umí spouštět naplánovaný příkaz (cron). Plánované úlohy pluginu (anonymizace, Připomínky přezutí a Termínu, Rozesílky, recenze) jinak běží přes WP‑Cron, tedy jen když někdo otevře web a web si úspěšně zavolá sám sebe.
 
@@ -113,7 +113,10 @@ Stejné jako v sekci Přepnutí níže (bez kroku 1, zálohou kopie je `kopie/`)
 
 ### 9. Obsah a ověření
 
-- [ ] Provozovatel dostane vlastní účet (Uživatelé → Přidat, role Administrátor nebo Editor) a heslo k serveru.
+- [ ] Účty (Uživatelé → Přidat), administrátorem zůstává vývojář:
+  - Provozovatel: role **Provozovatel** (Služby, Akce, Průvodci, stránky, Rezervace, Nastavení, Výjimky, E‑maily Zákazníkům; ne pluginy, uživatelé a Převod).
+  - Technici: společný účet s rolí **Rezervace – prohlížení** (kalendář, seznam a PDF přehled dne).
+  - Oběma heslo k testovací kopii.
 - [ ] Provozovatel doplní Služby (viz Výsledek zkoušky), Nastavení (kontakty, Pracovní doba, Sezóny, Lhůta zrušení), stránky O nás, Kontakt, Ochrana osobních údajů (perex do výňatku stránky) a Průvodce.
   Nastavení podle `docs/podklady-od-klienta/odpovedi-3.md`:
   - Pracovní doba Po–Pá 8:00–12:00 a 13:00–17:00, So–Ne zavřeno.
@@ -134,6 +137,7 @@ Stejné jako v sekci Přepnutí níže (bez kroku 1, zálohou kopie je `kopie/`)
     ```
   - Google recenze zapnuté.
   - Nejžádanější Služby: Přezutí pneu, Geometrie, Výměna oleje. Akce žádná.
+  - Sociální sítě: Facebook `https://www.facebook.com/jvkpneu`, Instagram `https://www.instagram.com/pneuservisjan/`, Google Firma `https://share.google/v4htT35a3nmeGdn5g`.
 - [ ] Zkušební rezervace, Zrušení odkazem z e‑mailu, PDF přehled a iCal.
 - [ ] Cron je vypnutý. Anonymizaci, Připomínky přezutí a Termínu, Rozesílky a recenze jde spustit ručně, když je potřeba vyzkoušet: plugin WP Crontrol, nebo dočasně `DISABLE_WP_CRON` na `false`.
 - [ ] Návrat zpět (nacvičení): znovu nahrát soubory a `kopie.sql` podle kroků 5 a 6 a v phpMyAdminu smazat tabulky `tstpk_`, které přidal nový plugin (`tstpk_pneukarnik_booking_services`, `…_day_exceptions`, `…_subscriptions`). Starý web na kopii musí naběhnout, pak krok 7 zopakovat. Proto `kopie/` lokálně smaž až po této zkoušce.

@@ -14,6 +14,21 @@ declare(strict_types=1);
 /** Při přidání výchozího obsahu zvyšte, chybějící obsah se doplní při dalším požadavku. */
 const PNEUKARNIK_CONTENT_VERSION = '1';
 
+/** Fotky galerie O nás v assets/img/galerie (soubor bez přípony => popisek). */
+const PNEUKARNIK_GALLERY = [
+	'01-provozovna'         => 'Budova pneuservisu BestDrive ve Znojmě',
+	'02-prodejna'           => 'Prodejna s pultem a čekárnou',
+	'03-cekarna'            => 'Čekárna u vchodu',
+	'04-pneumatiky-a-disky' => 'Pneumatiky, duše a disky v prodejně',
+	'05-recepce'            => 'Recepce BestDrive',
+	'06-recepce-a-regaly'   => 'Recepce a regály s pneumatikami',
+	'07-prodejna-a-cekarna' => 'Prodejna a čekárna',
+	'08-recepce-vecer'      => 'Recepce BestDrive večer',
+	'09-dilna-pneumatika'   => 'Pneumatika v dílně',
+	'10-dilna-montaz-kola'  => 'Montáž kola',
+	'11-dilna-klic'         => 'Předání klíče v dílně',
+];
+
 add_action( 'init', 'pneukarnik_ensure_content', 20 ); // Po registraci typů obsahu pluginu.
 
 function pneukarnik_ensure_content(): void {
@@ -74,6 +89,16 @@ function pneukarnik_default_pages(): array {
 	$highlighted = static fn( string $blocks ): string => '<!-- wp:group {"className":"is-style-zvyrazneny"} --><div class="wp-block-group is-style-zvyrazneny">' . "\n" . $blocks . "</div><!-- /wp:group -->\n\n";
 	$list        = static fn( array $items ): string => '<!-- wp:list --><ul class="wp-block-list">' . implode( '', array_map( static fn( string $item ): string => '<!-- wp:list-item --><li>' . $item . '</li><!-- /wp:list-item -->', $items ) ) . "</ul><!-- /wp:list -->\n\n";
 
+	// Fotky z galerie starého webu (leden 2022), adresy bez domény, ať platí i po přesunu databáze z testovací kopie.
+	$gallery_images = implode(
+		'',
+		array_map(
+			static fn( string $file, string $alt ): string => '<!-- wp:image --><figure class="wp-block-image"><img src="' . esc_url( wp_make_link_relative( get_theme_file_uri( "assets/img/galerie/{$file}.webp" ) ) ) . '" alt="' . esc_attr( $alt ) . '"/></figure><!-- /wp:image -->',
+			array_keys( PNEUKARNIK_GALLERY ),
+			PNEUKARNIK_GALLERY
+		)
+	);
+
 	return [
 		'o-nas'                  => [
 			'O nás',
@@ -87,17 +112,17 @@ function pneukarnik_default_pages(): array {
 					$heading( 'BestDrive a Barum', 'bestdrive' )
 					. $paragraph( 'Jsme franšízová pobočka sítě BestDrive, jedné z největších pneuservisních sítí v Česku a na Slovensku, a jediná znojemská franšíza Barum Continental. Prodáváme pneumatiky všech druhů, kola i disky.' )
 					// Výhody klubu jen odkazem, mění je BestDrive a tady by zastaraly.
-					. $paragraph( '<strong>Věrnostní karta BestDrive</strong> platí i u nás. Zaregistrujte se do Klubu BestDrive, dostanete číslo karty a s ním u nás uplatníte klubové slevy. [Kdy číslo karty nahlásit (při rezervaci, při placení), upřesní Provozovatel.]' )
+					. $paragraph( '<strong>Věrnostní karta BestDrive</strong> platí i u nás. Zaregistrujte se do Klubu BestDrive, dostanete číslo karty a s ním u nás uplatníte klubové slevy. Číslo karty nahlaste při placení.' )
 					. $paragraph( 'Aktuální výhody a registrace: <a href="https://www.bestdrive.cz/klub.html">Klub BestDrive</a>.' )
 				)
 				. $heading( 'Galerie', 'galerie' )
-				. "<!-- wp:gallery {\"linkTo\":\"none\"} -->\n<figure class=\"wp-block-gallery has-nested-images columns-default is-cropped\"></figure>\n<!-- /wp:gallery -->\n",
+				. "<!-- wp:gallery {\"linkTo\":\"none\"} -->\n<figure class=\"wp-block-gallery has-nested-images columns-default is-cropped\">" . $gallery_images . "</figure>\n<!-- /wp:gallery -->\n",
 		],
 		'kontakt'                => [
 			'Kontakt',
 			'', // Bez perexu má Kontakt výchozí výzvu z šablony.
 			// Adresa, telefon, otevírací doba, mapa a fakturační údaje jsou z Nastavení, tady jen popis příjezdu a návštěvy.
-			$paragraph( 'Zaparkujete přímo u servisu. [Jak k nám dojedete: odbočka a orientační body, doplní Provozovatel.]' )
+			$paragraph( 'Zaparkujete přímo u servisu.' )
 				. $paragraph( 'Na auto můžete počkat v naší čekárně. Platit jde hotově i kartou, firmám vystavíme fakturu. Náhradní vozidlo nepůjčujeme.' ),
 		],
 		'ochrana-osobnich-udaju' => [
@@ -115,7 +140,7 @@ function pneukarnik_default_pages(): array {
 				)
 				. $heading( 'Jak dlouho údaje uchováváme' )
 				. $paragraph( 'Osobní údaje z Rezervace se automaticky anonymizují 1 rok po Termínu. Zůstane jen to, jakou Službu a kdy jsme dělali.' )
-				. $paragraph( 'E‑mail s Poptávkou pneumatik smažeme, až ji vyřídíme. [Lhůtu upřesní Provozovatel.]' )
+				. $paragraph( 'E‑mail s Poptávkou pneumatik smažeme nejpozději 1 rok po jejím vyřízení.' )
 				. $heading( 'Cookies a měření návštěvnosti' )
 				. $paragraph( 'Web nepoužívá cookies, které by vyžadovaly souhlas. Mapa se načte z Google Maps až po vašem kliknutí. Návštěvnost měříme nástrojem Matomo v režimu bez cookies, adresy stránek odesíláme bez osobních údajů a odkazů z e‑mailů. [Kde Matomo běží a jak dlouho data uchovává, upřesní vývojář.]' )
 				. $heading( 'Vaše práva' )
