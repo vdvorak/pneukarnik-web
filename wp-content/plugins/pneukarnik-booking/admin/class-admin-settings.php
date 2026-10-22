@@ -23,7 +23,7 @@ class Pneukarnik_Admin_Settings {
 	}
 
 	public static function render_page(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! Pneukarnik_Access::can_operate() ) {
 			wp_die( esc_html__( 'Nemáte oprávnění.', 'pneukarnik-booking' ) );
 		}
 
@@ -401,7 +401,7 @@ class Pneukarnik_Admin_Settings {
 		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['pneukarnik_settings_nonce'] ) ), 'pneukarnik_save_settings' ) ) {
 			wp_die( 'Nonce chyba.' );
 		}
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! Pneukarnik_Access::can_operate() ) {
 			wp_die( 'Nemáte oprávnění.' );
 		}
 

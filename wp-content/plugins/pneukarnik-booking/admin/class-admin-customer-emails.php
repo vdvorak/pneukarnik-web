@@ -38,7 +38,7 @@ class Pneukarnik_Admin_Customer_Emails {
 		if ( 'POST' !== ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) {
 			return;
 		}
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! Pneukarnik_Access::can_operate() ) {
 			wp_die( esc_html__( 'Nemáte oprávnění.', 'pneukarnik-booking' ) );
 		}
 		if ( isset( $_GET['mailing'] ) ) {
@@ -121,7 +121,7 @@ class Pneukarnik_Admin_Customer_Emails {
 	}
 
 	public static function render_page(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! Pneukarnik_Access::can_operate() ) {
 			wp_die( esc_html__( 'Nemáte oprávnění.', 'pneukarnik-booking' ) );
 		}
 		if ( isset( $_GET['mailing'] ) ) {

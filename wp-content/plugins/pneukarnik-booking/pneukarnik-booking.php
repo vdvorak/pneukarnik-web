@@ -208,7 +208,7 @@ function pneukarnik_register_admin_menus(): void {
 		Pneukarnik_Admin_Calendar::PAGE,
 		__( 'E‑maily Zákazníkům', 'pneukarnik-booking' ),
 		__( 'E‑maily Zákazníkům', 'pneukarnik-booking' ),
-		'manage_options',
+		Pneukarnik_Access::OPERATE,
 		Pneukarnik_Admin_Customer_Emails::PAGE,
 		[ 'Pneukarnik_Admin_Customer_Emails', 'render_page' ]
 	);
@@ -220,7 +220,7 @@ function pneukarnik_register_admin_menus(): void {
 		Pneukarnik_Admin_Calendar::PAGE,
 		__( 'Nastavení', 'pneukarnik-booking' ),
 		__( 'Nastavení', 'pneukarnik-booking' ),
-		'manage_options',
+		Pneukarnik_Access::OPERATE,
 		'pneukarnik-settings',
 		[ 'Pneukarnik_Admin_Settings', 'render_page' ]
 	);
@@ -232,7 +232,7 @@ function pneukarnik_register_admin_menus(): void {
 		Pneukarnik_Admin_Calendar::PAGE,
 		__( 'Výjimky', 'pneukarnik-booking' ),
 		__( 'Výjimky', 'pneukarnik-booking' ),
-		'manage_options',
+		Pneukarnik_Access::OPERATE,
 		Pneukarnik_Admin_Day_Exceptions::PAGE,
 		[ 'Pneukarnik_Admin_Day_Exceptions', 'render_page' ]
 	);

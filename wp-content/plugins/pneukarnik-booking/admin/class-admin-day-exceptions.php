@@ -23,7 +23,7 @@ class Pneukarnik_Admin_Day_Exceptions {
 		if ( 'POST' !== ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) {
 			return;
 		}
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! Pneukarnik_Access::can_operate() ) {
 			wp_die( esc_html__( 'Nemáte oprávnění.', 'pneukarnik-booking' ) );
 		}
 		$action = sanitize_key( wp_unslash( $_POST['pnk_action'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce ověří check_admin_referer níže.
@@ -40,7 +40,7 @@ class Pneukarnik_Admin_Day_Exceptions {
 	}
 
 	public static function render_page(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! Pneukarnik_Access::can_operate() ) {
 			wp_die( esc_html__( 'Nemáte oprávnění.', 'pneukarnik-booking' ) );
 		}
 
