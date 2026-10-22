@@ -276,7 +276,7 @@ class Pneukarnik_Admin_Settings {
 					</tr>
 					<tr>
 						<th><label for="pnk-emergency-text"><?php esc_html_e( 'Popis Pohotovosti', 'pneukarnik-booking' ); ?></label></th>
-						<td><input id="pnk-emergency-text" type="text" name="emergency_text" value="<?php echo esc_attr( (string) get_option( Pneukarnik_Contact::OPTION_EMERGENCY_TEXT, '' ) ); ?>" class="large-text" placeholder="<?php esc_attr_e( 'Nonstop pomoc při defektu na cestě', 'pneukarnik-booking' ); ?>"></td>
+						<td><input id="pnk-emergency-text" type="text" name="emergency_text" value="<?php echo esc_attr( (string) get_option( Pneukarnik_Contact::OPTION_EMERGENCY_TEXT, '' ) ); ?>" class="large-text" placeholder="<?php esc_attr_e( 'Defekt na cestě? Přijedeme za vámi.', 'pneukarnik-booking' ); ?>"></td>
 					</tr>
 				</table>
 

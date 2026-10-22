@@ -67,7 +67,7 @@ Období přezouvání. Jsou dvě, **jarní** a **podzimní**, každá s datem od
 _Avoid_: pneu sezóna, season
 
 **Pohotovost**:
-Nonstop telefonická pomoc Zákazníkovi mimo otevírací dobu (rozsah upřesní Provozovatel). Nejde ji rezervovat, Zákazník volá.
+Pomoc Zákazníkovi při defektu na cestě, servis přijede k autu. Nejde ji rezervovat, Zákazník volá. Kdy a kde platí, píše Provozovatel do jejího popisu.
 _Avoid_: havarijní služba, SOS
 
 ### Komunikace

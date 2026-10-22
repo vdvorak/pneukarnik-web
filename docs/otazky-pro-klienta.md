@@ -8,27 +8,40 @@ Provozovateli jdou tyto otázky jako rozhovor s ChatGPT, viz `docs/podklady-od-k
 
 ## Firma a fakta o ní
 
-- [ ] **Od kdy firma funguje?** Na webu je „od roku 1991“. Platí to?
-- [ ] **Barum Continental:** Jste pořád „jediná znojemská franšíza Barum Continental“? Pokud ne, jaký je teď vztah k Barum/Continental?
+- [x] **Od kdy firma funguje?** Na webu je „od roku 1991“. Platí to?
+  > Z `docs/podklady-od-klienta/odpovedi-1.md`: od roku 1991, rodinná firma ve druhé generaci. Od té doby přibyly stroje a lidé, nověji dekarbonizace, nová klimatizace a diagnostika. Jak firma začínala, neví. Úvodní věta O nás: „Jsme rodinný pneuservis a autoservis ve Znojmě, který funguje od roku 1991.“
+- [x] **Barum Continental:** Jste pořád „jediná znojemská franšíza Barum Continental“? Pokud ne, jaký je teď vztah k Barum/Continental?
+  > Z `docs/podklady-od-klienta/odpovedi-1.md`: tvrzení „jediná znojemská franšíza Barum Continental“ potvrdil.
 - [ ] **BestDrive:** Jste pořád pobočkou nebo partnerem sítě BestDrive? Platí věrnostní karta BestDrive i u vás? Máte k tomu od BestDrive nějaké podklady (logo, texty, podmínky)?
   > Částečně z webu BestDrive: pobočku vede jako „Franšízová pobočka sítě BestDrive – Jan Kárník, Znojmo“, text O nás z toho vychází. O věrnostní kartě a o Barum tam nic není. Výčet nabídky (pneumatiky, litá i ocelová kola, autodoplňky) je obecný pro celou síť „dle zaměření pobočky“, pro Znojmo nepotvrzený.
   > Výhody klubu na webu jen odkazem na [Klub BestDrive](https://www.bestdrive.cz/klub.html) (registrace online, slevy se uplatní číslem karty), ať nezastarají. Od Provozovatele potřebujeme jen potvrdit, že karta u něj platí a kdy zákazník číslo karty nahlásí.
-- [ ] **Nonstop pohotovost:** Funguje pořád? Na jakém čísle, co pokrývá (defekt na cestě, odtah, výjezd) a v jaké oblasti?
-- [ ] **Tým:** Kolik lidí v servisu pracuje? Chcete je na webu představit (jméno, fotka, čím se zabývá)?
+  > Z `docs/podklady-od-klienta/odpovedi-1.md`: franšíza BestDrive, věrnostní karta u něj platí (slevy, kartu zákazník dostane přes BestDrive). Jak ji u něj uplatnit a jestli má a pošle podklady od BestDrive, neví.
+- [x] **Nonstop pohotovost:** Funguje pořád? Na jakém čísle, co pokrývá (defekt na cestě, odtah, výjezd) a v jaké oblasti?
+  > Z `docs/podklady-od-klienta/odpovedi-1.md`: funguje v omezeném režimu, ne nonstop: Po–Pá 8:00–17:00, o víkendech ne. Telefon 775565326, defekt na cestě a výjezd k autu, Znojmo a okolí. Výjezd za pevnou cenu, částku neví.
+- [x] **Tým:** Kolik lidí v servisu pracuje? Chcete je na webu představit (jméno, fotka, čím se zabývá)?
+  > Z `docs/podklady-od-klienta/odpovedi-1.md`: 6 lidí. Na webu jen společně jako „náš tým“, bez jmen a fotek.
 - [ ] **Vybavení:** Jaké stroje a technologie stojí za zmínku (geometrie, diagnostika, vyvažovačka, plnění klimatizace…)? Konkrétní značky a typy zákazníky přesvědčí víc než obecné „profesionální stroje“.
-- [ ] **Čím se lišíte od konkurence?** Proč k vám zákazníci chodí? (Na tom postavíme úvodní stránku.)
+  > Z `docs/podklady-od-klienta/odpovedi-1.md`: diagnostika TEXA. Značky ostatních strojů (geometrie, vyvažovačka, montážní stroj, plnění klimatizace, ozon, dekarbonizace) neví.
+- [x] **Čím se lišíte od konkurence?** Proč k vám zákazníci chodí? (Na tom postavíme úvodní stránku.)
+  > Z `docs/podklady-od-klienta/odpovedi-1.md`: schválil řádky Proč k nám: Zkušenosti od roku 1991 (Servisu se věnujeme od roku 1991.), Pneu i autoservis (Vše vyřídíte na jednom místě.), Osobní přístup (Zákazníci se k nám dlouhodobě vracejí.), Rychlé objednání (Často se dostanete na řadu ještě tentýž den.), Férové ceny (Ceny odpovídají odvedené práci.). Tentýž den záleží na vytížení, hlavně v Sezóně.
 
 ## Kontakty a provoz
 
-- [ ] **E-mail:** Zůstane `j.v.karnik@volny.cz`, nebo chcete adresu na doméně (např. `servis@pneukarnik.cz`)?
+- [x] **E-mail:** Zůstane `j.v.karnik@volny.cz`, nebo chcete adresu na doméně (např. `servis@pneukarnik.cz`)?
+  > Z `docs/podklady-od-klienta/odpovedi-1.md`: zůstává `j.v.karnik@volny.cz`.
 - [x] **Otevírací doba:** Platí Po–Pá 8:00–12:00 a 13:00–17:00, So–Ne zavřeno? Mění se během sezóny přezouvání (např. otevřeno i v sobotu)?
   > Z `docs/podklady-od-klienta/odpovedi-3.md`: platí, v Sezóně beze změny. Obvyklou dovolenou neví.
 - [ ] **Příjezd a parkování:** Je u servisu kde parkovat? Je něco, co je dobré vědět při příjezdu (vjezd z ulice, dvůr…)?
+  > Z `docs/podklady-od-klienta/odpovedi-1.md`: parkuje se přímo u servisu. Orientační body a příjezdovou trasu neví.
 - [ ] **Čekárna:** Může zákazník počkat na místě? Je k dispozici káva, Wi‑Fi?
   > Z `docs/podklady-od-klienta/odpovedi-2.md`: u většiny Služeb může zákazník počkat v servisu. U Geometrie je lepší vrátit se později, u Výměny oleje doporučeno a u Výměny tlumičů nutné nechat auto v servisu. Káva a Wi‑Fi: neodpověděl.
-- [ ] **Platba:** Jde platit kartou? Fakturace pro firmy?
-- [ ] **Náhradní vozidlo:** Nabízíte ho?
+  > Z `docs/podklady-od-klienta/odpovedi-1.md`: čekárna je. Káva a Wi‑Fi: neodpověděl.
+- [x] **Platba:** Jde platit kartou? Fakturace pro firmy?
+  > Z `docs/podklady-od-klienta/odpovedi-1.md`: hotově, kartou, fakturou pro firmy.
+- [x] **Náhradní vozidlo:** Nabízíte ho?
+  > Z `docs/podklady-od-klienta/odpovedi-1.md`: ne.
 - [ ] **Sociální sítě:** Máte Facebook, Instagram nebo Google Firmu? Pošlete prosím odkazy.
+  > Z `docs/podklady-od-klienta/odpovedi-1.md`: odkazy na Facebook, Instagram a Google Mapy pošle později.
 
 ## Služby a ceny
 
@@ -96,4 +109,5 @@ Provozovateli jdou tyto otázky jako rozhovor s ChatGPT, viz `docs/podklady-od-k
   > Z `docs/podklady-od-klienta/odpovedi-3.md`: neví.
 - [ ] **Fotky:** Můžeme udělat nové fotky dílny, týmu a práce? Staré fotky na webu jsou z ledna 2022.
   > Z `docs/podklady-od-klienta/odpovedi-3.md`: ano, domluvit konkrétní termín.
-- [ ] **Recenze:** Smíme na webu zobrazit hodnocení z Google?
+- [x] **Recenze:** Smíme na webu zobrazit hodnocení z Google?
+  > Z `docs/podklady-od-klienta/odpovedi-1.md`: ano, hodnocení z Google smíme zobrazit.

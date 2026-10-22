@@ -77,16 +77,17 @@ function pneukarnik_default_pages(): array {
 	return [
 		'o-nas'                  => [
 			'O nás',
-			'[Jednou větou, kdo jsme a od kdy servis ve Znojmě provozujeme, doplní Provozovatel.]',
+			'Jsme rodinný pneuservis a autoservis ve Znojmě, který funguje od roku 1991.',
 			$heading( 'Historie', 'historie' )
-				. $paragraph( 'Pneuservis a autoservis Jan Kárník ve Znojmě. [Od kdy servis funguje, jak začínal a co se od té doby změnilo, doplní Provozovatel.]' )
+				. $paragraph( 'Pneuservis a autoservis Jan Kárník funguje ve Znojmě od roku 1991. Je to rodinná firma a dnes ji vede už druhá generace.' )
+				. $paragraph( 'Od té doby přibyly nové stroje i lidé. Mezi novější vybavení patří diagnostika TEXA, přístroj na dekarbonizaci a nové zařízení na servis klimatizace.' )
 				. $heading( 'Tým', 'tym' )
-				. $paragraph( '[Kdo se o vaše auto postará: jména, role a zkušenosti, doplní Provozovatel.]' )
+				. $paragraph( 'O vaše auto se stará náš tým šesti lidí. Poradíme vám, co je potřeba opravit nebo vyměnit, a pneumatiky i servis auta vyřídíte na jednom místě. Proto se k nám zákazníci dlouhodobě vracejí.' )
 				. $highlighted(
 					$heading( 'BestDrive a Barum', 'bestdrive' )
-					. $paragraph( 'Jsme franšízová pobočka sítě BestDrive, jedné z největších pneuservisních sítí v Česku a na Slovensku. [Co z nabídky sítě najdete i u nás (prodej pneumatik, litá a ocelová kola, autodoplňky) a vztah ke značce Barum upřesní Provozovatel.]' )
+					. $paragraph( 'Jsme franšízová pobočka sítě BestDrive, jedné z největších pneuservisních sítí v Česku a na Slovensku, a jediná znojemská franšíza Barum Continental. Prodáváme pneumatiky všech druhů, kola i disky.' )
 					// Výhody klubu jen odkazem, mění je BestDrive a tady by zastaraly.
-					. $paragraph( '<strong>Věrnostní karta BestDrive</strong> platí i u nás. Zaregistrujte se do Klubu BestDrive, dostanete číslo karty a s ním u nás uplatníte klubové slevy. [Že karta u nás platí a kdy číslo karty nahlásit (při rezervaci, při placení), potvrdí Provozovatel.]' )
+					. $paragraph( '<strong>Věrnostní karta BestDrive</strong> platí i u nás. Zaregistrujte se do Klubu BestDrive, dostanete číslo karty a s ním u nás uplatníte klubové slevy. [Kdy číslo karty nahlásit (při rezervaci, při placení), upřesní Provozovatel.]' )
 					. $paragraph( 'Aktuální výhody a registrace: <a href="https://www.bestdrive.cz/klub.html">Klub BestDrive</a>.' )
 				)
 				. $heading( 'Galerie', 'galerie' )
@@ -95,8 +96,9 @@ function pneukarnik_default_pages(): array {
 		'kontakt'                => [
 			'Kontakt',
 			'', // Bez perexu má Kontakt výchozí výzvu z šablony.
-			// Adresa, telefon, otevírací doba, mapa a fakturační údaje jsou z Nastavení, tady jen popis příjezdu.
-			$paragraph( '[Jak k nám dojedete: odbočka, orientační body a kde zaparkovat, doplní Provozovatel.]' ),
+			// Adresa, telefon, otevírací doba, mapa a fakturační údaje jsou z Nastavení, tady jen popis příjezdu a návštěvy.
+			$paragraph( 'Zaparkujete přímo u servisu. [Jak k nám dojedete: odbočka a orientační body, doplní Provozovatel.]' )
+				. $paragraph( 'Na auto můžete počkat v naší čekárně. Platit jde hotově i kartou, firmám vystavíme fakturu. Náhradní vozidlo nepůjčujeme.' ),
 		],
 		'ochrana-osobnich-udaju' => [
 			'Ochrana osobních údajů',

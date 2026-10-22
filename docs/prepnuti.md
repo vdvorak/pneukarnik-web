@@ -120,6 +120,20 @@ Stejné jako v sekci Přepnutí níže (bez kroku 1, zálohou kopie je `kopie/`)
   - Sezóny: jarní 15. 3. až 30. 4. s leasing od 1. 4., podzimní 1. 10. až 15. 11. s leasing do 31. 10. („hotové do 1. 11.“, ověřit telefonem, viz `docs/otazky-pro-klienta.md`).
   - Předstih pro dnešek 1440 min (objednat se jde nejpozději den předem), Lhůta zrušení 24 hodin, Horizont zůstává 60 dní (Provozovatel neví).
   - E‑mail o každé nové online Rezervaci zapnutý.
+
+  Podle `docs/podklady-od-klienta/odpovedi-1.md` a `odpovedi-2.md`:
+  - E‑mail `j.v.karnik@volny.cz`.
+  - Pohotovost zapnutá, telefon 775565326, popis „Defekt na cestě? Přijedeme za vámi. Znojmo a okolí, Po–Pá 8–17 h.“
+  - Rok založení 1991. Proč k nám:
+    ```
+    Zkušenosti od roku 1991 | Servisu se věnujeme od roku 1991.
+    Pneu i autoservis | Vše vyřídíte na jednom místě.
+    Osobní přístup | Zákazníci se k nám dlouhodobě vracejí.
+    Rychlé objednání | Často se dostanete na řadu ještě tentýž den.
+    Férové ceny | Ceny odpovídají odvedené práci.
+    ```
+  - Google recenze zapnuté.
+  - Nejžádanější Služby: Přezutí pneu, Geometrie, Výměna oleje. Akce žádná.
 - [ ] Zkušební rezervace, Zrušení odkazem z e‑mailu, PDF přehled a iCal.
 - [ ] Cron je vypnutý. Anonymizaci, Připomínky přezutí a Termínu, Rozesílky a recenze jde spustit ručně, když je potřeba vyzkoušet: plugin WP Crontrol, nebo dočasně `DISABLE_WP_CRON` na `false`.
 - [ ] Návrat zpět (nacvičení): znovu nahrát soubory a `kopie.sql` podle kroků 5 a 6 a v phpMyAdminu smazat tabulky `tstpk_`, které přidal nový plugin (`tstpk_pneukarnik_booking_services`, `…_day_exceptions`, `…_subscriptions`). Starý web na kopii musí naběhnout, pak krok 7 zopakovat. Proto `kopie/` lokálně smaž až po této zkoušce.
