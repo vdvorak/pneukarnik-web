@@ -272,5 +272,31 @@ U nových služeb: ceny, časy, podmínky a podrobnosti NEVÍ nebo PŘESKOČENO.
 - Co zahrnuje: dekarbonizaci provádíme přístrojem.
 - Jak to probíhá: pomocí přístroje.
 - Co si vzít s sebou: nic.
+- Časté dotazy: NEVÍ.
+- Citace: NEVÍ.
 
-> Pozn. vývojáře: došlá odpověď tady končí. Chybí zbytek Dekarbonizace (Časté dotazy, Citace) a oddíly Nejžádanější služby, Akce, Další poznámky a Nevyjasněné.
+## Nejžádanější služby (na Úvod)
+1. Výměna pneumatik.
+2. Geometrie.
+3. Výměna oleje.
+
+## Akce
+- Akce na web: žádná aktuální akce.
+- Objednáno v akci, termín po akci: PŘESKOČENO.
+
+## Další poznámky
+- Objednávání online je dostupné u všech původních služeb, pokud není uvedeno jinak.
+- U několika služeb je možná také telefonická objednávka.
+- U přezutí závisí délka práce na velikosti disků a typu vozidla.
+- U výměny oleje se cena odvíjí od množství oleje v litrech.
+- U autodiagnostiky se cena liší podle roku výroby vozidla.
+
+## Nevyjasněné (seznam položek NEVÍ a PŘESKOČENO)
+- Přesné cenové hladiny přezutí podle velikosti kol.
+- Značky prodávaných pneumatik a zda se objednávají na přání.
+- Ceny, časy a podmínky nově uvedených služeb.
+- Přesné blokování v kalendáři u přezutí pneumatik.
+- Podrobnosti postupu a rozsahu u některých služeb.
+- Co si zákazník musí přinést u služeb, kde to nebylo potvrzeno.
+- Časté dotazy zákazníků u většiny služeb.
+- Pravidla pro termíny po skončení akce: PŘESKOČENO.

@@ -45,6 +45,7 @@ Provozovateli jdou tyto otázky jako rozhovor s ChatGPT, viz `docs/podklady-od-k
 - [ ] **Délka služeb:** Jak dlouho trvají jednotlivé služby (kvůli rezervaci termínů)?
   > Z `docs/podklady-od-klienta/odpovedi-2.md`: Geometrie 180 minut, ostatní Služby autoservisu a Duše a pláště na elektrokoloběžky 60 minut, Uskladnění samostatný blok nepotřebuje. U Přezutí neví, podle velikosti disků a typu vozidla.
 - [ ] **Akce a termín:** Platí akční cena, když se zákazník objedná v době akce, ale na termín až po jejím konci? Web zatím ukazuje akční cenu ve výběru služby podle dne objednání, ne podle termínu.
+  > Z `docs/podklady-od-klienta/odpovedi-2.md`: přeskočil. Žádnou Akci teď nemá.
 
 ## Rezervace
 

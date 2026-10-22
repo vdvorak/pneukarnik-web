@@ -50,11 +50,13 @@
 - Otevírací doba se v sezóně nemění.
 - Autoservis má být možné objednat online i během sezóny přezouvání.
 
-
 ## Nevyjasněné (seznam položek NEVÍ a PŘESKOČENO)
 - Obvyklá dovolená a mimořádné zavření.
 - Leasingové společnosti.
 - Jak poznáme leasingové auto.
-- Přesný význam termínů pro objedn
-
-> Pozn. vývojáře: došlá odpověď tady končí, zbytek seznamu Nevyjasněné chybí. Podle položek NEVÍ výše v něm má být ještě: jak dlouho dopředu se jde online objednat, kdo spravuje doménu a hosting, kdo má přístup ke Google Mapám, podrobnosti o reklamě a logo ve větším rozlišení.
+- Přesný význam termínů pro objednání leasingových aut.
+- Maximální předstih online objednávky.
+- Správce domény a webhostingu.
+- Přístup ke Google Mapám.
+- Podrobnosti o reklamě.
+- Dostupnost loga ve větším rozlišení a jeho autor.
